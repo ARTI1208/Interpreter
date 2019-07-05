@@ -1,0 +1,12 @@
+fun void main(){
+	move(5)
+	turn(30)
+	move(10)
+	scd(true)
+}
+
+fun void scd(bool b){
+	turn(5)
+	move(30)
+	turn(10)
+}

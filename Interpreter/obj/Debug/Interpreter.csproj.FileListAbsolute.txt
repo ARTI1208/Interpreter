@@ -1,0 +1,8 @@
+D:\Coding\C#\Interpreter\Interpreter\bin\Debug\Interpreter.pdb
+D:\Coding\C#\Interpreter\Interpreter\bin\Debug\Antlr4.Runtime.Standard.dll
+D:\Coding\C#\Interpreter\Interpreter\obj\Debug\Interpreter.csprojAssemblyReference.cache
+D:\Coding\C#\Interpreter\Interpreter\obj\Debug\Interpreter.csproj.CoreCompileInputs.cache
+D:\Coding\C#\Interpreter\Interpreter\obj\Debug\Interpreter.csproj.CopyComplete
+D:\Coding\C#\Interpreter\Interpreter\obj\Debug\Interpreter.pdb
+D:\Coding\C#\Interpreter\Interpreter\bin\Debug\Interpreter.dll
+D:\Coding\C#\Interpreter\Interpreter\obj\Debug\Interpreter.dll
