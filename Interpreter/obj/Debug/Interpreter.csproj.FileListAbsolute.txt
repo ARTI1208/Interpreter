@@ -4,5 +4,5 @@ D:\Coding\C#\Interpreter\Interpreter\obj\Debug\Interpreter.csprojAssemblyReferen
 D:\Coding\C#\Interpreter\Interpreter\obj\Debug\Interpreter.csproj.CoreCompileInputs.cache
 D:\Coding\C#\Interpreter\Interpreter\obj\Debug\Interpreter.csproj.CopyComplete
 D:\Coding\C#\Interpreter\Interpreter\obj\Debug\Interpreter.pdb
-D:\Coding\C#\Interpreter\Interpreter\bin\Debug\Interpreter.dll
-D:\Coding\C#\Interpreter\Interpreter\obj\Debug\Interpreter.dll
+D:\Coding\C#\Interpreter\Interpreter\bin\Debug\Interpreter.exe
+D:\Coding\C#\Interpreter\Interpreter\obj\Debug\Interpreter.exe

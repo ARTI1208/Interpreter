@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from Ninja.g4 by ANTLR 4.7.2
+// Generated from ..\..\..\Interpreter\Ninja.g4 by ANTLR 4.7.2
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -41,25 +41,75 @@ public interface INinjaListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitProgram([NotNull] NinjaParser.ProgramContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="NinjaParser.fun"/>.
+	/// Enter a parse tree produced by <see cref="NinjaParser.main"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterFun([NotNull] NinjaParser.FunContext context);
+	void EnterMain([NotNull] NinjaParser.MainContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="NinjaParser.fun"/>.
+	/// Exit a parse tree produced by <see cref="NinjaParser.main"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitFun([NotNull] NinjaParser.FunContext context);
+	void ExitMain([NotNull] NinjaParser.MainContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="NinjaParser.signature"/>.
+	/// Enter a parse tree produced by <see cref="NinjaParser.main_signature"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterSignature([NotNull] NinjaParser.SignatureContext context);
+	void EnterMain_signature([NotNull] NinjaParser.Main_signatureContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="NinjaParser.signature"/>.
+	/// Exit a parse tree produced by <see cref="NinjaParser.main_signature"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitSignature([NotNull] NinjaParser.SignatureContext context);
+	void ExitMain_signature([NotNull] NinjaParser.Main_signatureContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.function"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterFunction([NotNull] NinjaParser.FunctionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.function"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitFunction([NotNull] NinjaParser.FunctionContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.v_function"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterV_function([NotNull] NinjaParser.V_functionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.v_function"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitV_function([NotNull] NinjaParser.V_functionContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.v_fun_signature"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterV_fun_signature([NotNull] NinjaParser.V_fun_signatureContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.v_fun_signature"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitV_fun_signature([NotNull] NinjaParser.V_fun_signatureContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.m_function"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterM_function([NotNull] NinjaParser.M_functionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.m_function"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitM_function([NotNull] NinjaParser.M_functionContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.m_fun_signature"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterM_fun_signature([NotNull] NinjaParser.M_fun_signatureContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.m_fun_signature"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitM_fun_signature([NotNull] NinjaParser.M_fun_signatureContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="NinjaParser.code"/>.
 	/// </summary>
@@ -71,6 +121,26 @@ public interface INinjaListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitCode([NotNull] NinjaParser.CodeContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.main_code"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterMain_code([NotNull] NinjaParser.Main_codeContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.main_code"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitMain_code([NotNull] NinjaParser.Main_codeContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.method_return"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterMethod_return([NotNull] NinjaParser.Method_returnContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.method_return"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitMethod_return([NotNull] NinjaParser.Method_returnContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="NinjaParser.params"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -81,13 +151,13 @@ public interface INinjaListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitParams([NotNull] NinjaParser.ParamsContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="NinjaParser.param"/>.
+	/// Enter a parse tree produced by <see cref="NinjaParser.var_signature"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterParam([NotNull] NinjaParser.ParamContext context);
+	void EnterVar_signature([NotNull] NinjaParser.Var_signatureContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="NinjaParser.param"/>.
+	/// Exit a parse tree produced by <see cref="NinjaParser.var_signature"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitParam([NotNull] NinjaParser.ParamContext context);
+	void ExitVar_signature([NotNull] NinjaParser.Var_signatureContext context);
 }

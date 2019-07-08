@@ -1,12 +1,15 @@
+
 fun void main(){
-	move(5)
-	turn(30)
-	move(10)
+	//shoot(4)
+	//move(5)
+	//turn(30)
+	
 	scd(true)
 }
 
-fun void scd(bool b){
-	turn(5)
-	move(30)
+fun void scd(bool b, int ch, double v){
+	
 	turn(10)
+	move(100)
+	shoot(5)
 }

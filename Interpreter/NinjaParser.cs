@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from Ninja.g4 by ANTLR 4.7.2
+// Generated from ..\..\..\Interpreter\Ninja.g4 by ANTLR 4.7.2
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -36,21 +36,28 @@ public partial class NinjaParser : Parser {
 	protected static DFA[] decisionToDFA;
 	protected static PredictionContextCache sharedContextCache = new PredictionContextCache();
 	public const int
-		FUN_KEYWORD=1, MEANINGFUL_TYPE=2, VOID=3, COMMA=4, OBRACE=5, CBRACE=6, 
-		OBRACKET=7, CBRACKET=8, WS=9, INT=10, WORD=11, DOUBLE=12, CALL=13;
+		RETURN_KEYWORD=1, MAIN=2, FUN_KEYWORD=3, MEANINGFUL_TYPE=4, VOID=5, COMMA=6, 
+		OBRACE=7, CBRACE=8, OBRACKET=9, CBRACKET=10, WS=11, COMMENT=12, BOOL=13, 
+		DOUBLE=14, INT=15, WORD=16, STRING=17, BUILTIN_FUNC=18, CALL=19, CUSTOM_CALL=20;
 	public const int
-		RULE_program = 0, RULE_fun = 1, RULE_signature = 2, RULE_code = 3, RULE_params = 4, 
-		RULE_param = 5;
+		RULE_program = 0, RULE_main = 1, RULE_main_signature = 2, RULE_function = 3, 
+		RULE_v_function = 4, RULE_v_fun_signature = 5, RULE_m_function = 6, RULE_m_fun_signature = 7, 
+		RULE_code = 8, RULE_main_code = 9, RULE_method_return = 10, RULE_params = 11, 
+		RULE_var_signature = 12;
 	public static readonly string[] ruleNames = {
-		"program", "fun", "signature", "code", "params", "param"
+		"program", "main", "main_signature", "function", "v_function", "v_fun_signature", 
+		"m_function", "m_fun_signature", "code", "main_code", "method_return", 
+		"params", "var_signature"
 	};
 
 	private static readonly string[] _LiteralNames = {
-		null, "'fun'", null, "'void'", "','", "'{'", "'}'", "'('", "')'"
+		null, "'return'", "'main'", "'fun'", null, "'void'", "','", "'{'", "'}'", 
+		"'('", "')'"
 	};
 	private static readonly string[] _SymbolicNames = {
-		null, "FUN_KEYWORD", "MEANINGFUL_TYPE", "VOID", "COMMA", "OBRACE", "CBRACE", 
-		"OBRACKET", "CBRACKET", "WS", "INT", "WORD", "DOUBLE", "CALL"
+		null, "RETURN_KEYWORD", "MAIN", "FUN_KEYWORD", "MEANINGFUL_TYPE", "VOID", 
+		"COMMA", "OBRACE", "CBRACE", "OBRACKET", "CBRACKET", "WS", "COMMENT", 
+		"BOOL", "DOUBLE", "INT", "WORD", "STRING", "BUILTIN_FUNC", "CALL", "CUSTOM_CALL"
 	};
 	public static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);
 
@@ -76,6 +83,109 @@ public partial class NinjaParser : Parser {
 		}
 	}
 
+
+
+		public enum ParamType
+		{
+			Receive, Pass
+		};
+
+		public class ParamList
+		{
+			private ArrayList<NinjaParser.ParamData> _list = new ArrayList<NinjaParser.ParamData>();
+
+			public void Add(NinjaParser.ParamData data)
+			{
+				Console.WriteLine(data);
+				_list.Add(data);
+			}
+				
+			public override string ToString()
+			{
+				if (_list.Count == 0)
+				{
+					return "<no params>";
+				}
+
+				string s = "{";
+				foreach (var data in _list)
+				{
+					s += $" {data.type} {data.name},";
+				}
+
+				s = s.Substring(0, s.Length - 1) + " }";
+				return s;
+			}
+		}
+		
+		public enum CallType
+		{
+			BuiltIn, Custom
+		};
+		
+		public class CallData
+		{
+			public string name;
+	            
+			public dynamic value;
+	            
+			public CallType callType;
+	    	
+			public ReturnType returnType;
+	    		
+			public ParamList paramList = new ParamList();	
+	    	
+	    	public override string ToString()
+	        {
+				return $"call {name} of type {callType} returns {returnType}, params : {paramList}";
+			}
+		}
+
+		public enum VarType
+		{
+			Int, Double, Bool
+		};
+
+		public class ParamData
+		{
+			
+	        public string name;
+	        
+	        public dynamic value;
+		
+			public VarType type;	
+			
+			public ParamType paramType = ParamType.Receive;	
+		
+			public override string ToString()
+	        {
+	            return $"param {type} {name}";
+	        }
+		}
+		
+		public enum ReturnType
+		{
+			Int, Double, Bool, Void
+		};
+
+	    public class MethodData
+	    {
+	        public string name;
+			public bool isMeaningful;
+	        public ReturnType returnType;
+	        public ParamList paramList = new ParamList();
+	        public List<CallData> callList = new ArrayList<CallData>();
+	        
+			public dynamic returnValue;
+	        
+	        public override string ToString()
+	        {
+	        	return $"fun {returnType} {name}, params : {paramList} ";
+	        }
+	    }
+	 
+	    public static Dictionary<string, MethodData> metTable = new Dictionary<string, MethodData>();
+
 		public NinjaParser(ITokenStream input) : this(input, Console.Out, Console.Error) { }
 
 		public NinjaParser(ITokenStream input, TextWriter output, TextWriter errorOutput)
@@ -85,8 +195,14 @@ public partial class NinjaParser : Parser {
 	}
 
 	public partial class ProgramContext : ParserRuleContext {
-		public FunContext fun() {
-			return GetRuleContext<FunContext>(0);
+		public MainContext main() {
+			return GetRuleContext<MainContext>(0);
+		}
+		public FunctionContext[] function() {
+			return GetRuleContexts<FunctionContext>();
+		}
+		public FunctionContext function(int i) {
+			return GetRuleContext<FunctionContext>(i);
 		}
 		public ProgramContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
@@ -107,10 +223,40 @@ public partial class NinjaParser : Parser {
 	public ProgramContext program() {
 		ProgramContext _localctx = new ProgramContext(Context, State);
 		EnterRule(_localctx, 0, RULE_program);
+		int _la;
 		try {
+			int _alt;
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 12; fun();
+			State = 29;
+			ErrorHandler.Sync(this);
+			_alt = Interpreter.AdaptivePredict(TokenStream,0,Context);
+			while ( _alt!=2 && _alt!=global::Antlr4.Runtime.Atn.ATN.INVALID_ALT_NUMBER ) {
+				if ( _alt==1 ) {
+					{
+					{
+					State = 26; function();
+					}
+					} 
+				}
+				State = 31;
+				ErrorHandler.Sync(this);
+				_alt = Interpreter.AdaptivePredict(TokenStream,0,Context);
+			}
+			State = 32; main();
+			State = 36;
+			ErrorHandler.Sync(this);
+			_la = TokenStream.LA(1);
+			while (_la==FUN_KEYWORD) {
+				{
+				{
+				State = 33; function();
+				}
+				}
+				State = 38;
+				ErrorHandler.Sync(this);
+				_la = TokenStream.LA(1);
+			}
 			}
 		}
 		catch (RecognitionException re) {
@@ -124,41 +270,219 @@ public partial class NinjaParser : Parser {
 		return _localctx;
 	}
 
-	public partial class FunContext : ParserRuleContext {
-		public SignatureContext signature() {
-			return GetRuleContext<SignatureContext>(0);
+	public partial class MainContext : ParserRuleContext {
+		public List<String> symbols = new ArrayList<String>();
+		public Main_signatureContext main_signature() {
+			return GetRuleContext<Main_signatureContext>(0);
+		}
+		public ITerminalNode OBRACE() { return GetToken(NinjaParser.OBRACE, 0); }
+		public Main_codeContext main_code() {
+			return GetRuleContext<Main_codeContext>(0);
+		}
+		public ITerminalNode CBRACE() { return GetToken(NinjaParser.CBRACE, 0); }
+		public MainContext(ParserRuleContext parent, int invokingState)
+			: base(parent, invokingState)
+		{
+		}
+		public override int RuleIndex { get { return RULE_main; } }
+		public override void EnterRule(IParseTreeListener listener) {
+			INinjaListener typedListener = listener as INinjaListener;
+			if (typedListener != null) typedListener.EnterMain(this);
+		}
+		public override void ExitRule(IParseTreeListener listener) {
+			INinjaListener typedListener = listener as INinjaListener;
+			if (typedListener != null) typedListener.ExitMain(this);
+		}
+	}
+
+	[RuleVersion(0)]
+	public MainContext main() {
+		MainContext _localctx = new MainContext(Context, State);
+		EnterRule(_localctx, 2, RULE_main);
+		try {
+			EnterOuterAlt(_localctx, 1);
+			{
+			State = 39; main_signature();
+			State = 40; Match(OBRACE);
+			State = 41; main_code();
+			State = 42; Match(CBRACE);
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			ErrorHandler.ReportError(this, re);
+			ErrorHandler.Recover(this, re);
+		}
+		finally {
+			ExitRule();
+		}
+		return _localctx;
+	}
+
+	public partial class Main_signatureContext : ParserRuleContext {
+		public ITerminalNode FUN_KEYWORD() { return GetToken(NinjaParser.FUN_KEYWORD, 0); }
+		public ITerminalNode VOID() { return GetToken(NinjaParser.VOID, 0); }
+		public ITerminalNode MAIN() { return GetToken(NinjaParser.MAIN, 0); }
+		public ITerminalNode OBRACKET() { return GetToken(NinjaParser.OBRACKET, 0); }
+		public ITerminalNode CBRACKET() { return GetToken(NinjaParser.CBRACKET, 0); }
+		public Main_signatureContext(ParserRuleContext parent, int invokingState)
+			: base(parent, invokingState)
+		{
+		}
+		public override int RuleIndex { get { return RULE_main_signature; } }
+		public override void EnterRule(IParseTreeListener listener) {
+			INinjaListener typedListener = listener as INinjaListener;
+			if (typedListener != null) typedListener.EnterMain_signature(this);
+		}
+		public override void ExitRule(IParseTreeListener listener) {
+			INinjaListener typedListener = listener as INinjaListener;
+			if (typedListener != null) typedListener.ExitMain_signature(this);
+		}
+	}
+
+	[RuleVersion(0)]
+	public Main_signatureContext main_signature() {
+		Main_signatureContext _localctx = new Main_signatureContext(Context, State);
+		EnterRule(_localctx, 4, RULE_main_signature);
+		try {
+			EnterOuterAlt(_localctx, 1);
+			{
+			State = 44; Match(FUN_KEYWORD);
+			State = 45; Match(VOID);
+			State = 46; Match(MAIN);
+			State = 47; Match(OBRACKET);
+			State = 48; Match(CBRACKET);
+
+			MethodData newMet = new MethodData
+				{
+					name = "main",
+					returnType = ReturnType.Void
+				};
+				metTable.Add("main", newMet);
+				Console.WriteLine("Create MAIN met");
+
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			ErrorHandler.ReportError(this, re);
+			ErrorHandler.Recover(this, re);
+		}
+		finally {
+			ExitRule();
+		}
+		return _localctx;
+	}
+
+	public partial class FunctionContext : ParserRuleContext {
+		public List<String> symbols = new ArrayList<String>();
+		public V_functionContext v_function() {
+			return GetRuleContext<V_functionContext>(0);
+		}
+		public M_functionContext m_function() {
+			return GetRuleContext<M_functionContext>(0);
+		}
+		public FunctionContext(ParserRuleContext parent, int invokingState)
+			: base(parent, invokingState)
+		{
+		}
+		public override int RuleIndex { get { return RULE_function; } }
+		public override void EnterRule(IParseTreeListener listener) {
+			INinjaListener typedListener = listener as INinjaListener;
+			if (typedListener != null) typedListener.EnterFunction(this);
+		}
+		public override void ExitRule(IParseTreeListener listener) {
+			INinjaListener typedListener = listener as INinjaListener;
+			if (typedListener != null) typedListener.ExitFunction(this);
+		}
+	}
+
+	[RuleVersion(0)]
+	public FunctionContext function() {
+		FunctionContext _localctx = new FunctionContext(Context, State);
+		EnterRule(_localctx, 6, RULE_function);
+		try {
+			State = 55;
+			ErrorHandler.Sync(this);
+			switch ( Interpreter.AdaptivePredict(TokenStream,2,Context) ) {
+			case 1:
+				EnterOuterAlt(_localctx, 1);
+				{
+				State = 51; v_function();
+
+				 	
+				 
+				}
+				break;
+			case 2:
+				EnterOuterAlt(_localctx, 2);
+				{
+				State = 54; m_function();
+				}
+				break;
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			ErrorHandler.ReportError(this, re);
+			ErrorHandler.Recover(this, re);
+		}
+		finally {
+			ExitRule();
+		}
+		return _localctx;
+	}
+
+	public partial class V_functionContext : ParserRuleContext {
+		public V_fun_signatureContext _v_fun_signature;
+		public V_fun_signatureContext v_fun_signature() {
+			return GetRuleContext<V_fun_signatureContext>(0);
 		}
 		public ITerminalNode OBRACE() { return GetToken(NinjaParser.OBRACE, 0); }
 		public CodeContext code() {
 			return GetRuleContext<CodeContext>(0);
 		}
 		public ITerminalNode CBRACE() { return GetToken(NinjaParser.CBRACE, 0); }
-		public FunContext(ParserRuleContext parent, int invokingState)
+		public V_functionContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
-		public override int RuleIndex { get { return RULE_fun; } }
+		public override int RuleIndex { get { return RULE_v_function; } }
 		public override void EnterRule(IParseTreeListener listener) {
 			INinjaListener typedListener = listener as INinjaListener;
-			if (typedListener != null) typedListener.EnterFun(this);
+			if (typedListener != null) typedListener.EnterV_function(this);
 		}
 		public override void ExitRule(IParseTreeListener listener) {
 			INinjaListener typedListener = listener as INinjaListener;
-			if (typedListener != null) typedListener.ExitFun(this);
+			if (typedListener != null) typedListener.ExitV_function(this);
 		}
 	}
 
 	[RuleVersion(0)]
-	public FunContext fun() {
-		FunContext _localctx = new FunContext(Context, State);
-		EnterRule(_localctx, 2, RULE_fun);
+	public V_functionContext v_function() {
+		V_functionContext _localctx = new V_functionContext(Context, State);
+		EnterRule(_localctx, 8, RULE_v_function);
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 14; signature();
-			State = 15; Match(OBRACE);
-			State = 16; code();
-			State = 17; Match(CBRACE);
+			State = 57; _localctx._v_fun_signature = v_fun_signature();
+			State = 58; Match(OBRACE);
+			State = 59; code();
+			State = 60; Match(CBRACE);
+
+
+			try
+			{
+
+				Console.WriteLine((_localctx._v_fun_signature!=null?TokenStream.GetText(_localctx._v_fun_signature.Start,_localctx._v_fun_signature.Stop):null));
+
+			} catch {}
+
+
+
+
+
+
 			}
 		}
 		catch (RecognitionException re) {
@@ -172,53 +496,242 @@ public partial class NinjaParser : Parser {
 		return _localctx;
 	}
 
-	public partial class SignatureContext : ParserRuleContext {
+	public partial class V_fun_signatureContext : ParserRuleContext {
+		public IToken _WORD;
 		public ITerminalNode FUN_KEYWORD() { return GetToken(NinjaParser.FUN_KEYWORD, 0); }
+		public ITerminalNode VOID() { return GetToken(NinjaParser.VOID, 0); }
 		public ITerminalNode WORD() { return GetToken(NinjaParser.WORD, 0); }
 		public ITerminalNode OBRACKET() { return GetToken(NinjaParser.OBRACKET, 0); }
 		public ParamsContext @params() {
 			return GetRuleContext<ParamsContext>(0);
 		}
 		public ITerminalNode CBRACKET() { return GetToken(NinjaParser.CBRACKET, 0); }
-		public ITerminalNode MEANINGFUL_TYPE() { return GetToken(NinjaParser.MEANINGFUL_TYPE, 0); }
-		public ITerminalNode VOID() { return GetToken(NinjaParser.VOID, 0); }
-		public SignatureContext(ParserRuleContext parent, int invokingState)
+		public V_fun_signatureContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
-		public override int RuleIndex { get { return RULE_signature; } }
+		public override int RuleIndex { get { return RULE_v_fun_signature; } }
 		public override void EnterRule(IParseTreeListener listener) {
 			INinjaListener typedListener = listener as INinjaListener;
-			if (typedListener != null) typedListener.EnterSignature(this);
+			if (typedListener != null) typedListener.EnterV_fun_signature(this);
 		}
 		public override void ExitRule(IParseTreeListener listener) {
 			INinjaListener typedListener = listener as INinjaListener;
-			if (typedListener != null) typedListener.ExitSignature(this);
+			if (typedListener != null) typedListener.ExitV_fun_signature(this);
 		}
 	}
 
 	[RuleVersion(0)]
-	public SignatureContext signature() {
-		SignatureContext _localctx = new SignatureContext(Context, State);
-		EnterRule(_localctx, 4, RULE_signature);
-		int _la;
+	public V_fun_signatureContext v_fun_signature() {
+		V_fun_signatureContext _localctx = new V_fun_signatureContext(Context, State);
+		EnterRule(_localctx, 10, RULE_v_fun_signature);
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 19; Match(FUN_KEYWORD);
-			State = 20;
-			_la = TokenStream.LA(1);
-			if ( !(_la==MEANINGFUL_TYPE || _la==VOID) ) {
-			ErrorHandler.RecoverInline(this);
+			State = 63; Match(FUN_KEYWORD);
+			State = 64; Match(VOID);
+			State = 65; _localctx._WORD = Match(WORD);
+			State = 66; Match(OBRACKET);
+			State = 67; @params();
+			State = 68; Match(CBRACKET);
+
+
+			string methodName = (_localctx._WORD!=null?_localctx._WORD.Text:null);
+			Console.WriteLine($"Creating {methodName}");
+			if (methodName == "main" || metTable.ContainsKey(methodName))
+				throw new NotImplementedException("!!!Method overloading is not supported yet!!!");
+
+			MethodData newMet = new MethodData
+				{
+					name = methodName,
+					returnType = ReturnType.Void
+				};
+							foreach (var sig in _localctx.@params().var_signature())
+			    			{
+			    				var d = new NinjaParser.ParamData()
+			    				{
+			    					name = sig.WORD().Symbol.Text
+			    				};
+			    				switch (sig.MEANINGFUL_TYPE().Symbol.Text)
+			    				{
+			    					case "int":
+			    						d.type = NinjaParser.VarType.Int;
+			    						break;
+			    					case "double":
+			    						d.type = NinjaParser.VarType.Double;
+			    						break;
+			    					case "bool":
+			    						d.type = NinjaParser.VarType.Bool;
+			    						break;
+			    					default:
+			    						throw new NotImplementedException();
+			    				}
+			    				
+			    				newMet.paramList.Add(d);
+			    			
+			    			}
+			    			Console.WriteLine(newMet);
+				metTable.Add(newMet.name, newMet);
+				Console.WriteLine("Create met " + newMet.name);
+
 			}
-			else {
-				ErrorHandler.ReportMatch(this);
-			    Consume();
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			ErrorHandler.ReportError(this, re);
+			ErrorHandler.Recover(this, re);
+		}
+		finally {
+			ExitRule();
+		}
+		return _localctx;
+	}
+
+	public partial class M_functionContext : ParserRuleContext {
+		public M_fun_signatureContext m_fun_signature() {
+			return GetRuleContext<M_fun_signatureContext>(0);
+		}
+		public ITerminalNode OBRACE() { return GetToken(NinjaParser.OBRACE, 0); }
+		public CodeContext code() {
+			return GetRuleContext<CodeContext>(0);
+		}
+		public Method_returnContext method_return() {
+			return GetRuleContext<Method_returnContext>(0);
+		}
+		public ITerminalNode CBRACE() { return GetToken(NinjaParser.CBRACE, 0); }
+		public M_functionContext(ParserRuleContext parent, int invokingState)
+			: base(parent, invokingState)
+		{
+		}
+		public override int RuleIndex { get { return RULE_m_function; } }
+		public override void EnterRule(IParseTreeListener listener) {
+			INinjaListener typedListener = listener as INinjaListener;
+			if (typedListener != null) typedListener.EnterM_function(this);
+		}
+		public override void ExitRule(IParseTreeListener listener) {
+			INinjaListener typedListener = listener as INinjaListener;
+			if (typedListener != null) typedListener.ExitM_function(this);
+		}
+	}
+
+	[RuleVersion(0)]
+	public M_functionContext m_function() {
+		M_functionContext _localctx = new M_functionContext(Context, State);
+		EnterRule(_localctx, 12, RULE_m_function);
+		try {
+			EnterOuterAlt(_localctx, 1);
+			{
+			State = 71; m_fun_signature();
+			State = 72; Match(OBRACE);
+			State = 73; code();
+			State = 74; method_return();
+			State = 75; Match(CBRACE);
+
+			string methodName = _localctx.m_fun_signature().WORD().Symbol.Text;
+			Console.WriteLine($"Creating {methodName}");
+			if (methodName == "main" || metTable.ContainsKey(methodName))
+				throw new NotImplementedException("!!!Method overloading is not supported yet!!!");
+
+
+			MethodData newMet = new MethodData
+				{
+					name = methodName
+				};
+				
+				switch(_localctx.m_fun_signature().MEANINGFUL_TYPE().Symbol.Text)
+			    	{
+			    		case "int":
+			    			newMet.returnType = ReturnType.Int;
+			    			break;
+			    		case "double":
+			            	newMet.returnType = ReturnType.Double;
+			            	break;
+			            case "bool":
+			                newMet.returnType = ReturnType.Bool;
+			                break;		
+			    	}
+							foreach (var sig in _localctx.m_fun_signature().@params().var_signature())
+			    			{
+			    				var d = new NinjaParser.ParamData()
+			    				{
+			    					name = sig.WORD().Symbol.Text
+			    				};
+			    				switch (sig.MEANINGFUL_TYPE().Symbol.Text)
+			    				{
+			    					case "int":
+			    						d.type = NinjaParser.VarType.Int;
+			    						break;
+			    					case "double":
+			    						d.type = NinjaParser.VarType.Double;
+			    						break;
+			    					case "bool":
+			    						d.type = NinjaParser.VarType.Bool;
+			    						break;
+			    					default:
+			    						throw new NotImplementedException();
+			    				}
+			    				
+			    				newMet.paramList.Add(d);
+			    			
+			    			}
+			    			Console.WriteLine(newMet);
+				metTable.Add(newMet.name, newMet);
+				Console.WriteLine("Create met " + newMet.name);
+
 			}
-			State = 21; Match(WORD);
-			State = 22; Match(OBRACKET);
-			State = 23; @params();
-			State = 24; Match(CBRACKET);
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			ErrorHandler.ReportError(this, re);
+			ErrorHandler.Recover(this, re);
+		}
+		finally {
+			ExitRule();
+		}
+		return _localctx;
+	}
+
+	public partial class M_fun_signatureContext : ParserRuleContext {
+		public IToken _WORD;
+		public ITerminalNode FUN_KEYWORD() { return GetToken(NinjaParser.FUN_KEYWORD, 0); }
+		public ITerminalNode MEANINGFUL_TYPE() { return GetToken(NinjaParser.MEANINGFUL_TYPE, 0); }
+		public ITerminalNode WORD() { return GetToken(NinjaParser.WORD, 0); }
+		public ITerminalNode OBRACKET() { return GetToken(NinjaParser.OBRACKET, 0); }
+		public ParamsContext @params() {
+			return GetRuleContext<ParamsContext>(0);
+		}
+		public ITerminalNode CBRACKET() { return GetToken(NinjaParser.CBRACKET, 0); }
+		public M_fun_signatureContext(ParserRuleContext parent, int invokingState)
+			: base(parent, invokingState)
+		{
+		}
+		public override int RuleIndex { get { return RULE_m_fun_signature; } }
+		public override void EnterRule(IParseTreeListener listener) {
+			INinjaListener typedListener = listener as INinjaListener;
+			if (typedListener != null) typedListener.EnterM_fun_signature(this);
+		}
+		public override void ExitRule(IParseTreeListener listener) {
+			INinjaListener typedListener = listener as INinjaListener;
+			if (typedListener != null) typedListener.ExitM_fun_signature(this);
+		}
+	}
+
+	[RuleVersion(0)]
+	public M_fun_signatureContext m_fun_signature() {
+		M_fun_signatureContext _localctx = new M_fun_signatureContext(Context, State);
+		EnterRule(_localctx, 14, RULE_m_fun_signature);
+		try {
+			EnterOuterAlt(_localctx, 1);
+			{
+			State = 78; Match(FUN_KEYWORD);
+			State = 79; Match(MEANINGFUL_TYPE);
+			State = 80; _localctx._WORD = Match(WORD);
+			State = 81; Match(OBRACKET);
+			State = 82; @params();
+			State = 83; Match(CBRACKET);
+
+			Console.WriteLine($"Creating m sig for {(_localctx._WORD!=null?_localctx._WORD.Text:null)}");
+
 			}
 		}
 		catch (RecognitionException re) {
@@ -233,9 +746,14 @@ public partial class NinjaParser : Parser {
 	}
 
 	public partial class CodeContext : ParserRuleContext {
+		public IToken _CALL;
 		public ITerminalNode[] CALL() { return GetTokens(NinjaParser.CALL); }
 		public ITerminalNode CALL(int i) {
 			return GetToken(NinjaParser.CALL, i);
+		}
+		public ITerminalNode[] CUSTOM_CALL() { return GetTokens(NinjaParser.CUSTOM_CALL); }
+		public ITerminalNode CUSTOM_CALL(int i) {
+			return GetToken(NinjaParser.CUSTOM_CALL, i);
 		}
 		public CodeContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
@@ -255,21 +773,83 @@ public partial class NinjaParser : Parser {
 	[RuleVersion(0)]
 	public CodeContext code() {
 		CodeContext _localctx = new CodeContext(Context, State);
-		EnterRule(_localctx, 6, RULE_code);
+		EnterRule(_localctx, 16, RULE_code);
 		int _la;
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 29;
+			State = 94;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			while (_la==CALL) {
+			while (_la==CALL || _la==CUSTOM_CALL) {
 				{
 				{
-				State = 26; Match(CALL);
+				State = 90;
+				ErrorHandler.Sync(this);
+				switch (TokenStream.LA(1)) {
+				case CALL:
+					{
+					State = 86; _localctx._CALL = Match(CALL);
+
+						CallData data = new CallData(){
+							callType = CallType.BuiltIn, 
+							name = (_localctx._CALL!=null?_localctx._CALL.Text:null).Substring(0, (_localctx._CALL!=null?_localctx._CALL.Text:null).IndexOf("(")),
+							returnType = ReturnType.Void
+						};
+
+					string methodName = "";
+					if (_localctx.Parent is V_functionContext parentContext)
+								{
+									methodName = parentContext.v_fun_signature().WORD().Symbol.Text;
+								}
+								
+								if (_localctx.Parent is M_functionContext parContext)
+								{
+									methodName = parContext.m_fun_signature().WORD().Symbol.Text;
+								}
+
+					if(methodName != ""){
+					Console.WriteLine(methodName);
+						metTable[methodName].callList.Add(data);
+						}
+
+					}
+					break;
+				case CUSTOM_CALL:
+					{
+					State = 88; Match(CUSTOM_CALL);
+
+					CallData data = new CallData(){
+							callType = CallType.Custom, 
+							name = (_localctx._CALL!=null?_localctx._CALL.Text:null).Substring(0, (_localctx._CALL!=null?_localctx._CALL.Text:null).IndexOf("(")),
+							returnType = ReturnType.Void
+						};
+
+					string methodName = "";
+					if (_localctx.Parent is V_functionContext parentContext)
+								{
+									methodName = parentContext.v_fun_signature().WORD().Symbol.Text;
+								}
+								
+								if (_localctx.Parent is M_functionContext parContext)
+								{
+									methodName = parContext.m_fun_signature().WORD().Symbol.Text;
+								}
+
+					if(methodName != ""){
+					Console.WriteLine(methodName);
+						metTable[methodName].callList.Add(data);
+						}
+
+
+					}
+					break;
+				default:
+					throw new NoViableAltException(this);
 				}
 				}
-				State = 31;
+				}
+				State = 96;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
 			}
@@ -286,19 +866,148 @@ public partial class NinjaParser : Parser {
 		return _localctx;
 	}
 
+	public partial class Main_codeContext : ParserRuleContext {
+		public IToken _CALL;
+		public IToken _CUSTOM_CALL;
+		public ITerminalNode[] CALL() { return GetTokens(NinjaParser.CALL); }
+		public ITerminalNode CALL(int i) {
+			return GetToken(NinjaParser.CALL, i);
+		}
+		public ITerminalNode[] CUSTOM_CALL() { return GetTokens(NinjaParser.CUSTOM_CALL); }
+		public ITerminalNode CUSTOM_CALL(int i) {
+			return GetToken(NinjaParser.CUSTOM_CALL, i);
+		}
+		public Main_codeContext(ParserRuleContext parent, int invokingState)
+			: base(parent, invokingState)
+		{
+		}
+		public override int RuleIndex { get { return RULE_main_code; } }
+		public override void EnterRule(IParseTreeListener listener) {
+			INinjaListener typedListener = listener as INinjaListener;
+			if (typedListener != null) typedListener.EnterMain_code(this);
+		}
+		public override void ExitRule(IParseTreeListener listener) {
+			INinjaListener typedListener = listener as INinjaListener;
+			if (typedListener != null) typedListener.ExitMain_code(this);
+		}
+	}
+
+	[RuleVersion(0)]
+	public Main_codeContext main_code() {
+		Main_codeContext _localctx = new Main_codeContext(Context, State);
+		EnterRule(_localctx, 18, RULE_main_code);
+		int _la;
+		try {
+			EnterOuterAlt(_localctx, 1);
+			{
+			State = 103;
+			ErrorHandler.Sync(this);
+			_la = TokenStream.LA(1);
+			while (_la==CALL || _la==CUSTOM_CALL) {
+				{
+				State = 101;
+				ErrorHandler.Sync(this);
+				switch (TokenStream.LA(1)) {
+				case CALL:
+					{
+					State = 97; _localctx._CALL = Match(CALL);
+
+						CallData data = new CallData(){
+							callType = CallType.BuiltIn, 
+							name = (_localctx._CALL!=null?_localctx._CALL.Text:null).Substring(0, (_localctx._CALL!=null?_localctx._CALL.Text:null).IndexOf("(")),
+							returnType = ReturnType.Void
+						};
+
+
+						metTable["main"].callList.Add(data);
+
+					}
+					break;
+				case CUSTOM_CALL:
+					{
+					State = 99; _localctx._CUSTOM_CALL = Match(CUSTOM_CALL);
+
+					CallData data = new CallData(){
+							callType = CallType.Custom, 
+							name = (_localctx._CUSTOM_CALL!=null?_localctx._CUSTOM_CALL.Text:null).Substring(0, (_localctx._CUSTOM_CALL!=null?_localctx._CUSTOM_CALL.Text:null).IndexOf("(")),
+							returnType = ReturnType.Void
+						};
+
+						metTable["main"].callList.Add(data);
+
+					}
+					break;
+				default:
+					throw new NoViableAltException(this);
+				}
+				}
+				State = 105;
+				ErrorHandler.Sync(this);
+				_la = TokenStream.LA(1);
+			}
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			ErrorHandler.ReportError(this, re);
+			ErrorHandler.Recover(this, re);
+		}
+		finally {
+			ExitRule();
+		}
+		return _localctx;
+	}
+
+	public partial class Method_returnContext : ParserRuleContext {
+		public ITerminalNode RETURN_KEYWORD() { return GetToken(NinjaParser.RETURN_KEYWORD, 0); }
+		public ITerminalNode WORD() { return GetToken(NinjaParser.WORD, 0); }
+		public Method_returnContext(ParserRuleContext parent, int invokingState)
+			: base(parent, invokingState)
+		{
+		}
+		public override int RuleIndex { get { return RULE_method_return; } }
+		public override void EnterRule(IParseTreeListener listener) {
+			INinjaListener typedListener = listener as INinjaListener;
+			if (typedListener != null) typedListener.EnterMethod_return(this);
+		}
+		public override void ExitRule(IParseTreeListener listener) {
+			INinjaListener typedListener = listener as INinjaListener;
+			if (typedListener != null) typedListener.ExitMethod_return(this);
+		}
+	}
+
+	[RuleVersion(0)]
+	public Method_returnContext method_return() {
+		Method_returnContext _localctx = new Method_returnContext(Context, State);
+		EnterRule(_localctx, 20, RULE_method_return);
+		try {
+			EnterOuterAlt(_localctx, 1);
+			{
+			State = 106; Match(RETURN_KEYWORD);
+			State = 107; Match(WORD);
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			ErrorHandler.ReportError(this, re);
+			ErrorHandler.Recover(this, re);
+		}
+		finally {
+			ExitRule();
+		}
+		return _localctx;
+	}
+
 	public partial class ParamsContext : ParserRuleContext {
-		public ParamContext param() {
-			return GetRuleContext<ParamContext>(0);
+		public Var_signatureContext[] var_signature() {
+			return GetRuleContexts<Var_signatureContext>();
+		}
+		public Var_signatureContext var_signature(int i) {
+			return GetRuleContext<Var_signatureContext>(i);
 		}
 		public ITerminalNode[] COMMA() { return GetTokens(NinjaParser.COMMA); }
 		public ITerminalNode COMMA(int i) {
 			return GetToken(NinjaParser.COMMA, i);
-		}
-		public ParamsContext[] @params() {
-			return GetRuleContexts<ParamsContext>();
-		}
-		public ParamsContext @params(int i) {
-			return GetRuleContext<ParamsContext>(i);
 		}
 		public ParamsContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
@@ -318,37 +1027,34 @@ public partial class NinjaParser : Parser {
 	[RuleVersion(0)]
 	public ParamsContext @params() {
 		ParamsContext _localctx = new ParamsContext(Context, State);
-		EnterRule(_localctx, 8, RULE_params);
+		EnterRule(_localctx, 22, RULE_params);
 		int _la;
 		try {
-			int _alt;
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 33;
+			State = 117;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
 			if (_la==MEANINGFUL_TYPE) {
 				{
-				State = 32; param();
+				State = 109; var_signature();
+				State = 114;
+				ErrorHandler.Sync(this);
+				_la = TokenStream.LA(1);
+				while (_la==COMMA) {
+					{
+					{
+					State = 110; Match(COMMA);
+					State = 111; var_signature();
+					}
+					}
+					State = 116;
+					ErrorHandler.Sync(this);
+					_la = TokenStream.LA(1);
+				}
 				}
 			}
 
-			State = 39;
-			ErrorHandler.Sync(this);
-			_alt = Interpreter.AdaptivePredict(TokenStream,2,Context);
-			while ( _alt!=2 && _alt!=global::Antlr4.Runtime.Atn.ATN.INVALID_ALT_NUMBER ) {
-				if ( _alt==1 ) {
-					{
-					{
-					State = 35; Match(COMMA);
-					State = 36; @params();
-					}
-					} 
-				}
-				State = 41;
-				ErrorHandler.Sync(this);
-				_alt = Interpreter.AdaptivePredict(TokenStream,2,Context);
-			}
 			}
 		}
 		catch (RecognitionException re) {
@@ -362,33 +1068,33 @@ public partial class NinjaParser : Parser {
 		return _localctx;
 	}
 
-	public partial class ParamContext : ParserRuleContext {
+	public partial class Var_signatureContext : ParserRuleContext {
 		public ITerminalNode MEANINGFUL_TYPE() { return GetToken(NinjaParser.MEANINGFUL_TYPE, 0); }
 		public ITerminalNode WORD() { return GetToken(NinjaParser.WORD, 0); }
-		public ParamContext(ParserRuleContext parent, int invokingState)
+		public Var_signatureContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
-		public override int RuleIndex { get { return RULE_param; } }
+		public override int RuleIndex { get { return RULE_var_signature; } }
 		public override void EnterRule(IParseTreeListener listener) {
 			INinjaListener typedListener = listener as INinjaListener;
-			if (typedListener != null) typedListener.EnterParam(this);
+			if (typedListener != null) typedListener.EnterVar_signature(this);
 		}
 		public override void ExitRule(IParseTreeListener listener) {
 			INinjaListener typedListener = listener as INinjaListener;
-			if (typedListener != null) typedListener.ExitParam(this);
+			if (typedListener != null) typedListener.ExitVar_signature(this);
 		}
 	}
 
 	[RuleVersion(0)]
-	public ParamContext param() {
-		ParamContext _localctx = new ParamContext(Context, State);
-		EnterRule(_localctx, 10, RULE_param);
+	public Var_signatureContext var_signature() {
+		Var_signatureContext _localctx = new Var_signatureContext(Context, State);
+		EnterRule(_localctx, 24, RULE_var_signature);
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 42; Match(MEANINGFUL_TYPE);
-			State = 43; Match(WORD);
+			State = 119; Match(MEANINGFUL_TYPE);
+			State = 120; Match(WORD);
 			}
 		}
 		catch (RecognitionException re) {
@@ -404,41 +1110,96 @@ public partial class NinjaParser : Parser {
 
 	private static char[] _serializedATN = {
 		'\x3', '\x608B', '\xA72A', '\x8133', '\xB9ED', '\x417C', '\x3BE7', '\x7786', 
-		'\x5964', '\x3', '\xF', '\x30', '\x4', '\x2', '\t', '\x2', '\x4', '\x3', 
+		'\x5964', '\x3', '\x16', '}', '\x4', '\x2', '\t', '\x2', '\x4', '\x3', 
 		'\t', '\x3', '\x4', '\x4', '\t', '\x4', '\x4', '\x5', '\t', '\x5', '\x4', 
-		'\x6', '\t', '\x6', '\x4', '\a', '\t', '\a', '\x3', '\x2', '\x3', '\x2', 
-		'\x3', '\x3', '\x3', '\x3', '\x3', '\x3', '\x3', '\x3', '\x3', '\x3', 
+		'\x6', '\t', '\x6', '\x4', '\a', '\t', '\a', '\x4', '\b', '\t', '\b', 
+		'\x4', '\t', '\t', '\t', '\x4', '\n', '\t', '\n', '\x4', '\v', '\t', '\v', 
+		'\x4', '\f', '\t', '\f', '\x4', '\r', '\t', '\r', '\x4', '\xE', '\t', 
+		'\xE', '\x3', '\x2', '\a', '\x2', '\x1E', '\n', '\x2', '\f', '\x2', '\xE', 
+		'\x2', '!', '\v', '\x2', '\x3', '\x2', '\x3', '\x2', '\a', '\x2', '%', 
+		'\n', '\x2', '\f', '\x2', '\xE', '\x2', '(', '\v', '\x2', '\x3', '\x3', 
+		'\x3', '\x3', '\x3', '\x3', '\x3', '\x3', '\x3', '\x3', '\x3', '\x4', 
 		'\x3', '\x4', '\x3', '\x4', '\x3', '\x4', '\x3', '\x4', '\x3', '\x4', 
-		'\x3', '\x4', '\x3', '\x4', '\x3', '\x5', '\a', '\x5', '\x1E', '\n', '\x5', 
-		'\f', '\x5', '\xE', '\x5', '!', '\v', '\x5', '\x3', '\x6', '\x5', '\x6', 
-		'$', '\n', '\x6', '\x3', '\x6', '\x3', '\x6', '\a', '\x6', '(', '\n', 
-		'\x6', '\f', '\x6', '\xE', '\x6', '+', '\v', '\x6', '\x3', '\a', '\x3', 
-		'\a', '\x3', '\a', '\x3', '\a', '\x2', '\x2', '\b', '\x2', '\x4', '\x6', 
-		'\b', '\n', '\f', '\x2', '\x3', '\x3', '\x2', '\x4', '\x5', '\x2', ',', 
-		'\x2', '\xE', '\x3', '\x2', '\x2', '\x2', '\x4', '\x10', '\x3', '\x2', 
-		'\x2', '\x2', '\x6', '\x15', '\x3', '\x2', '\x2', '\x2', '\b', '\x1F', 
-		'\x3', '\x2', '\x2', '\x2', '\n', '#', '\x3', '\x2', '\x2', '\x2', '\f', 
-		',', '\x3', '\x2', '\x2', '\x2', '\xE', '\xF', '\x5', '\x4', '\x3', '\x2', 
-		'\xF', '\x3', '\x3', '\x2', '\x2', '\x2', '\x10', '\x11', '\x5', '\x6', 
-		'\x4', '\x2', '\x11', '\x12', '\a', '\a', '\x2', '\x2', '\x12', '\x13', 
-		'\x5', '\b', '\x5', '\x2', '\x13', '\x14', '\a', '\b', '\x2', '\x2', '\x14', 
-		'\x5', '\x3', '\x2', '\x2', '\x2', '\x15', '\x16', '\a', '\x3', '\x2', 
-		'\x2', '\x16', '\x17', '\t', '\x2', '\x2', '\x2', '\x17', '\x18', '\a', 
-		'\r', '\x2', '\x2', '\x18', '\x19', '\a', '\t', '\x2', '\x2', '\x19', 
-		'\x1A', '\x5', '\n', '\x6', '\x2', '\x1A', '\x1B', '\a', '\n', '\x2', 
-		'\x2', '\x1B', '\a', '\x3', '\x2', '\x2', '\x2', '\x1C', '\x1E', '\a', 
-		'\xF', '\x2', '\x2', '\x1D', '\x1C', '\x3', '\x2', '\x2', '\x2', '\x1E', 
-		'!', '\x3', '\x2', '\x2', '\x2', '\x1F', '\x1D', '\x3', '\x2', '\x2', 
-		'\x2', '\x1F', ' ', '\x3', '\x2', '\x2', '\x2', ' ', '\t', '\x3', '\x2', 
-		'\x2', '\x2', '!', '\x1F', '\x3', '\x2', '\x2', '\x2', '\"', '$', '\x5', 
-		'\f', '\a', '\x2', '#', '\"', '\x3', '\x2', '\x2', '\x2', '#', '$', '\x3', 
-		'\x2', '\x2', '\x2', '$', ')', '\x3', '\x2', '\x2', '\x2', '%', '&', '\a', 
-		'\x6', '\x2', '\x2', '&', '(', '\x5', '\n', '\x6', '\x2', '\'', '%', '\x3', 
-		'\x2', '\x2', '\x2', '(', '+', '\x3', '\x2', '\x2', '\x2', ')', '\'', 
-		'\x3', '\x2', '\x2', '\x2', ')', '*', '\x3', '\x2', '\x2', '\x2', '*', 
-		'\v', '\x3', '\x2', '\x2', '\x2', '+', ')', '\x3', '\x2', '\x2', '\x2', 
-		',', '-', '\a', '\x4', '\x2', '\x2', '-', '.', '\a', '\r', '\x2', '\x2', 
-		'.', '\r', '\x3', '\x2', '\x2', '\x2', '\x5', '\x1F', '#', ')',
+		'\x3', '\x4', '\x3', '\x5', '\x3', '\x5', '\x3', '\x5', '\x3', '\x5', 
+		'\x5', '\x5', ':', '\n', '\x5', '\x3', '\x6', '\x3', '\x6', '\x3', '\x6', 
+		'\x3', '\x6', '\x3', '\x6', '\x3', '\x6', '\x3', '\a', '\x3', '\a', '\x3', 
+		'\a', '\x3', '\a', '\x3', '\a', '\x3', '\a', '\x3', '\a', '\x3', '\a', 
+		'\x3', '\b', '\x3', '\b', '\x3', '\b', '\x3', '\b', '\x3', '\b', '\x3', 
+		'\b', '\x3', '\b', '\x3', '\t', '\x3', '\t', '\x3', '\t', '\x3', '\t', 
+		'\x3', '\t', '\x3', '\t', '\x3', '\t', '\x3', '\t', '\x3', '\n', '\x3', 
+		'\n', '\x3', '\n', '\x3', '\n', '\x5', '\n', ']', '\n', '\n', '\a', '\n', 
+		'_', '\n', '\n', '\f', '\n', '\xE', '\n', '\x62', '\v', '\n', '\x3', '\v', 
+		'\x3', '\v', '\x3', '\v', '\x3', '\v', '\a', '\v', 'h', '\n', '\v', '\f', 
+		'\v', '\xE', '\v', 'k', '\v', '\v', '\x3', '\f', '\x3', '\f', '\x3', '\f', 
+		'\x3', '\r', '\x3', '\r', '\x3', '\r', '\a', '\r', 's', '\n', '\r', '\f', 
+		'\r', '\xE', '\r', 'v', '\v', '\r', '\x5', '\r', 'x', '\n', '\r', '\x3', 
+		'\xE', '\x3', '\xE', '\x3', '\xE', '\x3', '\xE', '\x2', '\x2', '\xF', 
+		'\x2', '\x4', '\x6', '\b', '\n', '\f', '\xE', '\x10', '\x12', '\x14', 
+		'\x16', '\x18', '\x1A', '\x2', '\x2', '\x2', 'x', '\x2', '\x1F', '\x3', 
+		'\x2', '\x2', '\x2', '\x4', ')', '\x3', '\x2', '\x2', '\x2', '\x6', '.', 
+		'\x3', '\x2', '\x2', '\x2', '\b', '\x39', '\x3', '\x2', '\x2', '\x2', 
+		'\n', ';', '\x3', '\x2', '\x2', '\x2', '\f', '\x41', '\x3', '\x2', '\x2', 
+		'\x2', '\xE', 'I', '\x3', '\x2', '\x2', '\x2', '\x10', 'P', '\x3', '\x2', 
+		'\x2', '\x2', '\x12', '`', '\x3', '\x2', '\x2', '\x2', '\x14', 'i', '\x3', 
+		'\x2', '\x2', '\x2', '\x16', 'l', '\x3', '\x2', '\x2', '\x2', '\x18', 
+		'w', '\x3', '\x2', '\x2', '\x2', '\x1A', 'y', '\x3', '\x2', '\x2', '\x2', 
+		'\x1C', '\x1E', '\x5', '\b', '\x5', '\x2', '\x1D', '\x1C', '\x3', '\x2', 
+		'\x2', '\x2', '\x1E', '!', '\x3', '\x2', '\x2', '\x2', '\x1F', '\x1D', 
+		'\x3', '\x2', '\x2', '\x2', '\x1F', ' ', '\x3', '\x2', '\x2', '\x2', ' ', 
+		'\"', '\x3', '\x2', '\x2', '\x2', '!', '\x1F', '\x3', '\x2', '\x2', '\x2', 
+		'\"', '&', '\x5', '\x4', '\x3', '\x2', '#', '%', '\x5', '\b', '\x5', '\x2', 
+		'$', '#', '\x3', '\x2', '\x2', '\x2', '%', '(', '\x3', '\x2', '\x2', '\x2', 
+		'&', '$', '\x3', '\x2', '\x2', '\x2', '&', '\'', '\x3', '\x2', '\x2', 
+		'\x2', '\'', '\x3', '\x3', '\x2', '\x2', '\x2', '(', '&', '\x3', '\x2', 
+		'\x2', '\x2', ')', '*', '\x5', '\x6', '\x4', '\x2', '*', '+', '\a', '\t', 
+		'\x2', '\x2', '+', ',', '\x5', '\x14', '\v', '\x2', ',', '-', '\a', '\n', 
+		'\x2', '\x2', '-', '\x5', '\x3', '\x2', '\x2', '\x2', '.', '/', '\a', 
+		'\x5', '\x2', '\x2', '/', '\x30', '\a', '\a', '\x2', '\x2', '\x30', '\x31', 
+		'\a', '\x4', '\x2', '\x2', '\x31', '\x32', '\a', '\v', '\x2', '\x2', '\x32', 
+		'\x33', '\a', '\f', '\x2', '\x2', '\x33', '\x34', '\b', '\x4', '\x1', 
+		'\x2', '\x34', '\a', '\x3', '\x2', '\x2', '\x2', '\x35', '\x36', '\x5', 
+		'\n', '\x6', '\x2', '\x36', '\x37', '\b', '\x5', '\x1', '\x2', '\x37', 
+		':', '\x3', '\x2', '\x2', '\x2', '\x38', ':', '\x5', '\xE', '\b', '\x2', 
+		'\x39', '\x35', '\x3', '\x2', '\x2', '\x2', '\x39', '\x38', '\x3', '\x2', 
+		'\x2', '\x2', ':', '\t', '\x3', '\x2', '\x2', '\x2', ';', '<', '\x5', 
+		'\f', '\a', '\x2', '<', '=', '\a', '\t', '\x2', '\x2', '=', '>', '\x5', 
+		'\x12', '\n', '\x2', '>', '?', '\a', '\n', '\x2', '\x2', '?', '@', '\b', 
+		'\x6', '\x1', '\x2', '@', '\v', '\x3', '\x2', '\x2', '\x2', '\x41', '\x42', 
+		'\a', '\x5', '\x2', '\x2', '\x42', '\x43', '\a', '\a', '\x2', '\x2', '\x43', 
+		'\x44', '\a', '\x12', '\x2', '\x2', '\x44', '\x45', '\a', '\v', '\x2', 
+		'\x2', '\x45', '\x46', '\x5', '\x18', '\r', '\x2', '\x46', 'G', '\a', 
+		'\f', '\x2', '\x2', 'G', 'H', '\b', '\a', '\x1', '\x2', 'H', '\r', '\x3', 
+		'\x2', '\x2', '\x2', 'I', 'J', '\x5', '\x10', '\t', '\x2', 'J', 'K', '\a', 
+		'\t', '\x2', '\x2', 'K', 'L', '\x5', '\x12', '\n', '\x2', 'L', 'M', '\x5', 
+		'\x16', '\f', '\x2', 'M', 'N', '\a', '\n', '\x2', '\x2', 'N', 'O', '\b', 
+		'\b', '\x1', '\x2', 'O', '\xF', '\x3', '\x2', '\x2', '\x2', 'P', 'Q', 
+		'\a', '\x5', '\x2', '\x2', 'Q', 'R', '\a', '\x6', '\x2', '\x2', 'R', 'S', 
+		'\a', '\x12', '\x2', '\x2', 'S', 'T', '\a', '\v', '\x2', '\x2', 'T', 'U', 
+		'\x5', '\x18', '\r', '\x2', 'U', 'V', '\a', '\f', '\x2', '\x2', 'V', 'W', 
+		'\b', '\t', '\x1', '\x2', 'W', '\x11', '\x3', '\x2', '\x2', '\x2', 'X', 
+		'Y', '\a', '\x15', '\x2', '\x2', 'Y', ']', '\b', '\n', '\x1', '\x2', 'Z', 
+		'[', '\a', '\x16', '\x2', '\x2', '[', ']', '\b', '\n', '\x1', '\x2', '\\', 
+		'X', '\x3', '\x2', '\x2', '\x2', '\\', 'Z', '\x3', '\x2', '\x2', '\x2', 
+		']', '_', '\x3', '\x2', '\x2', '\x2', '^', '\\', '\x3', '\x2', '\x2', 
+		'\x2', '_', '\x62', '\x3', '\x2', '\x2', '\x2', '`', '^', '\x3', '\x2', 
+		'\x2', '\x2', '`', '\x61', '\x3', '\x2', '\x2', '\x2', '\x61', '\x13', 
+		'\x3', '\x2', '\x2', '\x2', '\x62', '`', '\x3', '\x2', '\x2', '\x2', '\x63', 
+		'\x64', '\a', '\x15', '\x2', '\x2', '\x64', 'h', '\b', '\v', '\x1', '\x2', 
+		'\x65', '\x66', '\a', '\x16', '\x2', '\x2', '\x66', 'h', '\b', '\v', '\x1', 
+		'\x2', 'g', '\x63', '\x3', '\x2', '\x2', '\x2', 'g', '\x65', '\x3', '\x2', 
+		'\x2', '\x2', 'h', 'k', '\x3', '\x2', '\x2', '\x2', 'i', 'g', '\x3', '\x2', 
+		'\x2', '\x2', 'i', 'j', '\x3', '\x2', '\x2', '\x2', 'j', '\x15', '\x3', 
+		'\x2', '\x2', '\x2', 'k', 'i', '\x3', '\x2', '\x2', '\x2', 'l', 'm', '\a', 
+		'\x3', '\x2', '\x2', 'm', 'n', '\a', '\x12', '\x2', '\x2', 'n', '\x17', 
+		'\x3', '\x2', '\x2', '\x2', 'o', 't', '\x5', '\x1A', '\xE', '\x2', 'p', 
+		'q', '\a', '\b', '\x2', '\x2', 'q', 's', '\x5', '\x1A', '\xE', '\x2', 
+		'r', 'p', '\x3', '\x2', '\x2', '\x2', 's', 'v', '\x3', '\x2', '\x2', '\x2', 
+		't', 'r', '\x3', '\x2', '\x2', '\x2', 't', 'u', '\x3', '\x2', '\x2', '\x2', 
+		'u', 'x', '\x3', '\x2', '\x2', '\x2', 'v', 't', '\x3', '\x2', '\x2', '\x2', 
+		'w', 'o', '\x3', '\x2', '\x2', '\x2', 'w', 'x', '\x3', '\x2', '\x2', '\x2', 
+		'x', '\x19', '\x3', '\x2', '\x2', '\x2', 'y', 'z', '\a', '\x6', '\x2', 
+		'\x2', 'z', '{', '\a', '\x12', '\x2', '\x2', '{', '\x1B', '\x3', '\x2', 
+		'\x2', '\x2', '\v', '\x1F', '&', '\x39', '\\', '`', 'g', 'i', 't', 'w',
 	};
 
 	public static readonly ATN _ATN =
