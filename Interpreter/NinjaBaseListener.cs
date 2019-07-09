@@ -275,17 +275,17 @@ public partial class NinjaBaseListener : INinjaListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitCall_params([NotNull] NinjaParser.Call_paramsContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="NinjaParser.call_param"/>.
+	/// Enter a parse tree produced by <see cref="NinjaParser.val_or_id"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterCall_param([NotNull] NinjaParser.Call_paramContext context) { }
+	public virtual void EnterVal_or_id([NotNull] NinjaParser.Val_or_idContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="NinjaParser.call_param"/>.
+	/// Exit a parse tree produced by <see cref="NinjaParser.val_or_id"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitCall_param([NotNull] NinjaParser.Call_paramContext context) { }
+	public virtual void ExitVal_or_id([NotNull] NinjaParser.Val_or_idContext context) { }
 
 	/// <inheritdoc/>
 	/// <remarks>The default implementation does nothing.</remarks>

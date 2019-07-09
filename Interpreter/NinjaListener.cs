@@ -231,13 +231,13 @@ public interface INinjaListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitCall_params([NotNull] NinjaParser.Call_paramsContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="NinjaParser.call_param"/>.
+	/// Enter a parse tree produced by <see cref="NinjaParser.val_or_id"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterCall_param([NotNull] NinjaParser.Call_paramContext context);
+	void EnterVal_or_id([NotNull] NinjaParser.Val_or_idContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="NinjaParser.call_param"/>.
+	/// Exit a parse tree produced by <see cref="NinjaParser.val_or_id"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitCall_param([NotNull] NinjaParser.Call_paramContext context);
+	void ExitVal_or_id([NotNull] NinjaParser.Val_or_idContext context);
 }

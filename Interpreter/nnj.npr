@@ -1,9 +1,4 @@
-fun void tcd(bool b, int ch, double v){
-	
-	turn(-10.0)
-	move(-100.0)
-	shoot()
-}
+
 
 fun void main(){
 	//shoot(4)
@@ -21,4 +16,12 @@ fun void scd(bool b, int ch, double v){
 	tcd(false, 1, -7.8)
 	move(100.0)
 	shoot()
+}
+
+fun int tcd(bool b, int ch, double v){
+	
+	turn(-10.0)
+	move(-100.0)
+	shoot()
+	return 5
 }

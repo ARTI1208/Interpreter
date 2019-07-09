@@ -172,6 +172,10 @@ namespace Interpreter
 				}
 			}
 
+			if (methodData.isMeaningful)
+			{
+				Console.WriteLine($"{formatter}Returning {methodData.returnValue} of type {methodData.returnType}");
+			}
 			--depth;
 			Console.WriteLine($"{formatter}--Exiting method {methodData.name}");
 		}
@@ -366,12 +370,12 @@ namespace Interpreter
 			
 		}
 
-		public void EnterCall_param(NinjaParser.Call_paramContext context)
+		public void EnterVal_or_id(NinjaParser.Val_or_idContext context)
 		{
 			
 		}
 
-		public void ExitCall_param(NinjaParser.Call_paramContext context)
+		public void ExitVal_or_id(NinjaParser.Val_or_idContext context)
 		{
 			
 		}

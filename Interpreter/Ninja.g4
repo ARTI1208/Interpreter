@@ -175,7 +175,37 @@ MethodData newMet = new MethodData
 };
 
 m_function : m_fun_signature OBRACE code method_return CBRACE {
-string methodName = _localctx.m_fun_signature().WORD().Symbol.Text;
+
+	string methodName = _localctx.m_fun_signature().WORD().Symbol.Text;
+	
+	ReturnType actualReturn;
+	
+	switch($method_return.type)
+    {
+        case "int":
+        	actualReturn = ReturnType.Int;
+        	break;
+        case "double":
+            actualReturn = ReturnType.Double;
+            break;
+        case "bool":
+            actualReturn = ReturnType.Bool;
+            break;		
+        default:
+    		throw new NotImplementedException();     
+    }
+
+	if (actualReturn != metTable[methodName].returnType){
+		throw new Exception($"Actual return is {actualReturn}, expected declared return type {metTable[methodName].returnType}");
+	}
+
+	metTable[methodName].returnValue = $method_return.value;
+
+};
+
+m_fun_signature: FUN_KEYWORD MEANINGFUL_TYPE WORD OBRACKET params CBRACKET {
+Console.WriteLine("heeere 3");
+string methodName = $WORD.text;
 //Console.WriteLine($"Creating {methodName}");
 if (methodName == "main" || metTable.ContainsKey(methodName))
 	throw new NotImplementedException("!!!Method overloading is not supported yet!!!");
@@ -183,10 +213,14 @@ if (methodName == "main" || metTable.ContainsKey(methodName))
 
 MethodData newMet = new MethodData
 	{
-		name = methodName
+		name = methodName,
+		isMeaningful = true
 	};
 	
-	switch(_localctx.m_fun_signature().MEANINGFUL_TYPE().Symbol.Text)
+	Console.WriteLine("heeere 1");
+	
+	
+	switch($MEANINGFUL_TYPE.text)
     	{
     		case "int":
     			newMet.returnType = ReturnType.Int;
@@ -198,7 +232,7 @@ MethodData newMet = new MethodData
                 newMet.returnType = ReturnType.Bool;
                 break;		
     	}
-				foreach (var sig in _localctx.m_fun_signature().@params().var_signature())
+				foreach (var sig in _localctx.@params().var_signature())
     			{
     				var d = new NinjaParser.ParamData()
     				{
@@ -223,17 +257,16 @@ MethodData newMet = new MethodData
     			
     			}
 //    			Console.WriteLine(newMet);
+Console.WriteLine("heeere 2");
 	metTable.Add(newMet.name, newMet);
 //	Console.WriteLine("Create met " + newMet.name);
 };
 
-m_fun_signature : FUN_KEYWORD MEANINGFUL_TYPE WORD OBRACKET params CBRACKET {
-//Console.WriteLine($"Creating m sig for {$WORD.text}");
-};
+code : ((call | custom_call))* {
 
-code : ((call {
-	
-} | custom_call))*;
+Console.WriteLine("heeere 4");
+
+};
 
 main_code : (call {
 	
@@ -241,7 +274,12 @@ main_code : (call {
 
 })*;
 
-method_return : RETURN_KEYWORD WORD ;
+method_return returns [string type, dynamic value]: RETURN_KEYWORD val_or_id {
+	$type = $val_or_id.type;
+	$value = $val_or_id.value;
+	Console.WriteLine($"returning {$val_or_id.text}");
+
+};
 
 RETURN_KEYWORD : 'return';
 
@@ -311,7 +349,9 @@ call : parameterized_call {
 	}	
 
 	if(methodName != ""){
+		Console.WriteLine($"heeere 5 {methodName}");
 		metTable[methodName].callList.Add(data);
+		Console.WriteLine("heeere 6");
 	}
 
 
@@ -338,7 +378,9 @@ call : parameterized_call {
 	}	
 
 	if(methodName != ""){
+		Console.WriteLine("heeere 7");
 		metTable[methodName].callList.Add(data);
+		Console.WriteLine("heeere 8");
 	}
 
 };
@@ -351,15 +393,12 @@ custom_call : WORD OBRACKET call_params CBRACKET {
 
 	string callName = $WORD.text;
 
-//	if (!metTable.ContainsKey(callName))
-//		throw new Exception($"Called fun {callName} not found");
-
 	CallData data = new CallData(){
 		callType = CallType.Custom, 
 		name = callName
 	};
 
-	foreach (var par in _localctx.call_params().call_param())
+	foreach (var par in _localctx.call_params().val_or_id())
 	{
 	
 		ParamData d = new ParamData();
@@ -405,19 +444,19 @@ custom_call : WORD OBRACKET call_params CBRACKET {
 
 };
 
-call_params : (call_param
+call_params : (val_or_id
 {
 
-//Console.WriteLine($"Param {$call_param.text} with value {$call_param.type}");
+//Console.WriteLine($"Param {$val_or_id.text} with value {$val_or_id.type}");
 
 
-} (COMMA call_param {
+} (COMMA val_or_id {
 
-//Console.WriteLine($"Param {$call_param.text} with value {$call_param.type}");
+//Console.WriteLine($"Param {$val_or_id.text} with value {$val_or_id.type}");
 
 })*)?;
 
-call_param returns [string type, dynamic value]: (INT{
+val_or_id returns [string type, dynamic value]: (INT{
 
 $type = "int";
 $value = int.Parse($INT.text);
