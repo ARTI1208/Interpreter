@@ -78,13 +78,148 @@ options {
     }
  
     public static Dictionary<string, MethodData> metTable = new Dictionary<string, MethodData>();
+    
+    
+    public class VarData
+    {
+        public VarType type;
+        public dynamic value;
+    }
+ 
+    public static Dictionary<string, VarData> varTable = new Dictionary<string, VarData>();
+    
+    public static void Debug(string line)
+    {
+        Console.WriteLine(line);
+    }
+    
+    public static void Error(string message)
+    {
+        ConsoleColor curr = Console.ForegroundColor;
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine(message);
+        Console.ForegroundColor = curr;
+    }
+	
+	public bool CheckParams(NinjaParser.CallData call, NinjaParser.MethodData method)
+    		{
+    			if (call.paramList.Count != method.paramList.Count)
+    			{
+    				Console.WriteLine($"Expected params {method.paramList.Count}, found {call.paramList.Count}");
+    				return false;
+    			}
+    
+    			for (int i = 0; i < call.paramList.Count; i++)
+    			{
+    				
+    				if (call.paramList[i].type == method.paramList[i].type)
+    				{
+    					method.paramList[i].value = call.paramList[i].value;
+    				}
+    				else
+    				{
+    					Console.WriteLine($"Type mismatch: expected {method.paramList[i].type}, found {call.paramList[i].type} with value {call.paramList[i].value}");
+    					return false;
+    				}
+    			}
+    
+    			return true;
+    		}
+    		
+    		int depth = 0;
+    		
+    		public void GoThroughCalls(NinjaParser.MethodData methodData)
+            		{
+            			string formatter = new string('\t', depth);
+            			Console.WriteLine($"{formatter}--Entering method {methodData.name}, params {ParamListToString(methodData.paramList)}:");
+            			foreach (var call in methodData.callList)
+            			{
+            				if (call.callType == NinjaParser.CallType.Custom)
+            				{
+            					if (NinjaParser.metTable.ContainsKey(call.name))
+            					{
+            						++depth;
+									foreach (var param in call.paramList)
+									{
+										VarData data = varTable[param.name];
+										if (data.type == param.type)
+											data.value = param.value;
+										else if (data.type == VarType.Double && param.type == VarType.Int)
+											data.value = (double)param.value;
+										else
+											Error("Can't convert \"" + param.value.ToString() + "\" to " + data.type);
+									}
+            						GoThroughCalls(NinjaParser.metTable[call.name]);
+            					}
+            				}
+            				else
+            				{
+            					Console.WriteLine($"{formatter}Calling builtin method {call.name} with params {ParamListToString(call.paramList)}");
+            //					Console.WriteLine(call.name);
+            					switch (call.name)
+            					{
+            						case "move":
+            //							Console.WriteLine($"move byte");
+            							_bytes.Add(1);
+            							break;
+            						case "turn":
+            //							Console.WriteLine("turn byte");
+            							_bytes.Add(2);
+            							break;
+            						case "hit":
+            //							Console.WriteLine($"hit byte");
+            							_bytes.Add(3);
+            							break;
+            						case "shoot":
+            //							Console.WriteLine($"shoot byte");
+            							_bytes.Add(4);
+            							break;
+            						default:
+            							Console.WriteLine($"no byte for this op {call.name}");
+            							break;
+            					}
+            				}
+            			}
+            
+            			if (methodData.isMeaningful)
+            			{
+            				Console.WriteLine($"{formatter}Returning {methodData.returnValue} of type {methodData.returnType}");
+            			}
+            			--depth;
+            			Console.WriteLine($"{formatter}--Exiting method {methodData.name}");
+            		}
+            		
+	ArrayList<byte> _bytes = new ArrayList<byte>();
+	
+	string ParamListToString(ArrayList<NinjaParser.ParamData> list)
+    		{
+    			string s = "{";
+    			foreach (var data in list)
+    			{
+    				if (data.paramType == NinjaParser.ParamType.Pass)
+    				{
+    					s += $" {data.type} {data.value},";	
+    				}
+    				else
+    				{
+    					s += $" {data.type} {data.name} = {data.value},";	
+    				}
+    			}
+    
+    			s = (s.Length > 1 ? s.Substring(0, s.Length - 1) : s) + " }";
+    			return s;
+    		}
 }
 
-program : function* main function*;
+program : function* main function* {
+
+GoThroughCalls(NinjaParser.metTable["main"]);
+
+};
 
 main : main_signature OBRACE main_code CBRACE;
 
-main_signature : FUN_KEYWORD VOID MAIN OBRACKET CBRACKET {
+main_signature : FUN_KEYWORD VOID MAIN LPAREN RPAREN {
 	MethodData newMet = new MethodData
 	{
 		name = "main",
@@ -97,9 +232,9 @@ function : v_function | m_function ;
 
 v_function: v_fun_signature OBRACE code CBRACE;
 
-v_fun_signature : FUN_KEYWORD VOID WORD OBRACKET params CBRACKET {
+v_fun_signature : FUN_KEYWORD VOID ID LPAREN params RPAREN {
 
-	string methodName = $WORD.text;
+	string methodName = $ID.text;
 	if (methodName == "main" || metTable.ContainsKey(methodName))
 		throw new NotImplementedException("!!!Method overloading is not supported yet!!!");
 
@@ -113,9 +248,9 @@ v_fun_signature : FUN_KEYWORD VOID WORD OBRACKET params CBRACKET {
     {
     	var d = new NinjaParser.ParamData()
     	{
-    		name = sig.WORD().Symbol.Text
+    		name = sig.ID().GetText()
     	};
-    	switch (sig.MEANINGFUL_TYPE().Symbol.Text)
+    	switch (sig.meaningfulType().GetText())
     	{
     		case "int":
     			d.type = NinjaParser.VarType.Int;
@@ -138,7 +273,7 @@ v_fun_signature : FUN_KEYWORD VOID WORD OBRACKET params CBRACKET {
 
 m_function : m_fun_signature OBRACE code method_return CBRACE {
 
-	string methodName = _localctx.m_fun_signature().WORD().Symbol.Text;
+	string methodName = _localctx.m_fun_signature().ID().GetText();
 	
 	ReturnType actualReturn;
 	
@@ -165,8 +300,8 @@ m_function : m_fun_signature OBRACE code method_return CBRACE {
 
 };
 
-m_fun_signature: FUN_KEYWORD MEANINGFUL_TYPE WORD OBRACKET params CBRACKET {
-	string methodName = $WORD.text;
+m_fun_signature: FUN_KEYWORD meaningfulType ID LPAREN params RPAREN {
+	string methodName = $ID.text;
 	if (methodName == "main" || metTable.ContainsKey(methodName))
 		throw new NotImplementedException("!!!Method overloading is not supported yet!!!");
 
@@ -176,7 +311,7 @@ m_fun_signature: FUN_KEYWORD MEANINGFUL_TYPE WORD OBRACKET params CBRACKET {
 		isMeaningful = true
 	};
 	
-	switch($MEANINGFUL_TYPE.text)
+	switch($meaningfulType.text)
     {
     	case "int":
     		newMet.returnType = ReturnType.Int;
@@ -193,9 +328,9 @@ m_fun_signature: FUN_KEYWORD MEANINGFUL_TYPE WORD OBRACKET params CBRACKET {
     {
     	var d = new NinjaParser.ParamData()
     	{
-    		name = sig.WORD().Symbol.Text
+    		name = sig.ID().GetText()
     	};
-    	switch (sig.MEANINGFUL_TYPE().Symbol.Text)
+    	switch (sig.meaningfulType().GetText())
     	{
     		case "int":
     			d.type = NinjaParser.VarType.Int;
@@ -217,48 +352,42 @@ m_fun_signature: FUN_KEYWORD MEANINGFUL_TYPE WORD OBRACKET params CBRACKET {
 	metTable.Add(newMet.name, newMet);
 };
 
-code : (call | custom_call)*;
+code : (operation)*;
 
-main_code : (call | custom_call)*;
+main_code : (operation)*;
+
+operation : call | custom_call | declare | ariphExprEx | boolExprEx
+			| myif|myif_short|mywhile|mydo_while|myfor;
 
 method_return returns [string type, dynamic value]: RETURN_KEYWORD val_or_id {
 	$type = $val_or_id.type;
 	$value = $val_or_id.value;
 };
 
-RETURN_KEYWORD : 'return';
-
-MAIN : 'main' ;
-
-FUN_KEYWORD : 'fun' ;
-
-MEANINGFUL_TYPE : ('int'|'double'|'bool') ;
-
 params : (var_signature (COMMA var_signature)*)? ;
 
-var_signature : MEANINGFUL_TYPE WORD;
-
-VOID : 'void' ;
-
-COMMA : ',' ;
-
-OBRACE : '{' ;
-CBRACE : '}' ;
-
-OBRACKET : '(' ;
-CBRACKET : ')' ;
-
-WS : [ \t\r\n]+ -> skip ;
-COMMENT : '//'.*?[\n] -> skip ;
-
-BOOL : ('true'|'false') ;
-DOUBLE : [+-]?DIGIT*[.]DIGIT+ ;
-INT : [+-]?DIGIT+ ;
-fragment DIGIT : [0-9] ;
-
-WORD : [a-zA-Z]+ ;
-
-STRING : '"'[a-zA-Z]*'"' ;
+var_signature: meaningfulType ID
+				{
+					VarData newVar = new VarData();
+					switch ($meaningfulType.text)
+					{
+						case "int":
+							newVar.type = VarType.Int;
+							newVar.value = 0;
+							break;
+							
+						case "double":
+							newVar.type = VarType.Double;
+							newVar.value = 0.0;
+							break;
+							
+						case "bool":
+							newVar.type = VarType.Bool;
+							newVar.value = false;
+							break;
+					}
+					varTable[$ID.text] = newVar;
+				};
 
 builtin_func_p : 'move'|'turn' ;
 
@@ -274,7 +403,7 @@ call : parameterized_call {
 	ParamData d = new ParamData()
 	{
 		type = VarType.Double, 
-		value = _localctx._parameterized_call.DOUBLE().GetText()
+		value = _localctx._parameterized_call.ariphExprEx().GetText()
 	};
     d.paramType = ParamType.Pass;				
     data.paramList.Add(d);
@@ -282,11 +411,11 @@ call : parameterized_call {
 	string methodName = "";
 	if (_localctx.Parent.Parent is V_functionContext parentContext)
 	{
-		methodName = parentContext.v_fun_signature().WORD().Symbol.Text;
+		methodName = parentContext.v_fun_signature().ID().GetText();
 	}		
 	if (_localctx.Parent.Parent is M_functionContext parContext)
 	{
-		methodName = parContext.m_fun_signature().WORD().Symbol.Text;
+		methodName = parContext.m_fun_signature().ID().GetText();
 	}
 	if (_localctx.Parent.Parent is MainContext)
 	{
@@ -308,11 +437,11 @@ call : parameterized_call {
 	string methodName = "";
 	if (_localctx.Parent.Parent is V_functionContext parentContext)
 	{
-		methodName = parentContext.v_fun_signature().WORD().Symbol.Text;
+		methodName = parentContext.v_fun_signature().ID().GetText();
 	}		
 	if (_localctx.Parent.Parent is M_functionContext parContext)
 	{
-		methodName = parContext.m_fun_signature().WORD().Symbol.Text;
+		methodName = parContext.m_fun_signature().ID().GetText();
 	}
 	if (_localctx.Parent.Parent is MainContext)
 	{
@@ -324,13 +453,13 @@ call : parameterized_call {
 	}
 };
 
-parameterized_call : builtin_func_p OBRACKET DOUBLE CBRACKET ;
+parameterized_call : builtin_func_p LPAREN ariphExprEx RPAREN ;
 
-simple_call : builtin_func_e OBRACKET CBRACKET;
+simple_call : builtin_func_e LPAREN RPAREN;
 
-custom_call : WORD OBRACKET call_params CBRACKET {
+custom_call : ID LPAREN call_params RPAREN {
 
-	string callName = $WORD.text;
+	string callName = $ID.text;
 
 	CallData data = new CallData(){
 		callType = CallType.Custom, 
@@ -366,16 +495,19 @@ custom_call : WORD OBRACKET call_params CBRACKET {
 	string methodName = "";
     if (_localctx.Parent.Parent is V_functionContext parentContext)
     {
-    	methodName = parentContext.v_fun_signature().WORD().Symbol.Text;
+    	methodName = parentContext.v_fun_signature().ID().GetText();
     }		
     if (_localctx.Parent.Parent is M_functionContext parContext)
    	{
-   		methodName = parContext.m_fun_signature().WORD().Symbol.Text;
+   		methodName = parContext.m_fun_signature().ID().GetText();
    	}
    	if (_localctx.Parent.Parent is MainContext)
    	{
     	methodName = "main";
-    }	
+    }
+	
+	Console.WriteLine($"call of {callName} in {methodName}, isKnownMet {metTable.ContainsKey(methodName)}");
+    Console.WriteLine($"Params pass result {CheckParams(data, metTable[callName])}");
     
     if(methodName != ""){
     	metTable[methodName].callList.Add(data);
@@ -385,31 +517,507 @@ custom_call : WORD OBRACKET call_params CBRACKET {
 
 call_params : (val_or_id (COMMA val_or_id)*)?;
 
-val_or_id returns [string type, dynamic value]: (INT{
+val_or_id returns [string type, dynamic value]: 
+			ariphExprEx
+			{
+				$value = $ariphExprEx.value;
+				if ($ariphExprEx.value.GetType() == typeof(int))
+					$type = "int";
+				else
+					$type = "double";
+			}
+		  | boolExprEx
+			{
+				$value = $boolExprEx.value;
+				$type = "bool";
+			};
 
-	$type = "int";
-	$value = int.Parse($INT.text);
 
-}|DOUBLE{
-        
-    $type = "double";
-    try {
-     	$value = double.Parse($DOUBLE.text);
-    } catch {
-        $value = double.Parse($DOUBLE.text.Replace('.', ','));
-    }
-        
-}|BOOL{
-      
-   	$type = "bool";
-    if($BOOL.text == "true")
-    	$value = true;
-    else
-      	$value = false;
-      
-}|WORD{
-      
-    $type = "other";
-    $value = $WORD.text;
-    
-}) ;
+//Code related to variables
+ariphOperand returns [dynamic value]:
+               INT
+               {
+                   $value = int.Parse($INT.text);
+               }
+             | DOUBLE
+               {
+                   $value = double.Parse($DOUBLE.text);
+               }
+             | ID
+               {
+                   try
+                   {
+                     $value = varTable[$ID.text].value;
+                   }
+                   catch (KeyNotFoundException)
+                   {
+                     Error("Variable " + $ID.text + " does not exist");
+                   }
+               }
+			 | sin
+			   {
+				   $value = $sin.value;
+			   }
+			 | cos
+			   {
+				   $value = $cos.value;
+			   }
+			 | tan
+			   {
+				   $value = $tan.value;
+			   }
+			 | asin
+			   {
+				   $value = $asin.value;
+			   }
+			 | acos
+			   {
+				   $value = $acos.value;
+			   }
+			 | atan
+			   {
+				   $value = $atan.value;
+			   }
+			 | atan2
+			   {
+				   $value = $atan2.value;
+			   }
+             | LPAREN ariphExprEx RPAREN
+               {
+                   $value = $ariphExprEx.value;
+               };
+ariphTerm returns [dynamic value]:
+            ariphOperand
+            {
+                $value = $ariphOperand.value;
+            }
+          | left=ariphTerm MUL right=ariphOperand
+            {
+                $value = $left.value * $right.value;
+            }
+          | left=ariphTerm DIV right=ariphOperand
+            {
+                $value = $left.value / $right.value;
+            };
+ariphExpr returns [dynamic value]:
+            ariphTerm
+            {
+                $value = $ariphTerm.value;
+            }
+          | left=ariphExpr ADD right=ariphTerm
+            {
+                $value = $left.value + $right.value;
+            }
+          | left=ariphExpr SUB right=ariphTerm
+            {
+                $value = $left.value - $right.value;
+            };
+ariphExprEx returns [dynamic value]:
+            ariphExpr
+            {
+                $value = $ariphExpr.value;
+            }
+          | ID ASSIGN ariphExprEx
+            {
+                try
+                {
+                    VarData data = varTable[$ID.text];
+                    if (data.value.GetType() == $ariphExprEx.value.GetType())
+                        data.value = $ariphExprEx.value;
+                    else if (data.type == VarType.Double)
+                        data.value = (double)$ariphExprEx.value;
+                    else
+                        Error("Can't convert \"" + $ariphExprEx.text + "\" to Int");
+                }
+                catch (KeyNotFoundException)
+                {
+                  Error("Variable " + $ID.text + " does not exist");
+                }
+            }
+          | ID ADDASSIGN ariphExprEx
+            {
+                try
+                {
+                    VarData data = varTable[$ID.text];
+                    if (data.value.GetType() == $ariphExprEx.value.GetType())
+                        data.value += $ariphExprEx.value;
+                    else if (data.type == VarType.Double)
+                        data.value += (double)$ariphExprEx.value;
+                    else
+                        Error("Can't convert \"" + $ariphExprEx.text + "\" to Int");
+                }
+                catch (KeyNotFoundException)
+                {
+                  Error("Variable " + $ID.text + " does not exist");
+                }
+            }
+          | ID SUBASSIGN ariphExprEx
+            {
+                try
+                {
+                    VarData data = varTable[$ID.text];
+                    if (data.value.GetType() == $ariphExprEx.value.GetType())
+                        data.value -= $ariphExprEx.value;
+                    else if (data.type == VarType.Double)
+                        data.value -= (double)$ariphExprEx.value;
+                    else
+                        Error("Can't convert \"" + $ariphExprEx.text + "\" to Int");
+                }
+                catch (KeyNotFoundException)
+                {
+                  Error("Variable " + $ID.text + " does not exist");
+                }
+            }
+          | ID MULASSIGN ariphExprEx
+            {
+                try
+                {
+                    VarData data = varTable[$ID.text];
+                    if (data.value.GetType() == $ariphExprEx.value.GetType())
+                        data.value *= $ariphExprEx.value;
+                    else if (data.type == VarType.Double)
+                        data.value *= (double)$ariphExprEx.value;
+                    else
+                        Error("Can't convert \"" + $ariphExprEx.text + "\" to Int");
+                }
+                catch (KeyNotFoundException)
+                {
+                  Error("Variable " + $ID.text + " does not exist");
+                }
+            }
+          | ID DIVASSIGN ariphExprEx
+            {
+                try
+                {
+                    VarData data = varTable[$ID.text];
+                    if (data.value.GetType() == $ariphExprEx.value.GetType())
+                        data.value /= $ariphExprEx.value;
+                    else if (data.type == VarType.Double)
+                        data.value /= (double)$ariphExprEx.value;
+                    else
+                        Error("Can't convert \"" + $ariphExprEx.text + "\" to Int");
+                }
+                catch (KeyNotFoundException)
+                {
+                  Error("Variable " + $ID.text + " does not exist");
+                }
+            };
+
+boolOperand returns [bool value]:
+              BOOL
+              {
+                  $value = bool.Parse($BOOL.text);
+              }
+            | ID
+              {
+                  try
+                  {
+                      $value = varTable[$ID.text].value;
+                  }
+                  catch (KeyNotFoundException)
+                  {
+                    Error("Variable " + $ID.text + " does not exist");
+                  }
+              }
+            | left=ariphExprEx LESS right=ariphExprEx
+              {
+                  $value = $left.value < $right.value;
+              }
+            | left=ariphExprEx GREATER right=ariphExprEx
+              {
+                  $value = $left.value > $right.value;
+              }
+            | left=ariphExprEx EQUAL right=ariphExprEx
+              {
+                  $value = $left.value == $right.value;
+              }
+            | left=ariphExprEx NOTEQUAL right=ariphExprEx
+              {
+                  $value = $left.value != $right.value;
+              }
+            | left=ariphExprEx LESSEQUAL right=ariphExprEx
+              {
+                  $value = $left.value <= $right.value;
+              }
+            | left=ariphExprEx GREQUAL right=ariphExprEx
+              {
+                  $value = $left.value >= $right.value;
+              }
+            /*| leftBool=boolExprEx EQUAL rightBool=boolExprEx
+              {
+                  $value = $leftBool.value == $rightBool.value;
+              }
+            | leftBool=boolExprEx NOTEQUAL rightBool=boolExprEx
+              {
+                  $value = $leftBool.value != $rightBool.value;
+              }*/
+            | LPAREN boolExprEx RPAREN
+              {
+                  $value = $boolExprEx.value;
+              };
+boolExpr returns [bool value]:
+           boolOperand
+           {
+               $value = $boolOperand.value;
+           }
+         | left=boolOperand OR right=boolExpr
+           {
+               $value = $left.value || $right.value;
+           }
+         | left=boolOperand AND right=boolExpr
+           {
+               $value = $left.value && $right.value;
+           };
+boolExprEx returns [bool value]:
+           boolExpr
+           {
+              $value = $boolExpr.value;
+           }
+         | ID ASSIGN boolExprEx
+           {
+              try
+              {
+                VarData data = varTable[$ID.text];
+                $value = data.value = $boolExprEx.value;
+                if (data.type != VarType.Bool)
+                {
+                    Error("Can't convert " + data.type + " to Bool");
+                }
+              }
+              catch (KeyNotFoundException)
+              {
+                Error("Variable " + $ID.text + " does not exist");
+              }
+           };
+
+//declaration
+declare : INTKEY ID
+          {
+           VarData newVar = new VarData
+           {
+                type = VarType.Int,
+                value = 0
+           };
+           varTable.Add($ID.text, newVar);
+           Debug("Create var " + $ID.text);
+          }
+          (ASSIGN ariphExprEx)?
+          {
+           if ($ariphExprEx.text != null)
+           {
+                Debug("\tAssigning it value of " + $ariphExprEx.text);
+                try
+                {
+                  VarData data = varTable[$ID.text];
+                  if (data.value.GetType() == $ariphExprEx.value.GetType())
+                    data.value = $ariphExprEx.value;
+                  else
+                    Error("Can't convert \"" + $ariphExprEx.text + "\" to Int");
+                }
+                catch (KeyNotFoundException)
+                {
+                  Error("Variable " + $ID.text + " does not exist");
+                }
+           }
+          }
+          
+        | DOUBLEKEY ID
+          {
+           VarData newVar = new VarData
+           {
+                type = VarType.Double,
+                value = 0.0
+           };
+           varTable.Add($ID.text, newVar);
+           Debug("Create var " + $ID.text);
+          }
+          (ASSIGN ariphExprEx)?
+          {
+           if ($ariphExprEx.text != null)
+           {
+                Debug("\tAssigning it value of " + $ariphExprEx.text);
+                try
+                {
+                  VarData data = varTable[$ID.text];
+                  if (data.value.GetType() == $ariphExprEx.value.GetType())
+                    data.value = $ariphExprEx.value;
+                  else if (data.type == VarType.Double)
+                    data.value = (double)$ariphExprEx.value;
+                }
+                catch (KeyNotFoundException)
+                {
+                  Error("Variable " + $ID.text + " does not exist");
+                }
+           }
+          }
+        | BOOLKEY ID
+          {
+           VarData newVar = new VarData
+           {
+                type = VarType.Bool,
+                value = false
+           };
+           varTable.Add($ID.text, newVar);
+           Debug("Create var " + $ID.text);
+          }
+          (ASSIGN boolExprEx)?
+          {
+           if ($boolExprEx.text != null)
+           {
+                Debug("\tAssigning it value of " + $boolExprEx.text);
+                try
+                {
+                  varTable[$ID.text].value = $boolExprEx.value;
+                }
+                catch (KeyNotFoundException)
+                {
+                  Error("Variable " + $ID.text + " does not exist");
+                }
+           }
+          };
+
+//trigonometry
+sin returns [double value]:
+		SIN LPAREN ariphExprEx RPAREN
+		{
+			$value = Math.Sin($ariphExprEx.value);
+		};
+cos returns [double value]:
+		COS LPAREN ariphExprEx RPAREN
+		{
+			$value = Math.Cos($ariphExprEx.value);
+		};
+tan returns [double value]:
+		TAN LPAREN ariphExprEx RPAREN
+		{
+			$value = Math.Tan($ariphExprEx.value);
+		};
+asin returns [double value]:
+		ASIN LPAREN ariphExprEx RPAREN
+		{
+			$value = Math.Asin($ariphExprEx.value);
+		};
+acos returns [double value]:
+		ACOS LPAREN ariphExprEx RPAREN
+		{
+			$value = Math.Acos($ariphExprEx.value);
+		};
+atan returns [double value]:
+		ATAN LPAREN ariphExprEx RPAREN
+		{
+			$value = Math.Atan($ariphExprEx.value);
+		};
+atan2 returns [double value]:
+		ATAN2 LPAREN y=ariphExprEx COMMA x=ariphExprEx RPAREN
+		{
+			$value = Math.Atan2($y.value, $x.value);
+		};
+		
+
+//code related to cycles
+myif: IF LPAREN boolExprEx RPAREN // вместо INT  нужен BOOL
+     OBRACE 
+    (operation)+
+    CBRACE
+     ELSE 
+      OBRACE  
+    (operation)+
+    CBRACE
+   ;
+myif_short: IF LPAREN boolExprEx  RPAREN // вместо INT  нужен BOOL
+    OBRACE
+    (operation)+
+    CBRACE
+   ;
+mywhile: WHILE LPAREN boolExprEx RPAREN // вместо INT  нужен BOOL
+     OBRACE
+     (operation)+
+     CBRACE 
+       ;
+mydo_while: DO 
+          OBRACE
+            (operation)+
+          CBRACE
+          WHILE LPAREN boolExprEx RPAREN // вместо INT  нужен BOOL
+          ;
+myfor:  FOR LPAREN ~SEMICOLON+ SEMICOLON boolExprEx SEMICOLON ~SEMICOLON+ RPAREN // ~SEMICOLON+ заменяется на INT BOOL оператор
+        OBRACE
+        (operation)+
+        CBRACE
+     ;
+
+
+//Lexer rules
+//OPSEP   : '\n' ;
+SEMICOLON: ';';
+
+//keywords
+INTKEY      : 'int' ;
+DOUBLEKEY   : 'double' ;
+BOOLKEY     : 'bool' ;
+WHILE		: 'while' ;
+FOR			: 'for' ;
+DO			: 'do' ;
+IF			: 'if' ;
+ELSE		: 'else' ;
+SIN			: 'sin' ;
+COS			: 'cos' ;
+TAN			: 'tan' ;
+ASIN		: 'asin' ;
+ACOS		: 'acos' ;
+ATAN		: 'atan' ;
+ATAN2		: 'atan2' ;
+
+//operators
+ASSIGN  : '=' ;
+ADD     : '+' ;
+SUB     : '-' ;
+MUL     : '*' ;
+DIV     : '/' ;
+ADDASSIGN   : '+=' ;
+SUBASSIGN   : '-=' ;
+MULASSIGN   : '*=' ;
+DIVASSIGN   : '/=' ;
+AND       : '&&' ;
+OR        : '||' ;
+LESS      : '<' ;
+GREATER   : '>' ;
+EQUAL     : '==' ;
+NOTEQUAL  : '!=' ;
+LESSEQUAL : '<=' ;
+GREQUAL   : '>=' ;
+
+//Whitespace symbols
+WS : [ \t\r\n]+ -> skip ;
+
+//literals
+BOOL    : ('true'|'false') ;
+DOUBLE  : [+-]?DIGIT*[,]DIGIT+ ;
+INT     : [+-]?DIGIT+ ;
+
+RETURN_KEYWORD : 'return';
+
+MAIN : 'main' ;
+
+FUN_KEYWORD : 'fun' ;
+
+meaningfulType : ('int'|'double'|'bool') ;
+
+VOID : 'void' ;
+
+COMMA : ',' ;
+
+OBRACE : '{' ;
+CBRACE : '}' ;
+
+LPAREN : '(' ;
+RPAREN : ')' ;
+
+COMMENT : '//'.*?[\n] -> skip ;
+
+STRING : '"'[a-zA-Z]*'"' ;
+ID  : LETTER (LETTER | DIGIT)* ;
+
+//lexer rule fragments
+fragment LETTER : [a-zA-Z_] ;
+fragment DIGIT : [0-9] ;

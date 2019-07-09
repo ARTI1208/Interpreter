@@ -121,7 +121,13 @@ namespace Interpreter
 			}
 
 			stream.Close();
-		}
+
+            Console.WriteLine("Variables of the program:");
+            foreach (var elem in NinjaVarsParser.varTable)
+            {
+                Console.WriteLine("\t" + elem.Key + " is " + elem.Value.type + " with value " + elem.Value.value);
+            }
+        }
 
 		public void EnterMain(NinjaParser.MainContext context)
 		{
@@ -379,5 +385,225 @@ namespace Interpreter
 		{
 			
 		}
-	}
+
+        public void EnterOperation([NotNull] NinjaParser.OperationContext context)
+        {
+            
+        }
+
+        public void ExitOperation([NotNull] NinjaParser.OperationContext context)
+        {
+            
+        }
+
+        public void EnterAriphOperand([NotNull] NinjaParser.AriphOperandContext context)
+        {
+            
+        }
+
+        public void ExitAriphOperand([NotNull] NinjaParser.AriphOperandContext context)
+        {
+            
+        }
+
+        public void EnterAriphTerm([NotNull] NinjaParser.AriphTermContext context)
+        {
+            
+        }
+
+        public void ExitAriphTerm([NotNull] NinjaParser.AriphTermContext context)
+        {
+            
+        }
+
+        public void EnterAriphExpr([NotNull] NinjaParser.AriphExprContext context)
+        {
+            
+        }
+
+        public void ExitAriphExpr([NotNull] NinjaParser.AriphExprContext context)
+        {
+            
+        }
+
+        public void EnterAriphExprEx([NotNull] NinjaParser.AriphExprExContext context)
+        {
+            
+        }
+
+        public void ExitAriphExprEx([NotNull] NinjaParser.AriphExprExContext context)
+        {
+            
+        }
+
+        public void EnterBoolOperand([NotNull] NinjaParser.BoolOperandContext context)
+        {
+            
+        }
+
+        public void ExitBoolOperand([NotNull] NinjaParser.BoolOperandContext context)
+        {
+            
+        }
+
+        public void EnterBoolExpr([NotNull] NinjaParser.BoolExprContext context)
+        {
+            
+        }
+
+        public void ExitBoolExpr([NotNull] NinjaParser.BoolExprContext context)
+        {
+            
+        }
+
+        public void EnterBoolExprEx([NotNull] NinjaParser.BoolExprExContext context)
+        {
+            
+        }
+
+        public void ExitBoolExprEx([NotNull] NinjaParser.BoolExprExContext context)
+        {
+            
+        }
+
+        public void EnterDeclare([NotNull] NinjaParser.DeclareContext context)
+        {
+            
+        }
+
+        public void ExitDeclare([NotNull] NinjaParser.DeclareContext context)
+        {
+            
+        }
+
+        public void EnterSin([NotNull] NinjaParser.SinContext context)
+        {
+            
+        }
+
+        public void ExitSin([NotNull] NinjaParser.SinContext context)
+        {
+            
+        }
+
+        public void EnterCos([NotNull] NinjaParser.CosContext context)
+        {
+            
+        }
+
+        public void ExitCos([NotNull] NinjaParser.CosContext context)
+        {
+            
+        }
+
+        public void EnterTan([NotNull] NinjaParser.TanContext context)
+        {
+            
+        }
+
+        public void ExitTan([NotNull] NinjaParser.TanContext context)
+        {
+            
+        }
+
+        public void EnterAsin([NotNull] NinjaParser.AsinContext context)
+        {
+            
+        }
+
+        public void ExitAsin([NotNull] NinjaParser.AsinContext context)
+        {
+            
+        }
+
+        public void EnterAcos([NotNull] NinjaParser.AcosContext context)
+        {
+            
+        }
+
+        public void ExitAcos([NotNull] NinjaParser.AcosContext context)
+        {
+            
+        }
+
+        public void EnterAtan([NotNull] NinjaParser.AtanContext context)
+        {
+            
+        }
+
+        public void ExitAtan([NotNull] NinjaParser.AtanContext context)
+        {
+            
+        }
+
+        public void EnterAtan2([NotNull] NinjaParser.Atan2Context context)
+        {
+            
+        }
+
+        public void ExitAtan2([NotNull] NinjaParser.Atan2Context context)
+        {
+            
+        }
+
+        public void EnterMyif([NotNull] NinjaParser.MyifContext context)
+        {
+            
+        }
+
+        public void ExitMyif([NotNull] NinjaParser.MyifContext context)
+        {
+            
+        }
+
+        public void EnterMyif_short([NotNull] NinjaParser.Myif_shortContext context)
+        {
+            
+        }
+
+        public void ExitMyif_short([NotNull] NinjaParser.Myif_shortContext context)
+        {
+            
+        }
+
+        public void EnterMywhile([NotNull] NinjaParser.MywhileContext context)
+        {
+            
+        }
+
+        public void ExitMywhile([NotNull] NinjaParser.MywhileContext context)
+        {
+            
+        }
+
+        public void EnterMydo_while([NotNull] NinjaParser.Mydo_whileContext context)
+        {
+            
+        }
+
+        public void ExitMydo_while([NotNull] NinjaParser.Mydo_whileContext context)
+        {
+            
+        }
+
+        public void EnterMyfor([NotNull] NinjaParser.MyforContext context)
+        {
+            
+        }
+
+        public void ExitMyfor([NotNull] NinjaParser.MyforContext context)
+        {
+            
+        }
+
+        public void EnterMeaningfulType([NotNull] NinjaParser.MeaningfulTypeContext context)
+        {
+            
+        }
+
+        public void ExitMeaningfulType([NotNull] NinjaParser.MeaningfulTypeContext context)
+        {
+            
+        }
+    }
 }

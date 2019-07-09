@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from ..\..\..\Interpreter\Ninja.g4 by ANTLR 4.7.2
+// Generated from Ninja.g4 by ANTLR 4.7.2
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -155,6 +155,18 @@ public partial class NinjaBaseListener : INinjaListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitMain_code([NotNull] NinjaParser.Main_codeContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.operation"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterOperation([NotNull] NinjaParser.OperationContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.operation"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitOperation([NotNull] NinjaParser.OperationContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="NinjaParser.method_return"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
@@ -286,6 +298,258 @@ public partial class NinjaBaseListener : INinjaListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitVal_or_id([NotNull] NinjaParser.Val_or_idContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.ariphOperand"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterAriphOperand([NotNull] NinjaParser.AriphOperandContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.ariphOperand"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitAriphOperand([NotNull] NinjaParser.AriphOperandContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.ariphTerm"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterAriphTerm([NotNull] NinjaParser.AriphTermContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.ariphTerm"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitAriphTerm([NotNull] NinjaParser.AriphTermContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.ariphExpr"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterAriphExpr([NotNull] NinjaParser.AriphExprContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.ariphExpr"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitAriphExpr([NotNull] NinjaParser.AriphExprContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.ariphExprEx"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterAriphExprEx([NotNull] NinjaParser.AriphExprExContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.ariphExprEx"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitAriphExprEx([NotNull] NinjaParser.AriphExprExContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.boolOperand"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterBoolOperand([NotNull] NinjaParser.BoolOperandContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.boolOperand"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitBoolOperand([NotNull] NinjaParser.BoolOperandContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.boolExpr"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterBoolExpr([NotNull] NinjaParser.BoolExprContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.boolExpr"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitBoolExpr([NotNull] NinjaParser.BoolExprContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.boolExprEx"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterBoolExprEx([NotNull] NinjaParser.BoolExprExContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.boolExprEx"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitBoolExprEx([NotNull] NinjaParser.BoolExprExContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.declare"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterDeclare([NotNull] NinjaParser.DeclareContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.declare"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitDeclare([NotNull] NinjaParser.DeclareContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.sin"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterSin([NotNull] NinjaParser.SinContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.sin"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitSin([NotNull] NinjaParser.SinContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.cos"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterCos([NotNull] NinjaParser.CosContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.cos"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitCos([NotNull] NinjaParser.CosContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.tan"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterTan([NotNull] NinjaParser.TanContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.tan"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitTan([NotNull] NinjaParser.TanContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.asin"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterAsin([NotNull] NinjaParser.AsinContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.asin"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitAsin([NotNull] NinjaParser.AsinContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.acos"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterAcos([NotNull] NinjaParser.AcosContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.acos"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitAcos([NotNull] NinjaParser.AcosContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.atan"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterAtan([NotNull] NinjaParser.AtanContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.atan"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitAtan([NotNull] NinjaParser.AtanContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.atan2"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterAtan2([NotNull] NinjaParser.Atan2Context context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.atan2"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitAtan2([NotNull] NinjaParser.Atan2Context context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.myif"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterMyif([NotNull] NinjaParser.MyifContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.myif"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitMyif([NotNull] NinjaParser.MyifContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.myif_short"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterMyif_short([NotNull] NinjaParser.Myif_shortContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.myif_short"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitMyif_short([NotNull] NinjaParser.Myif_shortContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.mywhile"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterMywhile([NotNull] NinjaParser.MywhileContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.mywhile"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitMywhile([NotNull] NinjaParser.MywhileContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.mydo_while"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterMydo_while([NotNull] NinjaParser.Mydo_whileContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.mydo_while"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitMydo_while([NotNull] NinjaParser.Mydo_whileContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.myfor"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterMyfor([NotNull] NinjaParser.MyforContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.myfor"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitMyfor([NotNull] NinjaParser.MyforContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.meaningfulType"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterMeaningfulType([NotNull] NinjaParser.MeaningfulTypeContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.meaningfulType"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitMeaningfulType([NotNull] NinjaParser.MeaningfulTypeContext context) { }
 
 	/// <inheritdoc/>
 	/// <remarks>The default implementation does nothing.</remarks>

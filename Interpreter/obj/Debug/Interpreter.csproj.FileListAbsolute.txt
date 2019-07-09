@@ -6,3 +6,7 @@ D:\Coding\C#\Interpreter\Interpreter\obj\Debug\Interpreter.csproj.CopyComplete
 D:\Coding\C#\Interpreter\Interpreter\obj\Debug\Interpreter.pdb
 D:\Coding\C#\Interpreter\Interpreter\bin\Debug\Interpreter.exe
 D:\Coding\C#\Interpreter\Interpreter\obj\Debug\Interpreter.exe
+C:\Users\Василий\Documents\ДЗ Вышка\1 Практика\Interpreter\Interpreter\obj\Debug\Interpreter.csprojAssemblyReference.cache
+C:\Users\Василий\Documents\ДЗ Вышка\1 Практика\Interpreter\Interpreter\obj\Debug\Interpreter.csproj.CoreCompileInputs.cache
+C:\Users\Василий\Documents\ДЗ Вышка\1 Практика\Interpreter\Interpreter\obj\Debug\Interpreter.exe
+C:\Users\Василий\Documents\ДЗ Вышка\1 Практика\Interpreter\Interpreter\obj\Debug\Interpreter.pdb

@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from ..\..\..\Interpreter\Ninja.g4 by ANTLR 4.7.2
+// Generated from Ninja.g4 by ANTLR 4.7.2
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -131,6 +131,16 @@ public interface INinjaListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitMain_code([NotNull] NinjaParser.Main_codeContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.operation"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterOperation([NotNull] NinjaParser.OperationContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.operation"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitOperation([NotNull] NinjaParser.OperationContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="NinjaParser.method_return"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -240,4 +250,214 @@ public interface INinjaListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitVal_or_id([NotNull] NinjaParser.Val_or_idContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.ariphOperand"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterAriphOperand([NotNull] NinjaParser.AriphOperandContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.ariphOperand"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitAriphOperand([NotNull] NinjaParser.AriphOperandContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.ariphTerm"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterAriphTerm([NotNull] NinjaParser.AriphTermContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.ariphTerm"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitAriphTerm([NotNull] NinjaParser.AriphTermContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.ariphExpr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterAriphExpr([NotNull] NinjaParser.AriphExprContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.ariphExpr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitAriphExpr([NotNull] NinjaParser.AriphExprContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.ariphExprEx"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterAriphExprEx([NotNull] NinjaParser.AriphExprExContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.ariphExprEx"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitAriphExprEx([NotNull] NinjaParser.AriphExprExContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.boolOperand"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterBoolOperand([NotNull] NinjaParser.BoolOperandContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.boolOperand"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitBoolOperand([NotNull] NinjaParser.BoolOperandContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.boolExpr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterBoolExpr([NotNull] NinjaParser.BoolExprContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.boolExpr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitBoolExpr([NotNull] NinjaParser.BoolExprContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.boolExprEx"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterBoolExprEx([NotNull] NinjaParser.BoolExprExContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.boolExprEx"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitBoolExprEx([NotNull] NinjaParser.BoolExprExContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.declare"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterDeclare([NotNull] NinjaParser.DeclareContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.declare"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitDeclare([NotNull] NinjaParser.DeclareContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.sin"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterSin([NotNull] NinjaParser.SinContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.sin"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitSin([NotNull] NinjaParser.SinContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.cos"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterCos([NotNull] NinjaParser.CosContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.cos"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitCos([NotNull] NinjaParser.CosContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.tan"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterTan([NotNull] NinjaParser.TanContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.tan"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitTan([NotNull] NinjaParser.TanContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.asin"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterAsin([NotNull] NinjaParser.AsinContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.asin"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitAsin([NotNull] NinjaParser.AsinContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.acos"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterAcos([NotNull] NinjaParser.AcosContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.acos"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitAcos([NotNull] NinjaParser.AcosContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.atan"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterAtan([NotNull] NinjaParser.AtanContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.atan"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitAtan([NotNull] NinjaParser.AtanContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.atan2"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterAtan2([NotNull] NinjaParser.Atan2Context context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.atan2"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitAtan2([NotNull] NinjaParser.Atan2Context context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.myif"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterMyif([NotNull] NinjaParser.MyifContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.myif"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitMyif([NotNull] NinjaParser.MyifContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.myif_short"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterMyif_short([NotNull] NinjaParser.Myif_shortContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.myif_short"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitMyif_short([NotNull] NinjaParser.Myif_shortContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.mywhile"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterMywhile([NotNull] NinjaParser.MywhileContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.mywhile"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitMywhile([NotNull] NinjaParser.MywhileContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.mydo_while"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterMydo_while([NotNull] NinjaParser.Mydo_whileContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.mydo_while"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitMydo_while([NotNull] NinjaParser.Mydo_whileContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.myfor"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterMyfor([NotNull] NinjaParser.MyforContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.myfor"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitMyfor([NotNull] NinjaParser.MyforContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.meaningfulType"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterMeaningfulType([NotNull] NinjaParser.MeaningfulTypeContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.meaningfulType"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitMeaningfulType([NotNull] NinjaParser.MeaningfulTypeContext context);
 }
