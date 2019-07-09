@@ -6,44 +6,25 @@ options {
 
 @parser::members 
 {
-
 	public enum ParamType
 	{
 		Receive, Pass
 	};
 
-	public class ParamList
-	{
-		private ArrayList<NinjaParser.ParamData> _list = new ArrayList<NinjaParser.ParamData>();
-
-		public void Add(NinjaParser.ParamData data)
-		{
-			//Console.WriteLine(data);
-			_list.Add(data);
-		}
-			
-		public override string ToString()
-		{
-			if (_list.Count == 0)
-			{
-				return "<no params>";
-			}
-
-			string s = "{";
-			foreach (var data in _list)
-			{
-				s += $" {data.type} {data.name},";
-			}
-
-			s = s.Substring(0, s.Length - 1) + " }";
-			return s;
-		}
-	}
-	
 	public enum CallType
 	{
 		BuiltIn, Custom
 	};
+	
+	public enum VarType
+    {
+    	Int, Double, Bool
+    };
+    
+    public enum ReturnType
+    {
+    	Int, Double, Bool, Void
+    };
 	
 	public class CallData
 	{
@@ -63,11 +44,6 @@ options {
 		}
 	}
 
-	public enum VarType
-	{
-		Int, Double, Bool
-	};
-
 	public class ParamData
 	{
 		
@@ -84,11 +60,6 @@ options {
             return $"param {type} {name}";
         }
 	}
-	
-	public enum ReturnType
-	{
-		Int, Double, Bool, Void
-	};
 
     public class MethodData
     {
@@ -111,67 +82,58 @@ options {
 
 program : function* main function*;
 
-main locals[List<String> symbols = new ArrayList<String>()]: main_signature OBRACE main_code CBRACE;
+main : main_signature OBRACE main_code CBRACE;
 
 main_signature : FUN_KEYWORD VOID MAIN OBRACKET CBRACKET {
-MethodData newMet = new MethodData
+	MethodData newMet = new MethodData
 	{
 		name = "main",
 		returnType = ReturnType.Void
 	};
 	metTable.Add("main", newMet);
-//	Console.WriteLine("Create MAIN met");
 };
 
-function locals[List<String> symbols = new ArrayList<String>()]: v_function
- {
- 	
- }
- | m_function ;
+function : v_function | m_function ;
 
-v_function: v_fun_signature OBRACE code CBRACE {
-
-};
+v_function: v_fun_signature OBRACE code CBRACE;
 
 v_fun_signature : FUN_KEYWORD VOID WORD OBRACKET params CBRACKET {
 
-string methodName = $WORD.text;
-//Console.WriteLine($"Creating {methodName}");
-if (methodName == "main" || metTable.ContainsKey(methodName))
-	throw new NotImplementedException("!!!Method overloading is not supported yet!!!");
+	string methodName = $WORD.text;
+	if (methodName == "main" || metTable.ContainsKey(methodName))
+		throw new NotImplementedException("!!!Method overloading is not supported yet!!!");
 
-MethodData newMet = new MethodData
+	MethodData newMet = new MethodData
 	{
 		name = methodName,
 		returnType = ReturnType.Void
 	};
-				foreach (var sig in _localctx.@params().var_signature())
-    			{
-    				var d = new NinjaParser.ParamData()
-    				{
-    					name = sig.WORD().Symbol.Text
-    				};
-    				switch (sig.MEANINGFUL_TYPE().Symbol.Text)
-    				{
-    					case "int":
-    						d.type = NinjaParser.VarType.Int;
-    						break;
-    					case "double":
-    						d.type = NinjaParser.VarType.Double;
-    						break;
-    					case "bool":
-    						d.type = NinjaParser.VarType.Bool;
-    						break;
-    					default:
-    						throw new NotImplementedException();
-    				}
+	
+	foreach (var sig in _localctx.@params().var_signature())
+    {
+    	var d = new NinjaParser.ParamData()
+    	{
+    		name = sig.WORD().Symbol.Text
+    	};
+    	switch (sig.MEANINGFUL_TYPE().Symbol.Text)
+    	{
+    		case "int":
+    			d.type = NinjaParser.VarType.Int;
+    			break;
+    		case "double":
+    			d.type = NinjaParser.VarType.Double;
+    			break;
+    		case "bool":
+    			d.type = NinjaParser.VarType.Bool;
+    			break;
+    		default:
+    			throw new NotImplementedException();
+    	}
     				
-    				newMet.paramList.Add(d);
+    	newMet.paramList.Add(d);
     			
-    			}
-//    			Console.WriteLine(newMet);
+    }
 	metTable.Add(newMet.name, newMet);
-//	Console.WriteLine("Create met " + newMet.name);
 };
 
 m_function : m_fun_signature OBRACE code method_return CBRACE {
@@ -204,81 +166,64 @@ m_function : m_fun_signature OBRACE code method_return CBRACE {
 };
 
 m_fun_signature: FUN_KEYWORD MEANINGFUL_TYPE WORD OBRACKET params CBRACKET {
-Console.WriteLine("heeere 3");
-string methodName = $WORD.text;
-//Console.WriteLine($"Creating {methodName}");
-if (methodName == "main" || metTable.ContainsKey(methodName))
-	throw new NotImplementedException("!!!Method overloading is not supported yet!!!");
+	string methodName = $WORD.text;
+	if (methodName == "main" || metTable.ContainsKey(methodName))
+		throw new NotImplementedException("!!!Method overloading is not supported yet!!!");
 
-
-MethodData newMet = new MethodData
+	MethodData newMet = new MethodData
 	{
 		name = methodName,
 		isMeaningful = true
 	};
 	
-	Console.WriteLine("heeere 1");
-	
-	
 	switch($MEANINGFUL_TYPE.text)
+    {
+    	case "int":
+    		newMet.returnType = ReturnType.Int;
+    		break;
+    	case "double":
+            newMet.returnType = ReturnType.Double;
+           	break;
+        case "bool":
+            newMet.returnType = ReturnType.Bool;
+            break;		
+    }
+    
+	foreach (var sig in _localctx.@params().var_signature())
+    {
+    	var d = new NinjaParser.ParamData()
+    	{
+    		name = sig.WORD().Symbol.Text
+    	};
+    	switch (sig.MEANINGFUL_TYPE().Symbol.Text)
     	{
     		case "int":
-    			newMet.returnType = ReturnType.Int;
+    			d.type = NinjaParser.VarType.Int;
     			break;
     		case "double":
-            	newMet.returnType = ReturnType.Double;
-            	break;
-            case "bool":
-                newMet.returnType = ReturnType.Bool;
-                break;		
+    			d.type = NinjaParser.VarType.Double;
+    			break;
+    		case "bool":
+    			d.type = NinjaParser.VarType.Bool;
+    			break;
+    		default:
+    			throw new NotImplementedException();
     	}
-				foreach (var sig in _localctx.@params().var_signature())
-    			{
-    				var d = new NinjaParser.ParamData()
-    				{
-    					name = sig.WORD().Symbol.Text
-    				};
-    				switch (sig.MEANINGFUL_TYPE().Symbol.Text)
-    				{
-    					case "int":
-    						d.type = NinjaParser.VarType.Int;
-    						break;
-    					case "double":
-    						d.type = NinjaParser.VarType.Double;
-    						break;
-    					case "bool":
-    						d.type = NinjaParser.VarType.Bool;
-    						break;
-    					default:
-    						throw new NotImplementedException();
-    				}
     				
-    				newMet.paramList.Add(d);
+    	newMet.paramList.Add(d);
     			
-    			}
-//    			Console.WriteLine(newMet);
-Console.WriteLine("heeere 2");
+    }
+
 	metTable.Add(newMet.name, newMet);
-//	Console.WriteLine("Create met " + newMet.name);
 };
 
-code : ((call | custom_call))* {
+code : (call | custom_call)*;
 
-Console.WriteLine("heeere 4");
-
-};
-
-main_code : (call {
-	
-} | custom_call {
-
-})*;
+main_code : (call | custom_call)*;
 
 method_return returns [string type, dynamic value]: RETURN_KEYWORD val_or_id {
 	$type = $val_or_id.type;
 	$value = $val_or_id.value;
-	Console.WriteLine($"returning {$val_or_id.text}");
-
 };
 
 RETURN_KEYWORD : 'return';
@@ -349,11 +294,8 @@ call : parameterized_call {
 	}	
 
 	if(methodName != ""){
-		Console.WriteLine($"heeere 5 {methodName}");
 		metTable[methodName].callList.Add(data);
-		Console.WriteLine("heeere 6");
 	}
-
 
 } | simple_call {
 
@@ -378,11 +320,8 @@ call : parameterized_call {
 	}	
 
 	if(methodName != ""){
-		Console.WriteLine("heeere 7");
 		metTable[methodName].callList.Add(data);
-		Console.WriteLine("heeere 8");
 	}
-
 };
 
 parameterized_call : builtin_func_p OBRACKET DOUBLE CBRACKET ;
@@ -444,42 +383,33 @@ custom_call : WORD OBRACKET call_params CBRACKET {
 
 };
 
-call_params : (val_or_id
-{
-
-//Console.WriteLine($"Param {$val_or_id.text} with value {$val_or_id.type}");
-
-
-} (COMMA val_or_id {
-
-//Console.WriteLine($"Param {$val_or_id.text} with value {$val_or_id.type}");
-
-})*)?;
+call_params : (val_or_id (COMMA val_or_id)*)?;
 
 val_or_id returns [string type, dynamic value]: (INT{
 
-$type = "int";
-$value = int.Parse($INT.text);
+	$type = "int";
+	$value = int.Parse($INT.text);
 
 }|DOUBLE{
         
-        $type = "double";
-        try {
-        	$value = double.Parse($DOUBLE.text);
-        } catch {
-        	$value = double.Parse($DOUBLE.text.Replace('.', ','));
-        }
+    $type = "double";
+    try {
+     	$value = double.Parse($DOUBLE.text);
+    } catch {
+        $value = double.Parse($DOUBLE.text.Replace('.', ','));
+    }
         
 }|BOOL{
       
-      $type = "bool";
-      if($BOOL.text == "true")
-      	$value = true;
-      else
+   	$type = "bool";
+    if($BOOL.text == "true")
+    	$value = true;
+    else
       	$value = false;
       
 }|WORD{
       
-      $type = "other";
-      $value = $WORD.text;
+    $type = "other";
+    $value = $WORD.text;
+    
 }) ;
