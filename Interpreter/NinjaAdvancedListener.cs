@@ -123,7 +123,7 @@ namespace Interpreter
 			stream.Close();
 
             Console.WriteLine("Variables of the program:");
-            foreach (var elem in NinjaVarsParser.varTable)
+            foreach (var elem in NinjaParser.varTable)
             {
                 Console.WriteLine("\t" + elem.Key + " is " + elem.Value.type + " with value " + elem.Value.value);
             }

@@ -36,6 +36,7 @@
     <Reference Include="Antlr4.Runtime.Standard, Version=4.7.1.0, Culture=neutral, PublicKeyToken=e78b2c5abd1fcb3f">
       <HintPath>Antlr4.Runtime.Standard.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
