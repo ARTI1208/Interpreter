@@ -85,6 +85,7 @@ namespace Interpreter
 		{
 			if (call.paramList.Count != method.paramList.Count)
 			{
+				Console.WriteLine($"Expected params {method.paramList.Count}, found {call.paramList.Count}");
 				return false;
 			}
 
@@ -111,16 +112,16 @@ namespace Interpreter
 		{
 			Console.WriteLine("---------------------------------------------------End");
 
-			GoThroughCalls(NinjaParser.metTable["main"]);
-			File.Delete("cmds.txt");
-			var stream = File.Create("cmds.txt");
-			stream.WriteByte((byte) _bytes.Count);
-			foreach (var b in _bytes)
-			{
-				stream.WriteByte(b);
-			}
-
-			stream.Close();
+//			GoThroughCalls(NinjaParser.metTable["main"]);
+//			File.Delete("cmds.txt");
+//			var stream = File.Create("cmds.txt");
+//			stream.WriteByte((byte) _bytes.Count);
+//			foreach (var b in _bytes)
+//			{
+//				stream.WriteByte(b);
+//			}
+//
+//			stream.Close();
 		}
 
 		public void EnterMain(NinjaParser.MainContext context)

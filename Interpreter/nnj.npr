@@ -1,19 +1,12 @@
-fun void main(){
-	//shoot(4)
-	//move(5)
-	//turn(30)
-	move(66.0)
-   	hit()
-	scd(true, 5, 7.8)
-	hit()
+fun bool mumu(){
+	return false
 }
 
-fun void scd(bool b, int ch, double v){
+fun void tutu(bool b, bool c, bool g, bool t, bool y){
 	turn(10.0)
-	tcd(false, 1, -7.8)
+	mumu()
 	move(100.0)
-	tutu()
-	//shoot()
+	shoot()
 }
 
 fun int tcd(bool b, int ch, double v){
@@ -23,13 +16,27 @@ fun int tcd(bool b, int ch, double v){
 	return 5
 }
 
-fun void tutu(){
+fun void scd(bool b, int ch){
 	turn(10.0)
-	mumu()
+	tcd(false, 1, -7.8)
 	move(100.0)
-	shoot()
+	tutu(true, false, false, true, false)
+	//shoot()
 }
 
-fun bool mumu(){
-	return false
+fun void main(){
+	//shoot(4)
+	//move(5)
+	//turn(30)
+	move(66.0)
+   	hit()
+	scd(true, 5)
+	hit()
 }
+
+
+
+
+
+
+

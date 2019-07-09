@@ -60,6 +60,14 @@ options {
             return $"param {type} {name}";
         }
 	}
+	
+	
+    public class VarData
+    {
+        public VarType type;
+        public dynamic value;
+        public string name;
+    }
 
     public class MethodData
     {
@@ -75,12 +83,116 @@ options {
         {
         	return $"fun {returnType} {name}, params : {paramList} ";
         }
+        public Dictionary<string, VarData> varTable = new Dictionary<string, VarData>();
     }
  
     public static Dictionary<string, MethodData> metTable = new Dictionary<string, MethodData>();
+    
+    public bool CheckParams(NinjaParser.CallData call, NinjaParser.MethodData method)
+    		{
+    			if (call.paramList.Count != method.paramList.Count)
+    			{
+    				Console.WriteLine($"Expected params {method.paramList.Count}, found {call.paramList.Count}");
+    				return false;
+    			}
+    
+    			for (int i = 0; i < call.paramList.Count; i++)
+    			{
+    				
+    				if (call.paramList[i].type == method.paramList[i].type)
+    				{
+    					method.paramList[i].value = call.paramList[i].value;
+    				}
+    				else
+    				{
+    					Console.WriteLine($"Type mismatch: expected {method.paramList[i].type}, found {call.paramList[i].type} with value {call.paramList[i].value}");
+    					return false;
+    				}
+    			}
+    
+    			return true;
+    		}
+    		
+    		int depth = 0;
+    		
+    		public void GoThroughCalls(NinjaParser.MethodData methodData)
+            		{
+            			string formatter = new string('\t', depth);
+            			Console.WriteLine($"{formatter}--Entering method {methodData.name}, params {ParamListToString(methodData.paramList)}:");
+            			foreach (var call in methodData.callList)
+            			{
+            				if (call.callType == NinjaParser.CallType.Custom)
+            				{
+            					if (NinjaParser.metTable.ContainsKey(call.name))
+            					{
+            						++depth;
+            						GoThroughCalls(NinjaParser.metTable[call.name]);
+            					}
+            				}
+            				else
+            				{
+            					Console.WriteLine($"{formatter}Calling builtin method {call.name} with params {ParamListToString(call.paramList)}");
+            //					Console.WriteLine(call.name);
+            					switch (call.name)
+            					{
+            						case "move":
+            //							Console.WriteLine($"move byte");
+            							_bytes.Add(1);
+            							break;
+            						case "turn":
+            //							Console.WriteLine("turn byte");
+            							_bytes.Add(2);
+            							break;
+            						case "hit":
+            //							Console.WriteLine($"hit byte");
+            							_bytes.Add(3);
+            							break;
+            						case "shoot":
+            //							Console.WriteLine($"shoot byte");
+            							_bytes.Add(4);
+            							break;
+            						default:
+            							Console.WriteLine($"no byte for this op {call.name}");
+            							break;
+            					}
+            				}
+            			}
+            
+            			if (methodData.isMeaningful)
+            			{
+            				Console.WriteLine($"{formatter}Returning {methodData.returnValue} of type {methodData.returnType}");
+            			}
+            			--depth;
+            			Console.WriteLine($"{formatter}--Exiting method {methodData.name}");
+            		}
+            		
+	ArrayList<byte> _bytes = new ArrayList<byte>();
+	
+	string ParamListToString(ArrayList<NinjaParser.ParamData> list)
+    		{
+    			string s = "{";
+    			foreach (var data in list)
+    			{
+    				if (data.paramType == NinjaParser.ParamType.Pass)
+    				{
+    					s += $" {data.type} {data.value},";	
+    				}
+    				else
+    				{
+    					s += $" {data.type} {data.name} = {data.value},";	
+    				}
+    			}
+    
+    			s = (s.Length > 1 ? s.Substring(0, s.Length - 1) : s) + " }";
+    			return s;
+    		}            		
 }
 
-program : function* main function*;
+program : function* main function* {
+
+GoThroughCalls(NinjaParser.metTable["main"]);
+
+};
 
 main : main_signature OBRACE main_code CBRACE;
 
@@ -376,6 +488,9 @@ custom_call : WORD OBRACKET call_params CBRACKET {
    	{
     	methodName = "main";
     }	
+    Console.WriteLine($"call of {callName} in {methodName}, isKnownMet {metTable.ContainsKey(methodName)}");
+    Console.WriteLine($"Params pass result {CheckParams(data, metTable[callName])}");
+    
     
     if(methodName != ""){
     	metTable[methodName].callList.Add(data);
