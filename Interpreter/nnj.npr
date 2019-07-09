@@ -1,15 +1,24 @@
+fun void tcd(bool b, int ch, double v){
+	
+	turn(-10.0)
+	move(-100.0)
+	shoot()
+}
 
 fun void main(){
 	//shoot(4)
 	//move(5)
 	//turn(30)
-	
-	scd(true)
+	move(66.0)
+   	hit()
+	scd(true, 5, 7.8)
+	hit()
 }
 
 fun void scd(bool b, int ch, double v){
 	
-	turn(10)
-	move(100)
-	shoot(5)
+	turn(10.0)
+	tcd(false, 1, -7.8)
+	move(100.0)
+	shoot()
 }

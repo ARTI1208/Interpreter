@@ -190,6 +190,102 @@ public partial class NinjaBaseListener : INinjaListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitVar_signature([NotNull] NinjaParser.Var_signatureContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.builtin_func_p"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterBuiltin_func_p([NotNull] NinjaParser.Builtin_func_pContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.builtin_func_p"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitBuiltin_func_p([NotNull] NinjaParser.Builtin_func_pContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.builtin_func_e"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterBuiltin_func_e([NotNull] NinjaParser.Builtin_func_eContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.builtin_func_e"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitBuiltin_func_e([NotNull] NinjaParser.Builtin_func_eContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.call"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterCall([NotNull] NinjaParser.CallContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.call"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitCall([NotNull] NinjaParser.CallContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.parameterized_call"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterParameterized_call([NotNull] NinjaParser.Parameterized_callContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.parameterized_call"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitParameterized_call([NotNull] NinjaParser.Parameterized_callContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.simple_call"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterSimple_call([NotNull] NinjaParser.Simple_callContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.simple_call"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitSimple_call([NotNull] NinjaParser.Simple_callContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.custom_call"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterCustom_call([NotNull] NinjaParser.Custom_callContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.custom_call"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitCustom_call([NotNull] NinjaParser.Custom_callContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.call_params"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterCall_params([NotNull] NinjaParser.Call_paramsContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.call_params"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitCall_params([NotNull] NinjaParser.Call_paramsContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.call_param"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterCall_param([NotNull] NinjaParser.Call_paramContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.call_param"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitCall_param([NotNull] NinjaParser.Call_paramContext context) { }
 
 	/// <inheritdoc/>
 	/// <remarks>The default implementation does nothing.</remarks>

@@ -160,4 +160,84 @@ public interface INinjaListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitVar_signature([NotNull] NinjaParser.Var_signatureContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.builtin_func_p"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterBuiltin_func_p([NotNull] NinjaParser.Builtin_func_pContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.builtin_func_p"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitBuiltin_func_p([NotNull] NinjaParser.Builtin_func_pContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.builtin_func_e"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterBuiltin_func_e([NotNull] NinjaParser.Builtin_func_eContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.builtin_func_e"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitBuiltin_func_e([NotNull] NinjaParser.Builtin_func_eContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.call"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterCall([NotNull] NinjaParser.CallContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.call"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitCall([NotNull] NinjaParser.CallContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.parameterized_call"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterParameterized_call([NotNull] NinjaParser.Parameterized_callContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.parameterized_call"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitParameterized_call([NotNull] NinjaParser.Parameterized_callContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.simple_call"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterSimple_call([NotNull] NinjaParser.Simple_callContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.simple_call"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitSimple_call([NotNull] NinjaParser.Simple_callContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.custom_call"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterCustom_call([NotNull] NinjaParser.Custom_callContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.custom_call"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitCustom_call([NotNull] NinjaParser.Custom_callContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.call_params"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterCall_params([NotNull] NinjaParser.Call_paramsContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.call_params"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitCall_params([NotNull] NinjaParser.Call_paramsContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.call_param"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterCall_param([NotNull] NinjaParser.Call_paramContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.call_param"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitCall_param([NotNull] NinjaParser.Call_paramContext context);
 }

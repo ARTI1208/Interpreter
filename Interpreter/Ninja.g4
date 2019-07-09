@@ -18,7 +18,7 @@ options {
 
 		public void Add(NinjaParser.ParamData data)
 		{
-			Console.WriteLine(data);
+			//Console.WriteLine(data);
 			_list.Add(data);
 		}
 			
@@ -55,7 +55,7 @@ options {
     	
 		public ReturnType returnType;
     		
-		public ParamList paramList = new ParamList();	
+		public ArrayList<NinjaParser.ParamData> paramList = new ArrayList<NinjaParser.ParamData>();	
     	
     	public override string ToString()
         {
@@ -95,7 +95,7 @@ options {
         public string name;
 		public bool isMeaningful;
         public ReturnType returnType;
-        public ParamList paramList = new ParamList();
+        public ArrayList<NinjaParser.ParamData> paramList = new ArrayList<NinjaParser.ParamData>();
         public List<CallData> callList = new ArrayList<CallData>();
         
 		public dynamic returnValue;
@@ -120,7 +120,7 @@ MethodData newMet = new MethodData
 		returnType = ReturnType.Void
 	};
 	metTable.Add("main", newMet);
-	Console.WriteLine("Create MAIN met");
+//	Console.WriteLine("Create MAIN met");
 };
 
 function locals[List<String> symbols = new ArrayList<String>()]: v_function
@@ -131,23 +131,12 @@ function locals[List<String> symbols = new ArrayList<String>()]: v_function
 
 v_function: v_fun_signature OBRACE code CBRACE {
 
-try
-{
-
-	Console.WriteLine($v_fun_signature.text);
-
-} catch {}
-
-
-
-
-
 };
 
 v_fun_signature : FUN_KEYWORD VOID WORD OBRACKET params CBRACKET {
 
 string methodName = $WORD.text;
-Console.WriteLine($"Creating {methodName}");
+//Console.WriteLine($"Creating {methodName}");
 if (methodName == "main" || metTable.ContainsKey(methodName))
 	throw new NotImplementedException("!!!Method overloading is not supported yet!!!");
 
@@ -180,14 +169,14 @@ MethodData newMet = new MethodData
     				newMet.paramList.Add(d);
     			
     			}
-    			Console.WriteLine(newMet);
+//    			Console.WriteLine(newMet);
 	metTable.Add(newMet.name, newMet);
-	Console.WriteLine("Create met " + newMet.name);
+//	Console.WriteLine("Create met " + newMet.name);
 };
 
 m_function : m_fun_signature OBRACE code method_return CBRACE {
 string methodName = _localctx.m_fun_signature().WORD().Symbol.Text;
-Console.WriteLine($"Creating {methodName}");
+//Console.WriteLine($"Creating {methodName}");
 if (methodName == "main" || metTable.ContainsKey(methodName))
 	throw new NotImplementedException("!!!Method overloading is not supported yet!!!");
 
@@ -233,79 +222,23 @@ MethodData newMet = new MethodData
     				newMet.paramList.Add(d);
     			
     			}
-    			Console.WriteLine(newMet);
+//    			Console.WriteLine(newMet);
 	metTable.Add(newMet.name, newMet);
-	Console.WriteLine("Create met " + newMet.name);
+//	Console.WriteLine("Create met " + newMet.name);
 };
 
 m_fun_signature : FUN_KEYWORD MEANINGFUL_TYPE WORD OBRACKET params CBRACKET {
-Console.WriteLine($"Creating m sig for {$WORD.text}");
+//Console.WriteLine($"Creating m sig for {$WORD.text}");
 };
 
-code : ((CALL {
-	CallData data = new CallData(){
-		callType = CallType.BuiltIn, 
-		name = $CALL.text.Substring(0, $CALL.text.IndexOf("(")),
-		returnType = ReturnType.Void
-	};
+code : ((call {
+	
+} | custom_call))*;
 
-string methodName = "";
-if (_localctx.Parent is V_functionContext parentContext)
-			{
-				methodName = parentContext.v_fun_signature().WORD().Symbol.Text;
-			}
-			
-			if (_localctx.Parent is M_functionContext parContext)
-			{
-				methodName = parContext.m_fun_signature().WORD().Symbol.Text;
-			}
+main_code : (call {
+	
+} | custom_call {
 
-if(methodName != ""){
-Console.WriteLine(methodName);
-	metTable[methodName].callList.Add(data);
-	}
-} | CUSTOM_CALL {
-CallData data = new CallData(){
-		callType = CallType.Custom, 
-		name = $CALL.text.Substring(0, $CALL.text.IndexOf("(")),
-		returnType = ReturnType.Void
-	};
-
-string methodName = "";
-if (_localctx.Parent is V_functionContext parentContext)
-			{
-				methodName = parentContext.v_fun_signature().WORD().Symbol.Text;
-			}
-			
-			if (_localctx.Parent is M_functionContext parContext)
-			{
-				methodName = parContext.m_fun_signature().WORD().Symbol.Text;
-			}
-
-if(methodName != ""){
-Console.WriteLine(methodName);
-	metTable[methodName].callList.Add(data);
-	}
-
-}))*;
-
-main_code : (CALL {
-	CallData data = new CallData(){
-		callType = CallType.BuiltIn, 
-		name = $CALL.text.Substring(0, $CALL.text.IndexOf("(")),
-		returnType = ReturnType.Void
-	};
-
-
-	metTable["main"].callList.Add(data);
-} | CUSTOM_CALL {
-CallData data = new CallData(){
-		callType = CallType.Custom, 
-		name = $CUSTOM_CALL.text.Substring(0, $CUSTOM_CALL.text.IndexOf("(")),
-		returnType = ReturnType.Void
-	};
-
-	metTable["main"].callList.Add(data);
 })*;
 
 method_return : RETURN_KEYWORD WORD ;
@@ -344,8 +277,170 @@ WORD : [a-zA-Z]+ ;
 
 STRING : '"'[a-zA-Z]*'"' ;
 
-BUILTIN_FUNC : ('hit'|'move'|'turn'|'shoot') ;
+builtin_func_p : 'move'|'turn' ;
 
-CALL : BUILTIN_FUNC OBRACKET (INT|DOUBLE|BOOL|WORD) CBRACKET ;
+builtin_func_e : 'hit'|'shoot' ;  
 
-CUSTOM_CALL : WORD OBRACKET (INT|DOUBLE|BOOL|WORD) CBRACKET ;
+call : parameterized_call {
+
+	CallData data = new CallData(){
+		callType = CallType.BuiltIn, 
+		name = $parameterized_call.text.Substring(0, $parameterized_call.text.IndexOf("(")),
+		returnType = ReturnType.Void
+	};
+	ParamData d = new ParamData()
+	{
+		type = VarType.Double, 
+		value = _localctx._parameterized_call.DOUBLE().GetText()
+	};
+    d.paramType = ParamType.Pass;				
+    data.paramList.Add(d);
+	
+	string methodName = "";
+	if (_localctx.Parent.Parent is V_functionContext parentContext)
+	{
+		methodName = parentContext.v_fun_signature().WORD().Symbol.Text;
+	}		
+	if (_localctx.Parent.Parent is M_functionContext parContext)
+	{
+		methodName = parContext.m_fun_signature().WORD().Symbol.Text;
+	}
+	if (_localctx.Parent.Parent is MainContext)
+	{
+		methodName = "main";
+	}	
+
+	if(methodName != ""){
+		metTable[methodName].callList.Add(data);
+	}
+
+
+} | simple_call {
+
+	CallData data = new CallData(){
+		callType = CallType.BuiltIn, 
+		name = $simple_call.text.Substring(0, $simple_call.text.IndexOf("(")),
+		returnType = ReturnType.Void
+	};
+
+	string methodName = "";
+	if (_localctx.Parent.Parent is V_functionContext parentContext)
+	{
+		methodName = parentContext.v_fun_signature().WORD().Symbol.Text;
+	}		
+	if (_localctx.Parent.Parent is M_functionContext parContext)
+	{
+		methodName = parContext.m_fun_signature().WORD().Symbol.Text;
+	}
+	if (_localctx.Parent.Parent is MainContext)
+	{
+		methodName = "main";
+	}	
+
+	if(methodName != ""){
+		metTable[methodName].callList.Add(data);
+	}
+
+};
+
+parameterized_call : builtin_func_p OBRACKET DOUBLE CBRACKET ;
+
+simple_call : builtin_func_e OBRACKET CBRACKET;
+
+custom_call : WORD OBRACKET call_params CBRACKET {
+
+	string callName = $WORD.text;
+
+//	if (!metTable.ContainsKey(callName))
+//		throw new Exception($"Called fun {callName} not found");
+
+	CallData data = new CallData(){
+		callType = CallType.Custom, 
+		name = callName
+	};
+
+	foreach (var par in _localctx.call_params().call_param())
+	{
+	
+		ParamData d = new ParamData();
+		d.paramType = ParamType.Pass;
+		switch (par.type)
+        {
+        	case "int":
+        		d.type = VarType.Int;		
+        		break;
+        	case "double":
+        		d.type = VarType.Double;
+        		break;
+        	case "bool":
+        		d.type = VarType.Bool;
+        		break;
+        	//case "other":
+        	//	break;
+        						
+        	default:
+        		throw new NotImplementedException();
+        }
+        d.value = par.value;
+		data.paramList.Add(d);    			
+	}
+	
+	string methodName = "";
+    if (_localctx.Parent.Parent is V_functionContext parentContext)
+    {
+    	methodName = parentContext.v_fun_signature().WORD().Symbol.Text;
+    }		
+    if (_localctx.Parent.Parent is M_functionContext parContext)
+   	{
+   		methodName = parContext.m_fun_signature().WORD().Symbol.Text;
+   	}
+   	if (_localctx.Parent.Parent is MainContext)
+   	{
+    	methodName = "main";
+    }	
+    
+    if(methodName != ""){
+    	metTable[methodName].callList.Add(data);
+    }
+
+};
+
+call_params : (call_param
+{
+
+//Console.WriteLine($"Param {$call_param.text} with value {$call_param.type}");
+
+
+} (COMMA call_param {
+
+//Console.WriteLine($"Param {$call_param.text} with value {$call_param.type}");
+
+})*)?;
+
+call_param returns [string type, dynamic value]: (INT{
+
+$type = "int";
+$value = int.Parse($INT.text);
+
+}|DOUBLE{
+        
+        $type = "double";
+        try {
+        	$value = double.Parse($DOUBLE.text);
+        } catch {
+        	$value = double.Parse($DOUBLE.text.Replace('.', ','));
+        }
+        
+}|BOOL{
+      
+      $type = "bool";
+      if($BOOL.text == "true")
+      	$value = true;
+      else
+      	$value = false;
+      
+}|WORD{
+      
+      $type = "other";
+      $value = $WORD.text;
+}) ;
