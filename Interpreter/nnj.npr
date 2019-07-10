@@ -1,3 +1,7 @@
+fun void returnTest(int v){
+	
+}
+
 fun bool mumu(){
 	return false
 }
@@ -9,16 +13,22 @@ fun void tutu(bool b, bool c, bool g, bool t, bool y){
 	shoot()
 }
 
-fun int tcd(bool b, int ch, double v){
+fun int tcd(bool b, int inTest, double v){
 	turn(-10,0)
 	move(-100,0)
 	//shoot()
-	return 5
+	int res = 2 * inTest
+	int res1 = 15
+	int res2 = res1 * 2
+	return res
 }
 
 fun void scd(bool b, int ch){
 	turn(10,0)
-	tcd(false, 1, -7,8)
+	int f = 5 + 3 - 3
+	int n = f * 2
+	int r = tcd(false, f + n, -7.8)
+	returnTest(tcd(false, f + n, -7.8))
 	move(100,0)
 	tutu(true, false, false, true, false)
 	//shoot()

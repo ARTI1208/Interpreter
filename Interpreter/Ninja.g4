@@ -60,6 +60,14 @@ options {
             return $"param {type} {name}";
         }
 	}
+	
+	public class VarData
+    {
+        public string name;
+        public VarType type;
+        public dynamic value;
+        
+    }
 
     public class MethodData
     {
@@ -70,6 +78,8 @@ options {
         public List<CallData> callList = new ArrayList<CallData>();
         
 		public dynamic returnValue;
+		
+		public Dictionary<string, VarData> varTable = new Dictionary<string, VarData>();
         
         public override string ToString()
         {
@@ -77,16 +87,10 @@ options {
         }
     }
  
+ 	public static Dictionary<string, VarData> varTable = new Dictionary<string, VarData>();
     public static Dictionary<string, MethodData> metTable = new Dictionary<string, MethodData>();
-    
-    
-    public class VarData
-    {
-        public VarType type;
-        public dynamic value;
-    }
- 
-    public static Dictionary<string, VarData> varTable = new Dictionary<string, VarData>();
+    int depth = 0;
+    string currentMet = "?";
     
     public static void Debug(string line)
     {
@@ -102,113 +106,121 @@ options {
     }
 	
 	public bool CheckParams(NinjaParser.CallData call, NinjaParser.MethodData method)
-    		{
-    			if (call.paramList.Count != method.paramList.Count)
-    			{
-    				Console.WriteLine($"Expected params {method.paramList.Count}, found {call.paramList.Count}");
-    				return false;
-    			}
+    {
+    	Console.WriteLine($"Checking params of {call.name}");
+    	if (call.paramList.Count != method.paramList.Count)
+    	{
+    		Console.WriteLine($"Expected params {method.paramList.Count}, found {call.paramList.Count}");
+    		return false;
+    	}
     
-    			for (int i = 0; i < call.paramList.Count; i++)
-    			{
+    	for (int i = 0; i < call.paramList.Count; i++)
+    	{
     				
-    				if (call.paramList[i].type == method.paramList[i].type)
-    				{
-    					method.paramList[i].value = call.paramList[i].value;
-    				}
-    				else
-    				{
-    					Console.WriteLine($"Type mismatch: expected {method.paramList[i].type}, found {call.paramList[i].type} with value {call.paramList[i].value}");
-    					return false;
-    				}
-    			}
-    
-    			return true;
+    		if (call.paramList[i].type == method.paramList[i].type)
+    		{
+    			method.paramList[i].value = call.paramList[i].value;
+    			method.varTable[method.paramList[i].name].value = call.paramList[i].value;
+    			Console.WriteLine($"addf var {method.paramList[i].name}, val {method.varTable[method.paramList[i].name].value}");
     		}
+    		else
+    		{
+    			Console.WriteLine($"Type mismatch: expected {method.paramList[i].type}, found {call.paramList[i].type} with value {call.paramList[i].value}");
+    			return false;
+    		}
+    	}
+    
+    	return true;
+    }
     		
-    		int depth = 0;
-    		
-    		public void GoThroughCalls(NinjaParser.MethodData methodData)
-            		{
-            			string formatter = new string('\t', depth);
-            			Console.WriteLine($"{formatter}--Entering method {methodData.name}, params {ParamListToString(methodData.paramList)}:");
-            			foreach (var call in methodData.callList)
-            			{
-            				if (call.callType == NinjaParser.CallType.Custom)
-            				{
-            					if (NinjaParser.metTable.ContainsKey(call.name))
-            					{
-            						++depth;
-									foreach (var param in call.paramList)
-									{
-										VarData data = varTable[param.name];
-										if (data.type == param.type)
-											data.value = param.value;
-										else if (data.type == VarType.Double && param.type == VarType.Int)
-											data.value = (double)param.value;
-										else
-											Error("Can't convert \"" + param.value.ToString() + "\" to " + data.type);
-									}
-            						GoThroughCalls(NinjaParser.metTable[call.name]);
-            					}
-            				}
-            				else
-            				{
-            					Console.WriteLine($"{formatter}Calling builtin method {call.name} with params {ParamListToString(call.paramList)}");
-            //					Console.WriteLine(call.name);
-            					switch (call.name)
-            					{
-            						case "move":
-            //							Console.WriteLine($"move byte");
-            							_bytes.Add(1);
-            							break;
-            						case "turn":
-            //							Console.WriteLine("turn byte");
-            							_bytes.Add(2);
-            							break;
-            						case "hit":
-            //							Console.WriteLine($"hit byte");
-            							_bytes.Add(3);
-            							break;
-            						case "shoot":
-            //							Console.WriteLine($"shoot byte");
-            							_bytes.Add(4);
-            							break;
-            						default:
-            							Console.WriteLine($"no byte for this op {call.name}");
-            							break;
-            					}
-            				}
-            			}
+    public void GoThroughCalls(NinjaParser.MethodData methodData)
+    {
+        string formatter = new string('\t', depth);
+        Console.WriteLine($"{formatter}--Entering method {methodData.name}, params {ParamListToString(methodData.paramList)}:");
+        Console.WriteLine($"{formatter}===Variables of the met:===");
+        foreach (var elem in methodData.varTable)
+        {
+            Console.WriteLine("\t"+ formatter + elem.Key + " is " + elem.Value.type + " with value " + elem.Value.value);
+        }
+        Console.WriteLine($"{formatter}===Variables of the met:===");
+        
+        foreach (var call in methodData.callList)
+        {
+            if (call.callType == NinjaParser.CallType.Custom)
+            {
+            	if (NinjaParser.metTable.ContainsKey(call.name))
+            	{
+            		++depth;
+					//foreach (var param in call.paramList)
+					//{
+					//	VarData data = varTable[param.name];
+					//	if (data.type == param.type)
+					//		data.value = param.value;
+					//	else if (data.type == VarType.Double && param.type == VarType.Int)
+					//		data.value = (double)param.value;
+					//	else
+					//		Error("Can't convert \"" + param.value.ToString() + "\" to " + data.type);
+					//}
+            		GoThroughCalls(NinjaParser.metTable[call.name]);
+            	}
+            }
+            else
+            {
+            	Console.WriteLine($"{formatter}Calling builtin method {call.name} with params {ParamListToString(call.paramList)}");
+            	//Console.WriteLine(call.name);
+            	switch (call.name)
+            	{
+            		case "move":
+            			//Console.WriteLine($"move byte");
+            			_bytes.Add(1);
+            			break;
+            		case "turn":
+    			        //Console.WriteLine("turn byte");
+            			_bytes.Add(2);
+            			break;
+            		case "hit":
+            			//Console.WriteLine($"hit byte");
+            			_bytes.Add(3);
+            			break;
+            		case "shoot":
+            			//Console.WriteLine($"shoot byte");
+            			_bytes.Add(4);
+            			break;
+            		default:
+            			Console.WriteLine($"no byte for this op {call.name}");
+            			break;
+            	}
+            }
+        }
             
-            			if (methodData.isMeaningful)
-            			{
-            				Console.WriteLine($"{formatter}Returning {methodData.returnValue} of type {methodData.returnType}");
-            			}
-            			--depth;
-            			Console.WriteLine($"{formatter}--Exiting method {methodData.name}");
-            		}
+        if (methodData.isMeaningful)
+        {
+            Console.WriteLine($"{formatter}Returning {methodData.returnValue} of type {methodData.returnType}");
+        }
+        --depth;
+        Console.WriteLine($"{formatter}--Exiting method {methodData.name}");
+    }
             		
 	ArrayList<byte> _bytes = new ArrayList<byte>();
 	
 	string ParamListToString(ArrayList<NinjaParser.ParamData> list)
+    {
+    	string s = "{";
+    	foreach (var data in list)
+    	{
+    		if (data.paramType == NinjaParser.ParamType.Pass)
     		{
-    			string s = "{";
-    			foreach (var data in list)
-    			{
-    				if (data.paramType == NinjaParser.ParamType.Pass)
-    				{
-    					s += $" {data.type} {data.value},";	
-    				}
-    				else
-    				{
-    					s += $" {data.type} {data.name} = {data.value},";	
-    				}
-    			}
-    
-    			s = (s.Length > 1 ? s.Substring(0, s.Length - 1) : s) + " }";
-    			return s;
+    			s += $" {data.type} {data.value},";	
     		}
+    		else
+    		{
+    			s += $" {data.type} {data.name} = {data.value},";	
+    		}
+    	}
+    
+    	s = (s.Length > 1 ? s.Substring(0, s.Length - 1) : s) + " }";
+    	return s;
+    }
 }
 
 program : function* main function* {
@@ -226,15 +238,17 @@ main_signature : FUN_KEYWORD VOID MAIN LPAREN RPAREN {
 		returnType = ReturnType.Void
 	};
 	metTable.Add("main", newMet);
+	currentMet = "main";
 };
 
 function : v_function | m_function ;
 
 v_function: v_fun_signature OBRACE code CBRACE;
 
-v_fun_signature : FUN_KEYWORD VOID ID LPAREN params RPAREN {
-
+v_fun_signature returns [string funName]: FUN_KEYWORD VOID ID 
+{
 	string methodName = $ID.text;
+	$funName = methodName;
 	if (methodName == "main" || metTable.ContainsKey(methodName))
 		throw new NotImplementedException("!!!Method overloading is not supported yet!!!");
 
@@ -244,36 +258,13 @@ v_fun_signature : FUN_KEYWORD VOID ID LPAREN params RPAREN {
 		returnType = ReturnType.Void
 	};
 	
-	foreach (var sig in _localctx.@params().var_signature())
-    {
-    	var d = new NinjaParser.ParamData()
-    	{
-    		name = sig.ID().GetText()
-    	};
-    	switch (sig.meaningfulType().GetText())
-    	{
-    		case "int":
-    			d.type = NinjaParser.VarType.Int;
-    			break;
-    		case "double":
-    			d.type = NinjaParser.VarType.Double;
-    			break;
-    		case "bool":
-    			d.type = NinjaParser.VarType.Bool;
-    			break;
-    		default:
-    			throw new NotImplementedException();
-    	}
-    				
-    	newMet.paramList.Add(d);
-    			
-    }
 	metTable.Add(newMet.name, newMet);
-};
+	currentMet = methodName;
+} LPAREN params[$ID.text] RPAREN;
 
 m_function : m_fun_signature OBRACE code method_return CBRACE {
 
-	string methodName = _localctx.m_fun_signature().ID().GetText();
+	string methodName = $m_fun_signature.funName;
 	
 	ReturnType actualReturn;
 	
@@ -300,8 +291,10 @@ m_function : m_fun_signature OBRACE code method_return CBRACE {
 
 };
 
-m_fun_signature: FUN_KEYWORD meaningfulType ID LPAREN params RPAREN {
+m_fun_signature returns [string funName]: FUN_KEYWORD meaningfulType ID {
+	
 	string methodName = $ID.text;
+	$funName = methodName;
 	if (methodName == "main" || metTable.ContainsKey(methodName))
 		throw new NotImplementedException("!!!Method overloading is not supported yet!!!");
 
@@ -323,34 +316,11 @@ m_fun_signature: FUN_KEYWORD meaningfulType ID LPAREN params RPAREN {
             newMet.returnType = ReturnType.Bool;
             break;		
     }
-    
-	foreach (var sig in _localctx.@params().var_signature())
-    {
-    	var d = new NinjaParser.ParamData()
-    	{
-    		name = sig.ID().GetText()
-    	};
-    	switch (sig.meaningfulType().GetText())
-    	{
-    		case "int":
-    			d.type = NinjaParser.VarType.Int;
-    			break;
-    		case "double":
-    			d.type = NinjaParser.VarType.Double;
-    			break;
-    		case "bool":
-    			d.type = NinjaParser.VarType.Bool;
-    			break;
-    		default:
-    			throw new NotImplementedException();
-    	}
-    				
-    	newMet.paramList.Add(d);
-    			
-    }
 
 	metTable.Add(newMet.name, newMet);
-};
+	currentMet = methodName;
+
+} LPAREN params[$ID.text] RPAREN;
 
 code : (operation)*;
 
@@ -364,11 +334,12 @@ method_return returns [string type, dynamic value]: RETURN_KEYWORD val_or_id {
 	$value = $val_or_id.value;
 };
 
-params : (var_signature (COMMA var_signature)*)? ;
+params[string funName] : (var_signature[funName] (COMMA var_signature[funName])*)? ;
 
-var_signature: meaningfulType ID
+var_signature[string funName]: meaningfulType ID
 				{
 					VarData newVar = new VarData();
+					newVar.name = $ID.text;
 					switch ($meaningfulType.text)
 					{
 						case "int":
@@ -386,7 +357,11 @@ var_signature: meaningfulType ID
 							newVar.value = false;
 							break;
 					}
-					varTable[$ID.text] = newVar;
+					ParamData pData = new ParamData();
+					pData.name = $ID.text;
+					pData.type = newVar.type;
+					metTable[funName].paramList.Add(pData);
+					metTable[funName].varTable[$ID.text] = newVar;
 				};
 
 builtin_func_p : 'move'|'turn' ;
@@ -408,22 +383,8 @@ call : parameterized_call {
     d.paramType = ParamType.Pass;				
     data.paramList.Add(d);
 	
-	string methodName = "";
-	Console.WriteLine(_localctx.Parent.Parent.Parent.GetType());
-	if (_localctx.Parent.Parent.Parent is V_functionContext parentContext)
-	{
-		methodName = parentContext.v_fun_signature().ID().GetText();
-	}		
-	if (_localctx.Parent.Parent.Parent is M_functionContext parContext)
-	{
-		methodName = parContext.m_fun_signature().ID().GetText();
-	}
-	if (_localctx.Parent.Parent.Parent is MainContext)
-	{
-		methodName = "main";
-	}	
-
-	if(methodName != ""){
+	string methodName = currentMet;
+	if(methodName != "?"){
 		metTable[methodName].callList.Add(data);
 	}
 
@@ -435,21 +396,8 @@ call : parameterized_call {
 		returnType = ReturnType.Void
 	};
 
-	string methodName = "";
-	if (_localctx.Parent.Parent.Parent is V_functionContext parentContext)
-	{
-		methodName = parentContext.v_fun_signature().ID().GetText();
-	}		
-	if (_localctx.Parent.Parent.Parent is M_functionContext parContext)
-	{
-		methodName = parContext.m_fun_signature().ID().GetText();
-	}
-	if (_localctx.Parent.Parent.Parent is MainContext)
-	{
-		methodName = "main";
-	}	
-
-	if(methodName != ""){
+	string methodName = currentMet;
+	if(methodName != "?"){
 		metTable[methodName].callList.Add(data);
 	}
 };
@@ -458,10 +406,10 @@ parameterized_call : builtin_func_p LPAREN ariphExprEx RPAREN ;
 
 simple_call : builtin_func_e LPAREN RPAREN;
 
-custom_call : ID LPAREN call_params RPAREN {
+custom_call returns [string funName]: ID LPAREN call_params RPAREN {
 
 	string callName = $ID.text;
-
+	$funName = callName;
 	CallData data = new CallData(){
 		callType = CallType.Custom, 
 		name = callName
@@ -493,24 +441,8 @@ custom_call : ID LPAREN call_params RPAREN {
 		data.paramList.Add(d);    			
 	}
 	
-	string methodName = "";
-    if (_localctx.Parent.Parent.Parent is V_functionContext parentContext)
-    {
-    	methodName = parentContext.v_fun_signature().ID().GetText();
-    }		
-    if (_localctx.Parent.Parent.Parent is M_functionContext parContext)
-   	{
-   		methodName = parContext.m_fun_signature().ID().GetText();
-   	}
-   	if (_localctx.Parent.Parent.Parent is MainContext)
-   	{
-    	methodName = "main";
-    }
-	
-	Console.WriteLine($"call of {callName} in {methodName}, isKnownMet {metTable.ContainsKey(methodName)}");
-    Console.WriteLine($"Params pass result {CheckParams(data, metTable[callName])}");
-    
-    if(methodName != ""){
+	string methodName = currentMet;
+    if(methodName != "?" && CheckParams(data, metTable[callName])){
     	metTable[methodName].callList.Add(data);
     }
 
@@ -542,19 +474,31 @@ ariphOperand returns [dynamic value]:
                }
              | DOUBLE
                {
-                   $value = double.Parse($DOUBLE.text);
+               		try 
+               		{
+                   		$value = double.Parse($DOUBLE.text);
+                   	} 
+                   	catch
+                   	{
+                   		$value = double.Parse($DOUBLE.text.Replace('.', ','));
+                   	}	
                }
+             | custom_call
+             	{
+             		$value = metTable[$custom_call.funName].returnValue;
+             	}  
              | ID
                {
                    try
                    {
-                     $value = varTable[$ID.text].value;
+                     $value = metTable[currentMet].varTable[$ID.text].value;
+                     Console.WriteLine($"founy idd {$ID.text} val {$value}");
                    }
                    catch (KeyNotFoundException)
                    {
-                     Error("Variable " + $ID.text + " does not exist");
+                     Error("Variable " + $ID.text + " does not exist in current context");
                    }
-               }
+               }  
 			 | sin
 			   {
 				   $value = $sin.value;
@@ -591,19 +535,23 @@ ariphTerm returns [dynamic value]:
             ariphOperand
             {
                 $value = $ariphOperand.value;
+                Debug("\t terarpy1");
             }
           | left=ariphTerm MUL right=ariphOperand
             {
                 $value = $left.value * $right.value;
+                Debug("\t terarpy2");
             }
           | left=ariphTerm DIV right=ariphOperand
             {
                 $value = $left.value / $right.value;
+                Debug("\t terarpy3");
             };
 ariphExpr returns [dynamic value]:
             ariphTerm
             {
                 $value = $ariphTerm.value;
+                Debug("\t rarpy1");
             }
           | left=ariphExpr ADD right=ariphTerm
             {
@@ -617,29 +565,31 @@ ariphExprEx returns [dynamic value]:
             ariphExpr
             {
                 $value = $ariphExpr.value;
+                Debug("\t arpy1"); 
             }
           | ID ASSIGN ariphExprEx
             {
                 try
                 {
-                    VarData data = varTable[$ID.text];
+                    VarData data = metTable[currentMet].varTable[$ID.text];
                     if (data.value.GetType() == $ariphExprEx.value.GetType())
                         data.value = $ariphExprEx.value;
                     else if (data.type == VarType.Double)
                         data.value = (double)$ariphExprEx.value;
                     else
                         Error("Can't convert \"" + $ariphExprEx.text + "\" to Int");
+                        
                 }
                 catch (KeyNotFoundException)
                 {
-                  Error("Variable " + $ID.text + " does not exist");
+                  Error("Variable " + $ID.text + " does not exist in current context");
                 }
             }
           | ID ADDASSIGN ariphExprEx
             {
                 try
                 {
-                    VarData data = varTable[$ID.text];
+                    VarData data = metTable[currentMet].varTable[$ID.text];
                     if (data.value.GetType() == $ariphExprEx.value.GetType())
                         data.value += $ariphExprEx.value;
                     else if (data.type == VarType.Double)
@@ -649,14 +599,14 @@ ariphExprEx returns [dynamic value]:
                 }
                 catch (KeyNotFoundException)
                 {
-                  Error("Variable " + $ID.text + " does not exist");
+                  Error("Variable " + $ID.text + " does not exist in current context");
                 }
             }
           | ID SUBASSIGN ariphExprEx
             {
                 try
                 {
-                    VarData data = varTable[$ID.text];
+                    VarData data = metTable[currentMet].varTable[$ID.text];
                     if (data.value.GetType() == $ariphExprEx.value.GetType())
                         data.value -= $ariphExprEx.value;
                     else if (data.type == VarType.Double)
@@ -666,14 +616,14 @@ ariphExprEx returns [dynamic value]:
                 }
                 catch (KeyNotFoundException)
                 {
-                  Error("Variable " + $ID.text + " does not exist");
+                  Error("Variable " + $ID.text + " does not exist in current context");
                 }
             }
           | ID MULASSIGN ariphExprEx
             {
                 try
                 {
-                    VarData data = varTable[$ID.text];
+                    VarData data = metTable[currentMet].varTable[$ID.text];
                     if (data.value.GetType() == $ariphExprEx.value.GetType())
                         data.value *= $ariphExprEx.value;
                     else if (data.type == VarType.Double)
@@ -683,14 +633,14 @@ ariphExprEx returns [dynamic value]:
                 }
                 catch (KeyNotFoundException)
                 {
-                  Error("Variable " + $ID.text + " does not exist");
+                  Error("Variable " + $ID.text + " does not exist in current context");
                 }
             }
           | ID DIVASSIGN ariphExprEx
             {
                 try
                 {
-                    VarData data = varTable[$ID.text];
+                    VarData data = metTable[currentMet].varTable[$ID.text];
                     if (data.value.GetType() == $ariphExprEx.value.GetType())
                         data.value /= $ariphExprEx.value;
                     else if (data.type == VarType.Double)
@@ -700,7 +650,7 @@ ariphExprEx returns [dynamic value]:
                 }
                 catch (KeyNotFoundException)
                 {
-                  Error("Variable " + $ID.text + " does not exist");
+                  Error("Variable " + $ID.text + " does not exist in current context");
                 }
             };
 
@@ -713,11 +663,11 @@ boolOperand returns [bool value]:
               {
                   try
                   {
-                      $value = varTable[$ID.text].value;
+                      $value = metTable[currentMet].varTable[$ID.text].value;
                   }
                   catch (KeyNotFoundException)
                   {
-                    Error("Variable " + $ID.text + " does not exist");
+                    Error("Variable " + $ID.text + " does not exist in current context");
                   }
               }
             | left=ariphExprEx LESS right=ariphExprEx
@@ -778,7 +728,7 @@ boolExprEx returns [bool value]:
            {
               try
               {
-                VarData data = varTable[$ID.text];
+                VarData data = metTable[currentMet].varTable[$ID.text];
                 $value = data.value = $boolExprEx.value;
                 if (data.type != VarType.Bool)
                 {
@@ -787,7 +737,7 @@ boolExprEx returns [bool value]:
               }
               catch (KeyNotFoundException)
               {
-                Error("Variable " + $ID.text + " does not exist");
+                Error("Variable " + $ID.text + " does not exist in current context");
               }
            };
 
@@ -799,25 +749,25 @@ declare : INTKEY ID
                 type = VarType.Int,
                 value = 0
            };
-           varTable.Add($ID.text, newVar);
+           metTable[currentMet].varTable.Add($ID.text, newVar);
            Debug("Create var " + $ID.text);
           }
           (ASSIGN ariphExprEx)?
           {
            if ($ariphExprEx.text != null)
            {
-                Debug("\tAssigning it value of " + $ariphExprEx.text);
                 try
                 {
-                  VarData data = varTable[$ID.text];
-                  if (data.value.GetType() == $ariphExprEx.value.GetType())
+                  VarData data = metTable[currentMet].varTable[$ID.text];
+                  if (data.value.GetType() == $ariphExprEx.value.GetType()){
                     data.value = $ariphExprEx.value;
-                  else
+                   	Debug("\tAssigning1 it value of " + $ariphExprEx.text + $" = {data.value}"); 
+                  }else
                     Error("Can't convert \"" + $ariphExprEx.text + "\" to Int");
                 }
                 catch (KeyNotFoundException)
                 {
-                  Error("Variable " + $ID.text + " does not exist");
+                  Error("Variable " + $ID.text + " does not exist in current context");
                 }
            }
           }
@@ -829,17 +779,17 @@ declare : INTKEY ID
                 type = VarType.Double,
                 value = 0.0
            };
-           varTable.Add($ID.text, newVar);
+           metTable[currentMet].varTable.Add($ID.text, newVar);
            Debug("Create var " + $ID.text);
           }
           (ASSIGN ariphExprEx)?
           {
            if ($ariphExprEx.text != null)
            {
-                Debug("\tAssigning it value of " + $ariphExprEx.text);
+                Debug("\tAssigning2 it value of " + $ariphExprEx.text);
                 try
                 {
-                  VarData data = varTable[$ID.text];
+                  VarData data = metTable[currentMet].varTable[$ID.text];
                   if (data.value.GetType() == $ariphExprEx.value.GetType())
                     data.value = $ariphExprEx.value;
                   else if (data.type == VarType.Double)
@@ -847,7 +797,7 @@ declare : INTKEY ID
                 }
                 catch (KeyNotFoundException)
                 {
-                  Error("Variable " + $ID.text + " does not exist");
+                  Error("Variable " + $ID.text + " does not exist in current context");
                 }
            }
           }
@@ -858,21 +808,21 @@ declare : INTKEY ID
                 type = VarType.Bool,
                 value = false
            };
-           varTable.Add($ID.text, newVar);
+           metTable[currentMet].varTable.Add($ID.text, newVar);
            Debug("Create var " + $ID.text);
           }
           (ASSIGN boolExprEx)?
           {
            if ($boolExprEx.text != null)
            {
-                Debug("\tAssigning it value of " + $boolExprEx.text);
+                Debug("\tAssigning3 it value of " + $boolExprEx.text);
                 try
                 {
-                  varTable[$ID.text].value = $boolExprEx.value;
+                  metTable[currentMet].varTable[$ID.text].value = $boolExprEx.value;
                 }
                 catch (KeyNotFoundException)
                 {
-                  Error("Variable " + $ID.text + " does not exist");
+                  Error("Variable " + $ID.text + " does not exist in cyrrent context");
                 }
            }
           };

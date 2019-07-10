@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
@@ -111,7 +112,14 @@ namespace Interpreter
 		{
 			Console.WriteLine("---------------------------------------------------End");
 
-			GoThroughCalls(NinjaParser.metTable["main"]);
+			foreach (KeyValuePair<string,NinjaParser.MethodData> pair in NinjaParser.metTable)
+			{
+				Console.WriteLine($"Method {pair.Key} contains calls of ");
+				foreach (var call in pair.Value.callList)
+				{
+					Console.WriteLine(call.name);
+				}
+			}
 			File.Delete("cmds.txt");
 			var stream = File.Create("cmds.txt");
 			stream.WriteByte((byte) _bytes.Count);
@@ -202,6 +210,7 @@ namespace Interpreter
 		{
 //			Console.WriteLine("ext main_sig");
 //			Console.WriteLine(context.ToString());
+			context = new NinjaParser.Main_signatureContext(context, 5);
 		}
 
 		public void EnterFunction(NinjaParser.FunctionContext context)
