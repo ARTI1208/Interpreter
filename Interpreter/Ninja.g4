@@ -57,7 +57,7 @@ options {
 		public bool isMeaningful;
         public ReturnType returnType;
         public ArrayList<NinjaParser.ParamData> paramList = new ArrayList<NinjaParser.ParamData>();
-        public List<CallData> callList = new ArrayList<CallData>();
+        public List<Operation> callList = new ArrayList<Operation>();
         
 		public dynamic returnValue;
 		
