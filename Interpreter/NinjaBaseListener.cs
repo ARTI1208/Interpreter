@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from ..\..\..\Interpreter\Ninja.g4 by ANTLR 4.7.2
+// Generated from Ninja.g4 by ANTLR 4.7.2
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -394,6 +394,18 @@ public partial class NinjaBaseListener : INinjaListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitDeclare([NotNull] NinjaParser.DeclareContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.ariphID"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterAriphID([NotNull] NinjaParser.AriphIDContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.ariphID"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitAriphID([NotNull] NinjaParser.AriphIDContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="NinjaParser.sin"/>.
 	/// <para>The default implementation does nothing.</para>

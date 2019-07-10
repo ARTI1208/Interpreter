@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
@@ -59,8 +58,8 @@ namespace Interpreter
 
 		public void VisitErrorNode(IErrorNode node)
 		{
-			NinjaParser.Error("error node==================");
-			NinjaParser.Error(node.GetText());
+			Console.WriteLine("error node==================");
+			Console.WriteLine(node.Symbol);
 		}
 
 		public void EnterEveryRule(ParserRuleContext ctx)
@@ -112,15 +111,7 @@ namespace Interpreter
 		{
 			Console.WriteLine("---------------------------------------------------End");
 
-			foreach (KeyValuePair<string,NinjaParser.MethodData> pair in NinjaParser.metTable)
-			{
-				Console.WriteLine($"Method {pair.Key} contains calls of ");
-				foreach (var call in pair.Value.callList)
-				{
-					//Console.WriteLine(call.name);
-				}
-			}
-            List<int> test;
+			GoThroughCalls(NinjaParser.metTable["main"]);
 			File.Delete("cmds.txt");
 			var stream = File.Create("cmds.txt");
 			stream.WriteByte((byte) _bytes.Count);
@@ -132,7 +123,7 @@ namespace Interpreter
 			stream.Close();
 
             Console.WriteLine("Variables of the program:");
-            foreach (var elem in NinjaParser.varTable)
+            foreach (var elem in NinjaParser.curBlock.varTable)
             {
                 Console.WriteLine("\t" + elem.Key + " is " + elem.Value.type + " with value " + elem.Value.value);
             }
@@ -143,7 +134,58 @@ namespace Interpreter
 			Console.WriteLine("ent main");
 			Console.WriteLine(context.ToString());
 		}
-		
+
+		public void GoThroughCalls(NinjaParser.MethodData methodData)
+		{
+			string formatter = new string('\t', depth);
+			Console.WriteLine($"{formatter}--Entering method {methodData.name}, params {ParamListToString(methodData.paramList)}:");
+			foreach (var call in methodData.callList)
+			{
+				if (call.callType == NinjaParser.CallType.Custom)
+				{
+					if (NinjaParser.metTable.ContainsKey(call.name) && CheckParams(call, NinjaParser.metTable[call.name]))
+					{
+						++depth;
+						GoThroughCalls(NinjaParser.metTable[call.name]);
+					}
+				}
+				else
+				{
+					Console.WriteLine($"{formatter}Calling builtin method {call.name} with params {ParamListToString(call.paramList)}");
+//					Console.WriteLine(call.name);
+					switch (call.name)
+					{
+						case "move":
+//							Console.WriteLine($"move byte");
+							_bytes.Add(1);
+							break;
+						case "turn":
+//							Console.WriteLine("turn byte");
+							_bytes.Add(2);
+							break;
+						case "hit":
+//							Console.WriteLine($"hit byte");
+							_bytes.Add(3);
+							break;
+						case "shoot":
+//							Console.WriteLine($"shoot byte");
+							_bytes.Add(4);
+							break;
+						default:
+							Console.WriteLine($"no byte for this op {call.name}");
+							break;
+					}
+				}
+			}
+
+			if (methodData.isMeaningful)
+			{
+				Console.WriteLine($"{formatter}Returning {methodData.returnValue} of type {methodData.returnType}");
+			}
+			--depth;
+			Console.WriteLine($"{formatter}--Exiting method {methodData.name}");
+		}
+
 		public void ExitMain(NinjaParser.MainContext context)
 		{
 			Console.WriteLine("ext main");
@@ -160,7 +202,6 @@ namespace Interpreter
 		{
 //			Console.WriteLine("ext main_sig");
 //			Console.WriteLine(context.ToString());
-			context = new NinjaParser.Main_signatureContext(context, 5);
 		}
 
 		public void EnterFunction(NinjaParser.FunctionContext context)
@@ -229,121 +270,20 @@ namespace Interpreter
 //			Console.WriteLine(context.ToString());
 		}
 
-		public void ExitCode(NinjaParser.CodeContext context)
-		{
-		}
+        public void ExitCode([NotNull] NinjaParser.CodeContext context)
+        {
+            
+        }
 
-		public void EnterMain_code(NinjaParser.Main_codeContext context)
-		{
-		}
+        public void EnterMain_code([NotNull] NinjaParser.Main_codeContext context)
+        {
+            
+        }
 
-		public void ExitMain_code(NinjaParser.Main_codeContext context)
-		{
-		}
-
-		public void EnterMethod_return(NinjaParser.Method_returnContext context)
-		{
-		}
-
-		public void ExitMethod_return(NinjaParser.Method_returnContext context)
-		{
-		}
-
-		public void EnterParams(NinjaParser.ParamsContext context)
-		{
-		}
-
-		public void ExitParams(NinjaParser.ParamsContext context)
-		{
-		}
-
-		public void EnterVar_signature(NinjaParser.Var_signatureContext context)
-		{
-		}
-
-		public void ExitVar_signature(NinjaParser.Var_signatureContext context)
-		{
-		}
-
-		public void EnterBuiltin_func_p(NinjaParser.Builtin_func_pContext context)
-		{
-			
-		}
-
-		public void ExitBuiltin_func_p(NinjaParser.Builtin_func_pContext context)
-		{
-			
-		}
-
-		public void EnterBuiltin_func_e(NinjaParser.Builtin_func_eContext context)
-		{
-			
-		}
-
-		public void ExitBuiltin_func_e(NinjaParser.Builtin_func_eContext context)
-		{
-			
-		}
-		
-		public void EnterCall(NinjaParser.CallContext context)
-		{
-			
-		}
-
-		public void ExitCall(NinjaParser.CallContext context)
-		{
-			
-		}
-
-		public void EnterParameterized_call(NinjaParser.Parameterized_callContext context)
-		{
-			
-		}
-
-		public void ExitParameterized_call(NinjaParser.Parameterized_callContext context)
-		{
-			
-		}
-
-		public void EnterSimple_call(NinjaParser.Simple_callContext context)
-		{
-			
-		}
-
-		public void ExitSimple_call(NinjaParser.Simple_callContext context)
-		{
-			
-		}
-
-		public void EnterCustom_call(NinjaParser.Custom_callContext context)
-		{
-			
-		}
-
-		public void ExitCustom_call(NinjaParser.Custom_callContext context)
-		{
-			
-		}
-
-		public void EnterCall_params(NinjaParser.Call_paramsContext context)
-		{
-			
-		}
-
-		public void ExitCall_params(NinjaParser.Call_paramsContext context)
-		{
-			
-		}
-
-		public void EnterVal_or_id(NinjaParser.Val_or_idContext context)
-		{
-			
-		}
-
-		public void ExitVal_or_id(NinjaParser.Val_or_idContext context)
-		{
-			
-		}
+        public void ExitMain_code([NotNull] NinjaParser.Main_codeContext context)
+        {
+            
+        }
 
         public void EnterOperation([NotNull] NinjaParser.OperationContext context)
         {
@@ -351,6 +291,116 @@ namespace Interpreter
         }
 
         public void ExitOperation([NotNull] NinjaParser.OperationContext context)
+        {
+            
+        }
+
+        public void EnterMethod_return([NotNull] NinjaParser.Method_returnContext context)
+        {
+            
+        }
+
+        public void ExitMethod_return([NotNull] NinjaParser.Method_returnContext context)
+        {
+            
+        }
+
+        public void EnterParams([NotNull] NinjaParser.ParamsContext context)
+        {
+            
+        }
+
+        public void ExitParams([NotNull] NinjaParser.ParamsContext context)
+        {
+            
+        }
+
+        public void EnterVar_signature([NotNull] NinjaParser.Var_signatureContext context)
+        {
+            
+        }
+
+        public void ExitVar_signature([NotNull] NinjaParser.Var_signatureContext context)
+        {
+            
+        }
+
+        public void EnterBuiltin_func_p([NotNull] NinjaParser.Builtin_func_pContext context)
+        {
+            
+        }
+
+        public void ExitBuiltin_func_p([NotNull] NinjaParser.Builtin_func_pContext context)
+        {
+            
+        }
+
+        public void EnterBuiltin_func_e([NotNull] NinjaParser.Builtin_func_eContext context)
+        {
+            
+        }
+
+        public void ExitBuiltin_func_e([NotNull] NinjaParser.Builtin_func_eContext context)
+        {
+            
+        }
+
+        public void EnterCall([NotNull] NinjaParser.CallContext context)
+        {
+            
+        }
+
+        public void ExitCall([NotNull] NinjaParser.CallContext context)
+        {
+            
+        }
+
+        public void EnterParameterized_call([NotNull] NinjaParser.Parameterized_callContext context)
+        {
+            
+        }
+
+        public void ExitParameterized_call([NotNull] NinjaParser.Parameterized_callContext context)
+        {
+            
+        }
+
+        public void EnterSimple_call([NotNull] NinjaParser.Simple_callContext context)
+        {
+            
+        }
+
+        public void ExitSimple_call([NotNull] NinjaParser.Simple_callContext context)
+        {
+            
+        }
+
+        public void EnterCustom_call([NotNull] NinjaParser.Custom_callContext context)
+        {
+            
+        }
+
+        public void ExitCustom_call([NotNull] NinjaParser.Custom_callContext context)
+        {
+            
+        }
+
+        public void EnterCall_params([NotNull] NinjaParser.Call_paramsContext context)
+        {
+            
+        }
+
+        public void ExitCall_params([NotNull] NinjaParser.Call_paramsContext context)
+        {
+            
+        }
+
+        public void EnterVal_or_id([NotNull] NinjaParser.Val_or_idContext context)
+        {
+            
+        }
+
+        public void ExitVal_or_id([NotNull] NinjaParser.Val_or_idContext context)
         {
             
         }
@@ -431,6 +481,16 @@ namespace Interpreter
         }
 
         public void ExitDeclare([NotNull] NinjaParser.DeclareContext context)
+        {
+            
+        }
+
+        public void EnterAriphID([NotNull] NinjaParser.AriphIDContext context)
+        {
+            
+        }
+
+        public void ExitAriphID([NotNull] NinjaParser.AriphIDContext context)
         {
             
         }

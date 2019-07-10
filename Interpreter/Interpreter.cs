@@ -57,7 +57,7 @@ namespace Interpreter
 			try
 			{
 				
-				Process proc = new Process
+				/*Process proc = new Process
 				{
 					StartInfo =
 					{
@@ -67,7 +67,7 @@ namespace Interpreter
 					}
 				};
 				proc.Start();
-				proc.WaitForExit();
+				proc.WaitForExit();*/
 				
 				
 				var input = File.ReadAllText("..\\..\\nnj.npr");

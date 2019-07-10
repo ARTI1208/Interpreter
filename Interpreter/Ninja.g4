@@ -57,7 +57,7 @@ options {
 		public bool isMeaningful;
         public ReturnType returnType;
         public ArrayList<NinjaParser.ParamData> paramList = new ArrayList<NinjaParser.ParamData>();
-        public List<Operation> callList = new ArrayList<Operation>();
+        public List<CallData> callList = new ArrayList<CallData>();
         
 		public dynamic returnValue;
 		
@@ -72,7 +72,7 @@ options {
  	public static Dictionary<string, VarData> varTable = new Dictionary<string, VarData>();
     public static Dictionary<string, MethodData> metTable = new Dictionary<string, MethodData>();
     int depth = 0;
-    string currentMet = "?";
+    static string currentMet = "?";
     
     public static void Debug(string line)
     {
@@ -103,6 +103,7 @@ options {
     		{
     			method.paramList[i].value = call.paramList[i].value;
     			method.varTable[method.paramList[i].name].value = call.paramList[i].value;
+    			Console.WriteLine($"addf var {method.paramList[i].name}, val {method.varTable[method.paramList[i].name].value}");
     		}
     		else
     		{
@@ -137,259 +138,366 @@ options {
 	
 	public class Block
 	{
-		public List<Operation> operations = new List<Operation>();
+		public List<OperationClass> operations = new List<OperationClass>();
+		public Dictionary<string, VarData> varTable = new Dictionary<string, VarData>();
 		
 		public void Eval()
 		{
 			for (int i = 0; i < operations.Count; ++i)
 				operations[i].Eval();
 		}
+		
+		public OperationClass createOperationClass()
+		{
+			operations.Add(new OperationClass());
+			return operations[operations.Count - 1];
+		}
+		
+		public AriphExprClass ToAriphExpr()
+		{
+			int lastInd = operations.Count - 1;
+			var res = new AriphExprClass(operations[lastInd]);
+			operations[lastInd] = res;
+			return res;
+		}
 	}
 	
-	public class CallData : Operation
-    	{
-    		public string name;
-                
-    		public dynamic value;
-                
-    		public CallType callType;
-        	
-    		public ReturnType returnType;
-        		
-    		public ArrayList<NinjaParser.ParamData> paramList = new ArrayList<NinjaParser.ParamData>();
-    		
-    		public override void Eval()
-    		{
-    			if (callType == NinjaParser.CallType.Custom)
-                {
-                	if (NinjaParser.metTable.ContainsKey(name) && CheckParams(this, NinjaParser.metTable[name]))
-                	{
-                		//GoThroughCalls(NinjaParser.metTable[call.name]);
-                		foreach(var sm in NinjaParser.metTable[name].callList)
-                		{
-                			sm.Eval();
-                		}
-                	}
-                }
-                else
-                {
-                Console.WriteLine($"Calling builtin method {name} with params {ParamListToString(paramList)}");
-                //					Console.WriteLine(call.name);
-                switch (name)
-                {
-                	case "move":
-                //							Console.WriteLine($"move byte");
-                		_bytes.Add(1);
-                		break;
-                	case "turn":
-                //							Console.WriteLine("turn byte");
-                		_bytes.Add(2);
-                		break;
-                	case "hit":
-                //							Console.WriteLine($"hit byte");
-                		_bytes.Add(3);
-                		break;
-                	case "shoot":
-                //							Console.WriteLine($"shoot byte");
-                		_bytes.Add(4);
-                		break;
-                	default:
-                		Console.WriteLine($"no byte for this op {name}");
-                		break;
-                	}
-                }
-    		}		
-        	
-        	public override string ToString()
-            {
-    			return $"call {name} of type {callType} returns {returnType}, params : {paramList}";
-    		}
-    	}
-	
-	public abstract class Operation
+	public class CallData : OperationClass
 	{
-		public string currentMet;
+		public string name;
+			
+		public dynamic value;
+			
+		public CallType callType;
 		
-		public abstract void Eval();
-	}	
-	
-	public class AriphExpr : Operation
-	{
-		public enum ObjType
-		{
-			Number, Var, Operation
-		}
+		public ReturnType returnType;
+			
+		public ArrayList<NinjaParser.ParamData> paramList = new ArrayList<NinjaParser.ParamData>();
 		
-		class ExprStackObject
+		public override dynamic Eval()
 		{
-			public ObjType type;
-			public dynamic value;
-			
-			public ExprStackObject(double value)
+			if (callType == NinjaParser.CallType.Custom)
 			{
-				type = ObjType.Number;
-				this.value = value;
-			}
-			
-			public ExprStackObject(int value)
-			{
-				type = ObjType.Number;
-				this.value = value;
-			}
-			
-			public void Calc()
-			{
-				if (type == ObjType.Number)
-					return;
-				if (type == ObjType.Var)
+				if (NinjaParser.metTable.ContainsKey(name) && CheckParams(this, NinjaParser.metTable[name]))
 				{
-					value = varTable[value].value;
-					return;
+					//GoThroughCalls(NinjaParser.metTable[call.name]);
+					foreach(var sm in NinjaParser.metTable[name].callList)
+					{
+						sm.Eval();
+					}
 				}
-				Error("System error: \"" + value + "\" is operation");
 			}
+			else
+			{
+				Console.WriteLine($"Calling builtin method {name} with params {ParamListToString(paramList)}");
+				//					Console.WriteLine(call.name);
+				switch (name)
+				{
+					case "move":
+				//							Console.WriteLine($"move byte");
+						_bytes.Add(1);
+						break;
+					case "turn":
+				//							Console.WriteLine("turn byte");
+						_bytes.Add(2);
+						break;
+					case "hit":
+				//							Console.WriteLine($"hit byte");
+						_bytes.Add(3);
+						break;
+					case "shoot":
+				//							Console.WriteLine($"shoot byte");
+						_bytes.Add(4);
+						break;
+					default:
+						Console.WriteLine($"no byte for this op {name}");
+						break;
+				}
+			}
+			return null;
+		}
+	}
+	
+	public static Block curBlock = new Block();
+	
+	public class OperationClass
+	{
+		public OperationClass()
+		{
+			
 		}
 		
-		List<ExprStackObject> exprStack;
+		public OperationClass(OperationClass op)
+		{
+			
+		}
 		
-		ExprStackObject Pop()
+		public virtual dynamic Eval()
+		{
+			throw new NotImplementedException("OperationClass class is abstract");
+		}
+	}
+    
+	public enum ObjType
+	{
+		Number, Logic, Var, Operation
+	}
+
+	public class ExprStackObject
+	{
+		public ObjType type;
+		public dynamic value;
+		
+		public ExprStackObject(): this(0) { }
+		
+		public ExprStackObject(double value)
+		{
+			type = ObjType.Number;
+			this.value = value;
+		}
+
+		public ExprStackObject(int value)
+		{
+			type = ObjType.Number;
+			this.value = value;
+		}
+		
+		public ExprStackObject(bool value)
+		{
+			type = ObjType.Number;
+			this.value = value;
+		}
+		
+		public dynamic Calc()
+		{
+			if (type == ObjType.Number)
+				return value;
+			if (type == ObjType.Var)
+				return curBlock.varTable[value].value;
+			Error("\"" + value + "\" is an operation");
+			return null;
+		}
+	}
+	
+	public class AriphExprClass : OperationClass
+	{
+		public List<ExprStackObject> exprStack;
+		
+		public AriphExprClass(OperationClass parent) : base(parent)
+		{
+			exprStack = new List<ExprStackObject>();
+		}
+		
+		public void Push(ExprStackObject value)
+		{
+			exprStack.Add(value);
+		}
+		
+		public ExprStackObject Pop(List<ExprStackObject> vals)
+		{
+			var res = vals[vals.Count - 1];
+			vals.RemoveAt(vals.Count - 1);
+			return res;
+		}
+		
+		public override dynamic Eval()
+		{
+			List<ExprStackObject> stack = new List<ExprStackObject>();
+			foreach (var elem in exprStack)
+			{
+				if (elem.type == ObjType.Number || elem.type == ObjType.Var)
+					stack.Add(elem);
+				else
+				{
+					ExprStackObject left, right;
+					switch (elem.value)
+					{
+						case "+":
+							right = Pop(stack);
+							left = Pop(stack);
+							stack.Add(new ExprStackObject(left.Calc() + right.Calc()));
+							break;
+						
+						case "-":
+							right = Pop(stack);
+							left = Pop(stack);
+							stack.Add(new ExprStackObject(left.Calc() - right.Calc()));
+							break;
+						
+						case "*":
+							right = Pop(stack);
+							left = Pop(stack);
+							stack.Add(new ExprStackObject(left.Calc() * right.Calc()));
+							break;
+						
+						case "/":
+							right = Pop(stack);
+							left = Pop(stack);
+							stack.Add(new ExprStackObject(left.Calc() / right.Calc()));
+							break;
+						
+						case "=":
+							right = Pop(stack);
+							left = Pop(stack);
+							try
+							{
+								dynamic rightval = right.Calc();
+								VarData data = curBlock.varTable[left.value];
+								if (data.value.GetType() == rightval.GetType())
+									data.value = rightval;
+								else if (data.type == VarType.Double)
+									data.value = (double)rightval;
+								else
+									Error("Can't convert \"" + "" + "\" to Int");
+								stack.Add(new ExprStackObject(data.value));
+							}
+							catch (KeyNotFoundException)
+							{
+								Error("Variable " + left.value + " does not exist in current context");
+							}
+							break;
+						
+						case "+=":
+							right = Pop(stack);
+							left = Pop(stack);
+							try
+							{
+								dynamic rightval = right.Calc();
+								VarData data = curBlock.varTable[left.value];
+								if (data.value.GetType() == rightval.GetType())
+									data.value += rightval;
+								else if (data.type == VarType.Double)
+									data.value += (double)rightval;
+								else
+									Error("Can't convert \"" + "" + "\" to Int");
+								stack.Add(new ExprStackObject(data.value));
+							}
+							catch (KeyNotFoundException)
+							{
+								Error("Variable " + left.value + " does not exist in current context");
+							}
+							break;
+						
+						case "-=":
+							right = Pop(stack);
+							left = Pop(stack);
+							try
+							{
+								dynamic rightval = right.Calc();
+								VarData data = curBlock.varTable[left.value];
+								if (data.value.GetType() == rightval.GetType())
+									data.value -= rightval;
+								else if (data.type == VarType.Double)
+									data.value -= (double)rightval;
+								else
+									Error("Can't convert \"" + "" + "\" to Int");
+								stack.Add(new ExprStackObject(data.value));
+							}
+							catch (KeyNotFoundException)
+							{
+								Error("Variable " + left.value + " does not exist in current context");
+							}
+							break;
+						
+						case "*=":
+							right = Pop(stack);
+							left = Pop(stack);
+							try
+							{
+								dynamic rightval = right.Calc();
+								VarData data = curBlock.varTable[left.value];
+								if (data.value.GetType() == rightval.GetType())
+									data.value *= rightval;
+								else if (data.type == VarType.Double)
+									data.value *= (double)rightval;
+								else
+									Error("Can't convert \"" + "" + "\" to Int");
+								stack.Add(new ExprStackObject(data.value));
+							}
+							catch (KeyNotFoundException)
+							{
+								Error("Variable " + left.value + " does not exist in current context");
+							}
+							break;
+						
+						case "/=":
+							right = Pop(stack);
+							left = Pop(stack);
+							try
+							{
+								dynamic rightval = right.Calc();
+								VarData data = curBlock.varTable[left.value];
+								if (data.value.GetType() == rightval.GetType())
+									data.value /= rightval;
+								else if (data.type == VarType.Double)
+									data.value /= (double)rightval;
+								else
+									Error("Can't convert \"" + "" + "\" to Int");
+								stack.Add(new ExprStackObject(data.value));
+							}
+							catch (KeyNotFoundException)
+							{
+								Error("Variable " + left.value + " does not exist in current context");
+							}
+							break;
+					}
+					
+				}
+			}
+			var res = stack[0];
+			res.Calc();
+			return res.value;
+		}
+	}
+	
+	public class BoolExpr : OperationClass
+	{
+		public List<ExprStackObject> exprStack;
+		
+		public BoolExpr(OperationClass parent) : base(parent)
+		{
+			exprStack = new List<ExprStackObject>();
+		}
+		
+		public ExprStackObject Pop()
 		{
 			var ret = exprStack[exprStack.Count - 1];
 			exprStack.RemoveAt(exprStack.Count - 1);
 			return ret;
 		}
 		
-		void Push(ExprStackObject value)
+		public void Push(ExprStackObject value)
 		{
 			exprStack.Add(value);
 		}
 		
-		public override void Eval()
+		public override dynamic Eval()
 		{
-			while (exprStack.Count != 0)
+			List<ExprStackObject> stack = new List<ExprStackObject>();
+			/*foreach (var elem in exprStack)
 			{
-				var last = Pop();
-				ExprStackObject left, right;
-				switch (last.value)
+				if (elem.type == ObjType.Number || elem.type == ObjType.Var)
+					stack.Add(elem);
+				else
 				{
-					case "+":
-						right = Pop();
-						left = Pop();
-						right.Calc();
-						left.Calc();
-						Push(left.value + right.value);
-						break;
+					ExprStackObject left, right;
+					switch (elem.value)
+					{
 						
-					case "-":
-						right = Pop();
-						left = Pop();
-						right.Calc();
-						left.Calc();
-						Push(left.value - right.value);
-						break;
-						
-					case "*":
-						right = Pop();
-						left = Pop();
-						right.Calc();
-						left.Calc();
-						Push(left.value * right.value);
-						break;
-						
-					case "/":
-						right = Pop();
-						left = Pop();
-						right.Calc();
-						left.Calc();
-						Push(left.value / right.value);
-						break;
-						
-					case "=":
-						right = Pop();
-						left = Pop();
-						right.Calc();
-						try
-					   {
-						 metTable[currentMet].varTable[left.value].value = right.value;
-						 Push(right.value);
-					   }
-					   catch (KeyNotFoundException)
-					   {
-						 Error("Variable " + left.value + " does not exist in current context");
-					   }
-						break;
+					}
 					
-					case "+=":
-						right = Pop();
-						left = Pop();
-						right.Calc();
-						try
-					   {
-						 metTable[currentMet].varTable[left.value].value += right.value;
-						 Push(right.value);
-					   }
-					   catch (KeyNotFoundException)
-					   {
-						 Error("Variable " + left.value + " does not exist in current context");
-					   }
-						break;
-					
-					case "-=":
-						right = Pop();
-						left = Pop();
-						right.Calc();
-						try
-					   {
-						 metTable[currentMet].varTable[left.value].value -= right.value;
-						 Push(right.value);
-					   }
-					   catch (KeyNotFoundException)
-					   {
-						 Error("Variable " + left.value + " does not exist in current context");
-					   }
-						break;
-					
-					case "*=":
-						right = Pop();
-						left = Pop();
-						right.Calc();
-						try
-					   {
-						 metTable[currentMet].varTable[left.value].value *= right.value;
-						 Push(right.value);
-					   }
-					   catch (KeyNotFoundException)
-					   {
-						 Error("Variable " + left.value + " does not exist in current context");
-					   }
-						break;
-					
-					case "/=":
-						right = Pop();
-						left = Pop();
-						right.Calc();
-						try
-					   {
-						 metTable[currentMet].varTable[left.value].value /= right.value;
-						 Push(right.value);
-					   }
-					   catch (KeyNotFoundException)
-					   {
-						 Error("Variable " + left.value + " does not exist in current context");
-					   }
-						break;
 				}
-			}
+			}*/
+			var res = stack[0];
+			res.Calc();
+			return res.value;
 		}
 	}
-	
-	
 }
 
 program : function* main function* {
 
-//GoThroughCalls(NinjaParser.metTable["main"]);
-					if (NinjaParser.metTable.ContainsKey("main"))
+/*if (NinjaParser.metTable.ContainsKey("main"))
                 	{
                 		++depth;
                 		//GoThroughCalls(NinjaParser.metTable[call.name]);
@@ -397,11 +505,14 @@ program : function* main function* {
                 		{
                 			sm.Eval();
                 		}
-                	}
+                	}*/
 
 };
 
-main : main_signature OBRACE main_code CBRACE;
+main : main_signature OBRACE main_code CBRACE
+{
+	curBlock.Eval();
+};
 
 main_signature : FUN_KEYWORD VOID MAIN LPAREN RPAREN {
 	MethodData newMet = new MethodData
@@ -494,14 +605,14 @@ m_fun_signature returns [string funName]: FUN_KEYWORD meaningfulType ID {
 
 } LPAREN params[$ID.text] RPAREN;
 
-code : (operation)*;
+code : (operation[curBlock.createOperationClass()])*;
 
-main_code : (operation)*;
+main_code : (operation[curBlock.createOperationClass()])*;
 
-operation : call | custom_call | declare | ariphExprEx | boolExprEx
+operation[OperationClass oper] : call[$oper] | custom_call[$oper] | declare[curBlock.ToAriphExpr()] | ariphExprEx[curBlock.ToAriphExpr()] | boolExprEx
 			| myif|myif_short|mywhile|mydo_while|myfor;
 
-method_return returns [string type, dynamic value]: RETURN_KEYWORD val_or_id {
+method_return returns [string type, dynamic value]: RETURN_KEYWORD val_or_id[curBlock.createOperationClass()] {
 	$type = $val_or_id.type;
 	$value = $val_or_id.value;
 };
@@ -540,7 +651,7 @@ builtin_func_p : 'move'|'turn' ;
 
 builtin_func_e : 'hit'|'shoot' ;  
 
-call : parameterized_call {
+call[OperationClass oper] : parameterized_call {
 
 	CallData data = new CallData(){
 		callType = CallType.BuiltIn, 
@@ -574,11 +685,11 @@ call : parameterized_call {
 	}
 };
 
-parameterized_call : builtin_func_p LPAREN ariphExprEx RPAREN ;
+parameterized_call : builtin_func_p LPAREN ariphExprEx[new AriphExprClass(curBlock.createOperationClass())] RPAREN ;
 
 simple_call : builtin_func_e LPAREN RPAREN;
 
-custom_call returns [string funName]: ID LPAREN call_params RPAREN {
+custom_call[OperationClass oper] returns [string funName]: ID LPAREN call_params[$oper] RPAREN {
 
 	string callName = $ID.text;
 	$funName = callName;
@@ -620,245 +731,141 @@ custom_call returns [string funName]: ID LPAREN call_params RPAREN {
 
 };
 
-call_params : (val_or_id (COMMA val_or_id)*)?;
+call_params[OperationClass oper] : (val_or_id[$oper] (COMMA val_or_id[$oper])*)?;
 
-val_or_id returns [string type, dynamic value]: 
-			ariphExprEx
+val_or_id[OperationClass oper] returns [string type, dynamic value]: 
+			ariphExprEx[curBlock.ToAriphExpr()]
 			{
-				$value = $ariphExprEx.value;
-				if ($ariphExprEx.value.GetType() == typeof(int))
+				$value = 0;
+				if (false) //ariphExprEx.value.GetType() == typeof(int)")
 					$type = "int";
 				else
 					$type = "double";
 			}
 		  | boolExprEx
 			{
-				$value = $boolExprEx.value;
+				$value = false;
 				$type = "bool";
 			};
 
 
 //Code related to variables
-ariphOperand returns [dynamic value]:
+ariphOperand[AriphExprClass oper]:
                INT
                {
-                   $value = int.Parse($INT.text);
+                   $oper.Push(new ExprStackObject(int.Parse($INT.text)));
                }
              | DOUBLE
                {
+					double value;
                		try 
                		{
-                   		$value = double.Parse($DOUBLE.text);
+                   		value = double.Parse($DOUBLE.text);
                    	} 
                    	catch
                    	{
-                   		$value = double.Parse($DOUBLE.text.Replace('.', ','));
-                   	}	
+                   		value = double.Parse($DOUBLE.text.Replace('.', ','));
+                   	}
+					$oper.Push(new ExprStackObject(value));
                }
-             | custom_call
-             	{
+             | custom_call[$oper]
+             	/*{
              		$value = metTable[$custom_call.funName].returnValue;
-             	}  
-             | ID
+             	}*/
+             | ariphID[$oper]
                {
-                   try
-                   {
-                     $value = metTable[currentMet].varTable[$ID.text].value;
-                   }
-                   catch (KeyNotFoundException)
-                   {
-                     Error("Variable " + $ID.text + " does not exist in current context");
-                   }
-               }  
-			 | sin
-			   {
-				   $value = $sin.value;
-			   }
-			 | cos
-			   {
-				   $value = $cos.value;
-			   }
-			 | tan
-			   {
-				   $value = $tan.value;
-			   }
-			 | asin
-			   {
-				   $value = $asin.value;
-			   }
-			 | acos
-			   {
-				   $value = $acos.value;
-			   }
-			 | atan
-			   {
-				   $value = $atan.value;
-			   }
-			 | atan2
-			   {
-				   $value = $atan2.value;
-			   }
-             | LPAREN ariphExprEx RPAREN
+                   Console.WriteLine($"founy idd {$ariphID.text} val undefined");
+               }
+             /*| LPAREN ariphExprEx[null] RPAREN
                {
-                   $value = $ariphExprEx.value;
-               };
-ariphTerm returns [dynamic value]:
-            ariphOperand
+                   $value = $ariphExprEx[null].value;
+               }*/;
+ariphTerm[AriphExprClass oper]:
+            ariphOperand[$oper]
             {
-                $value = $ariphOperand.value;
+                Debug("\t terarpy1 operand\"" + $ariphOperand.text + "\"");
             }
-          | left=ariphTerm MUL right=ariphOperand
+           (MUL ariphOperand[$oper])*
             {
-                $value = $left.value * $right.value;
-            }
-          | left=ariphTerm DIV right=ariphOperand
-            {
-                $value = $left.value / $right.value;
+				if ($MUL.text != null)
+				{
+					$oper.Push(new ExprStackObject()
+					 {
+						type = ObjType.Operation,
+						value = $MUL.text
+					 });
+					Debug("\t terarpy2 operand\"" + $ariphOperand.text + "\"");
+				}
             };
-ariphExpr returns [dynamic value]:
-            ariphTerm
+ariphExpr[AriphExprClass oper]:
+            ariphTerm[$oper]
             {
-                $value = $ariphTerm.value;
+                Debug("\t rarpy1 term\"" + $ariphTerm.text + "\"");
             }
-          | left=ariphExpr ADD right=ariphTerm
+           (ADD ariphTerm[$oper])*
             {
-                $value = $left.value + $right.value;
-            }
-          | left=ariphExpr SUB right=ariphTerm
-            {
-                $value = $left.value - $right.value;
+				if ($ADD.text != null)
+				{
+					$oper.Push(new ExprStackObject()
+					 {
+						type = ObjType.Operation,
+						value = $ADD.text
+					 });
+					 Debug("\t rarpy2 term\"" + $ariphTerm.text + "\"");
+				 }
             };
-ariphExprEx returns [dynamic value]:
-            ariphExpr
+ariphExprEx[AriphExprClass oper]:
+            ariphExpr[$oper]
             {
-                $value = $ariphExpr.value;
+                Debug("\t arpy1 expr\"" + $ariphExpr.text + "\"");
             }
-          | ID ASSIGN ariphExprEx
+          | ariphID[$oper] ASSIGN ariphExprEx[$oper]
             {
-                try
-                {
-                    VarData data = metTable[currentMet].varTable[$ID.text];
-                    if (data.value.GetType() == $ariphExprEx.value.GetType())
-                        data.value = $ariphExprEx.value;
-                    else if (data.type == VarType.Double)
-                        data.value = (double)$ariphExprEx.value;
-                    else
-                        Error("Can't convert \"" + $ariphExprEx.text + "\" to Int");
-                }
-                catch (KeyNotFoundException)
-                {
-                  Error("Variable " + $ID.text + " does not exist in current context");
-                }
-            }
-          | ID ADDASSIGN ariphExprEx
-            {
-                try
-                {
-                    VarData data = metTable[currentMet].varTable[$ID.text];
-                    if (data.value.GetType() == $ariphExprEx.value.GetType())
-                        data.value += $ariphExprEx.value;
-                    else if (data.type == VarType.Double)
-                        data.value += (double)$ariphExprEx.value;
-                    else
-                        Error("Can't convert \"" + $ariphExprEx.text + "\" to Int");
-                }
-                catch (KeyNotFoundException)
-                {
-                  Error("Variable " + $ID.text + " does not exist in current context");
-                }
-            }
-          | ID SUBASSIGN ariphExprEx
-            {
-                try
-                {
-                    VarData data = metTable[currentMet].varTable[$ID.text];
-                    if (data.value.GetType() == $ariphExprEx.value.GetType())
-                        data.value -= $ariphExprEx.value;
-                    else if (data.type == VarType.Double)
-                        data.value -= (double)$ariphExprEx.value;
-                    else
-                        Error("Can't convert \"" + $ariphExprEx.text + "\" to Int");
-                }
-                catch (KeyNotFoundException)
-                {
-                  Error("Variable " + $ID.text + " does not exist in current context");
-                }
-            }
-          | ID MULASSIGN ariphExprEx
-            {
-                try
-                {
-                    VarData data = metTable[currentMet].varTable[$ID.text];
-                    if (data.value.GetType() == $ariphExprEx.value.GetType())
-                        data.value *= $ariphExprEx.value;
-                    else if (data.type == VarType.Double)
-                        data.value *= (double)$ariphExprEx.value;
-                    else
-                        Error("Can't convert \"" + $ariphExprEx.text + "\" to Int");
-                }
-                catch (KeyNotFoundException)
-                {
-                  Error("Variable " + $ID.text + " does not exist in current context");
-                }
-            }
-          | ID DIVASSIGN ariphExprEx
-            {
-                try
-                {
-                    VarData data = metTable[currentMet].varTable[$ID.text];
-                    if (data.value.GetType() == $ariphExprEx.value.GetType())
-                        data.value /= $ariphExprEx.value;
-                    else if (data.type == VarType.Double)
-                        data.value /= (double)$ariphExprEx.value;
-                    else
-                        Error("Can't convert \"" + $ariphExprEx.text + "\" to Int");
-                }
-                catch (KeyNotFoundException)
-                {
-                  Error("Variable " + $ID.text + " does not exist in current context");
-                }
+                $oper.Push(new ExprStackObject()
+					 {
+						type = ObjType.Operation,
+						value = "="
+					 });
+				Debug("\t arpy2 expr\"" + $ariphExprEx.text + "\"");
             };
 
-boolOperand returns [bool value]:
+boolOperand returns[bool value]/*[BoolExpr oper]*/:
               BOOL
-              {
-                  $value = bool.Parse($BOOL.text);
-              }
+              /*{
+                  //$oper.Push(new ExprStackObject($BOOL.text));
+              }*/
             | ID
-              {
-                  try
-                  {
-                      $value = metTable[currentMet].varTable[$ID.text].value;
-                  }
-                  catch (KeyNotFoundException)
-                  {
-                    Error("Variable " + $ID.text + " does not exist in current context");
-                  }
-              }
-            | left=ariphExprEx LESS right=ariphExprEx
-              {
+              /*{
+                  $oper.Push(new ExprStackObject()
+				  {
+						type = ObjType.var;
+						
+				  });
+              }*/
+            | left=ariphExprEx[null] LESS right=ariphExprEx[null]
+              /*{
                   $value = $left.value < $right.value;
-              }
-            | left=ariphExprEx GREATER right=ariphExprEx
-              {
+              }*/
+            | left=ariphExprEx[null] GREATER right=ariphExprEx[null]
+              /*{
                   $value = $left.value > $right.value;
-              }
-            | left=ariphExprEx EQUAL right=ariphExprEx
-              {
+              }*/
+            | left=ariphExprEx[null] EQUAL right=ariphExprEx[null]
+              /*{
                   $value = $left.value == $right.value;
-              }
-            | left=ariphExprEx NOTEQUAL right=ariphExprEx
-              {
+              }*/
+            | left=ariphExprEx[null] NOTEQUAL right=ariphExprEx[null]
+              /*{
                   $value = $left.value != $right.value;
-              }
-            | left=ariphExprEx LESSEQUAL right=ariphExprEx
-              {
+              }*/
+            | left=ariphExprEx[null] LESSEQUAL right=ariphExprEx[null]
+              /*{
                   $value = $left.value <= $right.value;
-              }
-            | left=ariphExprEx GREQUAL right=ariphExprEx
-              {
+              }*/
+            | left=ariphExprEx[null] GREQUAL right=ariphExprEx[null]
+              /*{
                   $value = $left.value >= $right.value;
-              }
+              }*/
             /*| leftBool=boolExprEx EQUAL rightBool=boolExprEx
               {
                   $value = $leftBool.value == $rightBool.value;
@@ -893,7 +900,7 @@ boolExprEx returns [bool value]:
            {
               try
               {
-                VarData data = metTable[currentMet].varTable[$ID.text];
+                VarData data = curBlock.varTable[$ID.text];
                 $value = data.value = $boolExprEx.value;
                 if (data.type != VarType.Bool)
                 {
@@ -907,63 +914,49 @@ boolExprEx returns [bool value]:
            };
 
 //declaration
-declare : INTKEY ID
+declare[AriphExprClass oper]: INTKEY ariphID[$oper]
           {
            VarData newVar = new VarData
            {
                 type = VarType.Int,
                 value = 0
            };
-           metTable[currentMet].varTable.Add($ID.text, newVar);
-           Debug("Create var " + $ID.text);
+           curBlock.varTable.Add($ariphID.text, newVar);
+           Debug("Create var " + $ariphID.text);
           }
-          (ASSIGN ariphExprEx)?
+          (ASSIGN ariphExprEx[$oper])?
           {
            if ($ariphExprEx.text != null)
            {
-                try
-                {
-                  VarData data = metTable[currentMet].varTable[$ID.text];
-                  if (data.value.GetType() == $ariphExprEx.value.GetType()){
-                    data.value = $ariphExprEx.value;
-                   	Debug("\tAssigning it value of " + $ariphExprEx.text + $" = {data.value}"); 
-                  }else
-                    Error("Can't convert \"" + $ariphExprEx.text + "\" to Int");
-                }
-                catch (KeyNotFoundException)
-                {
-                  Error("Variable " + $ID.text + " does not exist in current context");
-                }
+				Debug("\tAssigning it value of " + $ariphExprEx.text);
+                $oper.Push(new ExprStackObject()
+					 {
+						type = ObjType.Operation,
+						value = "="
+					 });
            }
           }
           
-        | DOUBLEKEY ID
+        | DOUBLEKEY ariphID[$oper]
           {
            VarData newVar = new VarData
            {
                 type = VarType.Double,
                 value = 0.0
            };
-           metTable[currentMet].varTable.Add($ID.text, newVar);
-           Debug("Create var " + $ID.text);
+           curBlock.varTable.Add($ariphID.text, newVar);
+           Debug("Create var " + $ariphID.text);
           }
-          (ASSIGN ariphExprEx)?
+          (ASSIGN ariphExprEx[$oper])?
           {
            if ($ariphExprEx.text != null)
            {
                 Debug("\tAssigning it value of " + $ariphExprEx.text);
-                try
-                {
-                  VarData data = metTable[currentMet].varTable[$ID.text];
-                  if (data.value.GetType() == $ariphExprEx.value.GetType())
-                    data.value = $ariphExprEx.value;
-                  else if (data.type == VarType.Double)
-                    data.value = (double)$ariphExprEx.value;
-                }
-                catch (KeyNotFoundException)
-                {
-                  Error("Variable " + $ID.text + " does not exist in current context");
-                }
+                $oper.Push(new ExprStackObject()
+					 {
+						type = ObjType.Var,
+						value = "="
+					 });
            }
           }
         | BOOLKEY ID
@@ -973,17 +966,17 @@ declare : INTKEY ID
                 type = VarType.Bool,
                 value = false
            };
-           metTable[currentMet].varTable.Add($ID.text, newVar);
+           curBlock.varTable.Add($ID.text, newVar);
            Debug("Create var " + $ID.text);
           }
           (ASSIGN boolExprEx)?
           {
            if ($boolExprEx.text != null)
            {
-                Debug("\tAssigning it value of " + $boolExprEx.text);
+                Debug("\tAssigning3 it value of " + $boolExprEx.text);
                 try
                 {
-                  metTable[currentMet].varTable[$ID.text].value = $boolExprEx.value;
+                  curBlock.varTable[$ID.text].value = $boolExprEx.value;
                 }
                 catch (KeyNotFoundException)
                 {
@@ -992,73 +985,82 @@ declare : INTKEY ID
            }
           };
 
+ariphID[AriphExprClass oper] : ID
+		{
+			$oper.Push(new ExprStackObject()
+					 {
+						type = ObjType.Var,
+						value = $ID.text
+					 });
+		};
+
 //trigonometry
 sin returns [double value]:
-		SIN LPAREN ariphExprEx RPAREN
-		{
-			$value = Math.Sin($ariphExprEx.value);
-		};
+		SIN LPAREN ariphExprEx[null] RPAREN
+		/*{
+			$value = Math.Sin($ariphExprEx[null].value);
+		}*/;
 cos returns [double value]:
-		COS LPAREN ariphExprEx RPAREN
-		{
-			$value = Math.Cos($ariphExprEx.value);
-		};
+		COS LPAREN ariphExprEx[null] RPAREN
+		/*{
+			$value = Math.Cos($ariphExprEx[null].value);
+        }*/;
 tan returns [double value]:
-		TAN LPAREN ariphExprEx RPAREN
-		{
-			$value = Math.Tan($ariphExprEx.value);
-		};
+		TAN LPAREN ariphExprEx[null] RPAREN
+		/*{
+			$value = Math.Tan($ariphExprEx[null].value);
+		}*/;
 asin returns [double value]:
-		ASIN LPAREN ariphExprEx RPAREN
-		{
-			$value = Math.Asin($ariphExprEx.value);
-		};
+		ASIN LPAREN ariphExprEx[null] RPAREN
+		/*{
+			$value = Math.Asin($ariphExprEx[null].value);
+		}*/;
 acos returns [double value]:
-		ACOS LPAREN ariphExprEx RPAREN
-		{
-			$value = Math.Acos($ariphExprEx.value);
-		};
+		ACOS LPAREN ariphExprEx[null] RPAREN
+		/*{
+			$value = Math.Acos($ariphExprEx[null].value);
+		}*/;
 atan returns [double value]:
-		ATAN LPAREN ariphExprEx RPAREN
-		{
-			$value = Math.Atan($ariphExprEx.value);
-		};
+		ATAN LPAREN ariphExprEx[null] RPAREN
+		/*{
+			$value = Math.Atan($ariphExprEx[null].value);
+		}*/;
 atan2 returns [double value]:
-		ATAN2 LPAREN y=ariphExprEx COMMA x=ariphExprEx RPAREN
-		{
+		ATAN2 LPAREN y=ariphExprEx[null] COMMA x=ariphExprEx[null] RPAREN
+		/*{
 			$value = Math.Atan2($y.value, $x.value);
-		};
+		}*/;
 		
 
 //code related to cycles
 myif: IF LPAREN boolExprEx RPAREN // вместо INT  нужен BOOL
      OBRACE 
-    (operation)+
+    (operation[null])+
     CBRACE
      ELSE 
       OBRACE  
-    (operation)+
+    (operation[null])+
     CBRACE
    ;
 myif_short: IF LPAREN boolExprEx  RPAREN // вместо INT  нужен BOOL
     OBRACE
-    (operation)+
+    (operation[null])+
     CBRACE
    ;
 mywhile: WHILE LPAREN boolExprEx RPAREN // вместо INT  нужен BOOL
      OBRACE
-     (operation)+
+     (operation[null])+
      CBRACE 
        ;
 mydo_while: DO 
           OBRACE
-            (operation)+
+            (operation[null])+
           CBRACE
           WHILE LPAREN boolExprEx RPAREN // вместо INT  нужен BOOL
           ;
 myfor:  FOR LPAREN ~SEMICOLON+ SEMICOLON boolExprEx SEMICOLON ~SEMICOLON+ RPAREN // ~SEMICOLON+ заменяется на INT BOOL оператор
         OBRACE
-        (operation)+
+        (operation[null])+
         CBRACE
      ;
 
@@ -1085,15 +1087,18 @@ ATAN		: 'atan' ;
 ATAN2		: 'atan2' ;
 
 //operators
-ASSIGN  : '=' ;
 ADD     : '+' ;
 SUB     : '-' ;
+ADDSUB	: ADD | SUB ;
 MUL     : '*' ;
 DIV     : '/' ;
+MULDIV	: MUL | DIV ;
+ASSIGN		: '=' ;
 ADDASSIGN   : '+=' ;
 SUBASSIGN   : '-=' ;
 MULASSIGN   : '*=' ;
 DIVASSIGN   : '/=' ;
+ASSIGNS		: ASSIGN | ADDASSIGN | SUBASSIGN | MULASSIGN | DIVASSIGN ;
 AND       : '&&' ;
 OR        : '||' ;
 LESS      : '<' ;
@@ -1112,6 +1117,7 @@ DOUBLE  : [+-]?DIGIT*[,.]DIGIT+ ;
 INT     : [+-]?DIGIT+ ;
 
 RETURN_KEYWORD : 'return';
+PASS : 'pass' ;
 
 MAIN : 'main' ;
 

@@ -1,55 +1,10 @@
-fun void returnTest(int v){
-	
+fun double test(double a)
+{
+	return 5 + 2
 }
 
-fun bool mumu(){
-	return false
+fun void main()
+{
+	int f = 5
+	test(f)
 }
-
-fun void tutu(bool b, bool c, bool g, bool t, bool y){
-	turn(10,0)
-	mumu()
-	move(100,0)
-	shoot()
-}
-
-fun int tcd(bool b, int inTest, double v){
-	turn(-10,0)
-	move(-100,0)
-	//shoot()
-	int res = 2 * inTest
-	int res1 = 15
-	int res2 = res1 * 2
-	bool qwe = true
-	return res
-}
-
-fun void scd(bool b, int ch){
-	turn(10,0)
-	int f = 5 + 3 - 3
-	int n = f * 2
-	
-	move(100,0)
-	tutu(true, false, false, true, false)
-	//shoot()
-}
-
-fun void main(){
-	//shoot(4)
-	//move(5)
-	//turn(30)
-	move(66,0)
-   	hit()
-	scd(true, 5)
-	while(true){
-		turn(666)
-	}
-	hit()
-}
-
-
-
-
-
-
-
