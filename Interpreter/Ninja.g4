@@ -25,24 +25,6 @@ options {
     {
     	Int, Double, Bool, Void
     };
-	
-	public class CallData
-	{
-		public string name;
-            
-		public dynamic value;
-            
-		public CallType callType;
-    	
-		public ReturnType returnType;
-    		
-		public ArrayList<NinjaParser.ParamData> paramList = new ArrayList<NinjaParser.ParamData>();	
-    	
-    	public override string ToString()
-        {
-			return $"call {name} of type {callType} returns {returnType}, params : {paramList}";
-		}
-	}
 
 	public class ParamData
 	{
@@ -105,7 +87,7 @@ options {
         Console.ForegroundColor = curr;
     }
 	
-	public bool CheckParams(NinjaParser.CallData call, NinjaParser.MethodData method)
+	public static bool CheckParams(NinjaParser.CallData call, NinjaParser.MethodData method)
     {
     	Console.WriteLine($"Checking params of {call.name}");
     	if (call.paramList.Count != method.paramList.Count)
@@ -121,7 +103,6 @@ options {
     		{
     			method.paramList[i].value = call.paramList[i].value;
     			method.varTable[method.paramList[i].name].value = call.paramList[i].value;
-    			Console.WriteLine($"addf var {method.paramList[i].name}, val {method.varTable[method.paramList[i].name].value}");
     		}
     		else
     		{
@@ -132,78 +113,10 @@ options {
     
     	return true;
     }
-    		
-    public void GoThroughCalls(NinjaParser.MethodData methodData)
-    {
-        string formatter = new string('\t', depth);
-        Console.WriteLine($"{formatter}--Entering method {methodData.name}, params {ParamListToString(methodData.paramList)}:");
-        Console.WriteLine($"{formatter}===Variables of the met:===");
-        foreach (var elem in methodData.varTable)
-        {
-            Console.WriteLine("\t"+ formatter + elem.Key + " is " + elem.Value.type + " with value " + elem.Value.value);
-        }
-        Console.WriteLine($"{formatter}===Variables of the met:===");
-        
-        foreach (var call in methodData.callList)
-        {
-            if (call.callType == NinjaParser.CallType.Custom)
-            {
-            	if (NinjaParser.metTable.ContainsKey(call.name))
-            	{
-            		++depth;
-					//foreach (var param in call.paramList)
-					//{
-					//	VarData data = varTable[param.name];
-					//	if (data.type == param.type)
-					//		data.value = param.value;
-					//	else if (data.type == VarType.Double && param.type == VarType.Int)
-					//		data.value = (double)param.value;
-					//	else
-					//		Error("Can't convert \"" + param.value.ToString() + "\" to " + data.type);
-					//}
-            		GoThroughCalls(NinjaParser.metTable[call.name]);
-            	}
-            }
-            else
-            {
-            	Console.WriteLine($"{formatter}Calling builtin method {call.name} with params {ParamListToString(call.paramList)}");
-            	//Console.WriteLine(call.name);
-            	switch (call.name)
-            	{
-            		case "move":
-            			//Console.WriteLine($"move byte");
-            			_bytes.Add(1);
-            			break;
-            		case "turn":
-    			        //Console.WriteLine("turn byte");
-            			_bytes.Add(2);
-            			break;
-            		case "hit":
-            			//Console.WriteLine($"hit byte");
-            			_bytes.Add(3);
-            			break;
-            		case "shoot":
-            			//Console.WriteLine($"shoot byte");
-            			_bytes.Add(4);
-            			break;
-            		default:
-            			Console.WriteLine($"no byte for this op {call.name}");
-            			break;
-            	}
-            }
-        }
-            
-        if (methodData.isMeaningful)
-        {
-            Console.WriteLine($"{formatter}Returning {methodData.returnValue} of type {methodData.returnType}");
-        }
-        --depth;
-        Console.WriteLine($"{formatter}--Exiting method {methodData.name}");
-    }
             		
-	ArrayList<byte> _bytes = new ArrayList<byte>();
+	static ArrayList<byte> _bytes = new ArrayList<byte>();
 	
-	string ParamListToString(ArrayList<NinjaParser.ParamData> list)
+	static string ParamListToString(ArrayList<NinjaParser.ParamData> list)
     {
     	string s = "{";
     	foreach (var data in list)
@@ -233,12 +146,72 @@ options {
 		}
 	}
 	
+	public class CallData : Operation
+    	{
+    		public string name;
+                
+    		public dynamic value;
+                
+    		public CallType callType;
+        	
+    		public ReturnType returnType;
+        		
+    		public ArrayList<NinjaParser.ParamData> paramList = new ArrayList<NinjaParser.ParamData>();
+    		
+    		public override void Eval()
+    		{
+    			if (callType == NinjaParser.CallType.Custom)
+                {
+                	if (NinjaParser.metTable.ContainsKey(name) && CheckParams(this, NinjaParser.metTable[name]))
+                	{
+                		//GoThroughCalls(NinjaParser.metTable[call.name]);
+                		foreach(var sm in NinjaParser.metTable[name].callList)
+                		{
+                			sm.Eval();
+                		}
+                	}
+                }
+                else
+                {
+                Console.WriteLine($"Calling builtin method {name} with params {ParamListToString(paramList)}");
+                //					Console.WriteLine(call.name);
+                switch (name)
+                {
+                	case "move":
+                //							Console.WriteLine($"move byte");
+                		_bytes.Add(1);
+                		break;
+                	case "turn":
+                //							Console.WriteLine("turn byte");
+                		_bytes.Add(2);
+                		break;
+                	case "hit":
+                //							Console.WriteLine($"hit byte");
+                		_bytes.Add(3);
+                		break;
+                	case "shoot":
+                //							Console.WriteLine($"shoot byte");
+                		_bytes.Add(4);
+                		break;
+                	default:
+                		Console.WriteLine($"no byte for this op {name}");
+                		break;
+                	}
+                }
+    		}		
+        	
+        	public override string ToString()
+            {
+    			return $"call {name} of type {callType} returns {returnType}, params : {paramList}";
+    		}
+    	}
+	
 	public abstract class Operation
 	{
 		public string currentMet;
 		
 		public abstract void Eval();
-	}
+	}	
 	
 	public class AriphExpr : Operation
 	{
@@ -415,7 +388,16 @@ options {
 
 program : function* main function* {
 
-GoThroughCalls(NinjaParser.metTable["main"]);
+//GoThroughCalls(NinjaParser.metTable["main"]);
+					if (NinjaParser.metTable.ContainsKey("main"))
+                	{
+                		++depth;
+                		//GoThroughCalls(NinjaParser.metTable[call.name]);
+                		foreach(var sm in NinjaParser.metTable["main"].callList)
+                		{
+                			sm.Eval();
+                		}
+                	}
 
 };
 
@@ -682,7 +664,6 @@ ariphOperand returns [dynamic value]:
                    try
                    {
                      $value = metTable[currentMet].varTable[$ID.text].value;
-                     Console.WriteLine($"founy idd {$ID.text} val {$value}");
                    }
                    catch (KeyNotFoundException)
                    {
@@ -725,23 +706,19 @@ ariphTerm returns [dynamic value]:
             ariphOperand
             {
                 $value = $ariphOperand.value;
-                Debug("\t terarpy1");
             }
           | left=ariphTerm MUL right=ariphOperand
             {
                 $value = $left.value * $right.value;
-                Debug("\t terarpy2");
             }
           | left=ariphTerm DIV right=ariphOperand
             {
                 $value = $left.value / $right.value;
-                Debug("\t terarpy3");
             };
 ariphExpr returns [dynamic value]:
             ariphTerm
             {
                 $value = $ariphTerm.value;
-                Debug("\t rarpy1");
             }
           | left=ariphExpr ADD right=ariphTerm
             {
@@ -755,7 +732,6 @@ ariphExprEx returns [dynamic value]:
             ariphExpr
             {
                 $value = $ariphExpr.value;
-                Debug("\t arpy1"); 
             }
           | ID ASSIGN ariphExprEx
             {
@@ -768,7 +744,6 @@ ariphExprEx returns [dynamic value]:
                         data.value = (double)$ariphExprEx.value;
                     else
                         Error("Can't convert \"" + $ariphExprEx.text + "\" to Int");
-                        
                 }
                 catch (KeyNotFoundException)
                 {
@@ -951,7 +926,7 @@ declare : INTKEY ID
                   VarData data = metTable[currentMet].varTable[$ID.text];
                   if (data.value.GetType() == $ariphExprEx.value.GetType()){
                     data.value = $ariphExprEx.value;
-                   	Debug("\tAssigning1 it value of " + $ariphExprEx.text + $" = {data.value}"); 
+                   	Debug("\tAssigning it value of " + $ariphExprEx.text + $" = {data.value}"); 
                   }else
                     Error("Can't convert \"" + $ariphExprEx.text + "\" to Int");
                 }
@@ -976,7 +951,7 @@ declare : INTKEY ID
           {
            if ($ariphExprEx.text != null)
            {
-                Debug("\tAssigning2 it value of " + $ariphExprEx.text);
+                Debug("\tAssigning it value of " + $ariphExprEx.text);
                 try
                 {
                   VarData data = metTable[currentMet].varTable[$ID.text];
@@ -1005,7 +980,7 @@ declare : INTKEY ID
           {
            if ($boolExprEx.text != null)
            {
-                Debug("\tAssigning3 it value of " + $boolExprEx.text);
+                Debug("\tAssigning it value of " + $boolExprEx.text);
                 try
                 {
                   metTable[currentMet].varTable[$ID.text].value = $boolExprEx.value;

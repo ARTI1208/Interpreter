@@ -128,24 +128,6 @@ public partial class NinjaParser : Parser {
 	    {
 	    	Int, Double, Bool, Void
 	    };
-		
-		public class CallData
-		{
-			public string name;
-	            
-			public dynamic value;
-	            
-			public CallType callType;
-	    	
-			public ReturnType returnType;
-	    		
-			public ArrayList<NinjaParser.ParamData> paramList = new ArrayList<NinjaParser.ParamData>();	
-	    	
-	    	public override string ToString()
-	        {
-				return $"call {name} of type {callType} returns {returnType}, params : {paramList}";
-			}
-		}
 
 		public class ParamData
 		{
@@ -208,7 +190,7 @@ public partial class NinjaParser : Parser {
 	        Console.ForegroundColor = curr;
 	    }
 		
-		public bool CheckParams(NinjaParser.CallData call, NinjaParser.MethodData method)
+		public static bool CheckParams(NinjaParser.CallData call, NinjaParser.MethodData method)
 	    {
 	    	Console.WriteLine($"Checking params of {call.name}");
 	    	if (call.paramList.Count != method.paramList.Count)
@@ -224,7 +206,6 @@ public partial class NinjaParser : Parser {
 	    		{
 	    			method.paramList[i].value = call.paramList[i].value;
 	    			method.varTable[method.paramList[i].name].value = call.paramList[i].value;
-	    			Console.WriteLine($"addf var {method.paramList[i].name}, val {method.varTable[method.paramList[i].name].value}");
 	    		}
 	    		else
 	    		{
@@ -235,78 +216,10 @@ public partial class NinjaParser : Parser {
 	    
 	    	return true;
 	    }
-	    		
-	    public void GoThroughCalls(NinjaParser.MethodData methodData)
-	    {
-	        string formatter = new string('\t', depth);
-	        Console.WriteLine($"{formatter}--Entering method {methodData.name}, params {ParamListToString(methodData.paramList)}:");
-	        Console.WriteLine($"{formatter}===Variables of the met:===");
-	        foreach (var elem in methodData.varTable)
-	        {
-	            Console.WriteLine("\t"+ formatter + elem.Key + " is " + elem.Value.type + " with value " + elem.Value.value);
-	        }
-	        Console.WriteLine($"{formatter}===Variables of the met:===");
-	        
-	        foreach (var call in methodData.callList)
-	        {
-	            if (call.callType == NinjaParser.CallType.Custom)
-	            {
-	            	if (NinjaParser.metTable.ContainsKey(call.name))
-	            	{
-	            		++depth;
-						//foreach (var param in call.paramList)
-						//{
-						//	VarData data = varTable[param.name];
-						//	if (data.type == param.type)
-						//		data.value = param.value;
-						//	else if (data.type == VarType.Double && param.type == VarType.Int)
-						//		data.value = (double)param.value;
-						//	else
-						//		Error("Can't convert \"" + param.value.ToString() + "\" to " + data.type);
-						//}
-	            		GoThroughCalls(NinjaParser.metTable[call.name]);
-	            	}
-	            }
-	            else
-	            {
-	            	Console.WriteLine($"{formatter}Calling builtin method {call.name} with params {ParamListToString(call.paramList)}");
-	            	//Console.WriteLine(call.name);
-	            	switch (call.name)
-	            	{
-	            		case "move":
-	            			//Console.WriteLine($"move byte");
-	            			_bytes.Add(1);
-	            			break;
-	            		case "turn":
-	    			        //Console.WriteLine("turn byte");
-	            			_bytes.Add(2);
-	            			break;
-	            		case "hit":
-	            			//Console.WriteLine($"hit byte");
-	            			_bytes.Add(3);
-	            			break;
-	            		case "shoot":
-	            			//Console.WriteLine($"shoot byte");
-	            			_bytes.Add(4);
-	            			break;
-	            		default:
-	            			Console.WriteLine($"no byte for this op {call.name}");
-	            			break;
-	            	}
-	            }
-	        }
-	            
-	        if (methodData.isMeaningful)
-	        {
-	            Console.WriteLine($"{formatter}Returning {methodData.returnValue} of type {methodData.returnType}");
-	        }
-	        --depth;
-	        Console.WriteLine($"{formatter}--Exiting method {methodData.name}");
-	    }
 	            		
-		ArrayList<byte> _bytes = new ArrayList<byte>();
+		static ArrayList<byte> _bytes = new ArrayList<byte>();
 		
-		string ParamListToString(ArrayList<NinjaParser.ParamData> list)
+		static string ParamListToString(ArrayList<NinjaParser.ParamData> list)
 	    {
 	    	string s = "{";
 	    	foreach (var data in list)
@@ -336,12 +249,72 @@ public partial class NinjaParser : Parser {
 			}
 		}
 		
+		public class CallData : Operation
+	    	{
+	    		public string name;
+	                
+	    		public dynamic value;
+	                
+	    		public CallType callType;
+	        	
+	    		public ReturnType returnType;
+	        		
+	    		public ArrayList<NinjaParser.ParamData> paramList = new ArrayList<NinjaParser.ParamData>();
+	    		
+	    		public override void Eval()
+	    		{
+	    			if (callType == NinjaParser.CallType.Custom)
+	                {
+	                	if (NinjaParser.metTable.ContainsKey(name) && CheckParams(this, NinjaParser.metTable[name]))
+	                	{
+	                		//GoThroughCalls(NinjaParser.metTable[call.name]);
+	                		foreach(var sm in NinjaParser.metTable[name].callList)
+	                		{
+	                			sm.Eval();
+	                		}
+	                	}
+	                }
+	                else
+	                {
+	                Console.WriteLine($"Calling builtin method {name} with params {ParamListToString(paramList)}");
+	                //					Console.WriteLine(call.name);
+	                switch (name)
+	                {
+	                	case "move":
+	                //							Console.WriteLine($"move byte");
+	                		_bytes.Add(1);
+	                		break;
+	                	case "turn":
+	                //							Console.WriteLine("turn byte");
+	                		_bytes.Add(2);
+	                		break;
+	                	case "hit":
+	                //							Console.WriteLine($"hit byte");
+	                		_bytes.Add(3);
+	                		break;
+	                	case "shoot":
+	                //							Console.WriteLine($"shoot byte");
+	                		_bytes.Add(4);
+	                		break;
+	                	default:
+	                		Console.WriteLine($"no byte for this op {name}");
+	                		break;
+	                	}
+	                }
+	    		}		
+	        	
+	        	public override string ToString()
+	            {
+	    			return $"call {name} of type {callType} returns {returnType}, params : {paramList}";
+	    		}
+	    	}
+		
 		public abstract class Operation
 		{
 			public string currentMet;
 			
 			public abstract void Eval();
-		}
+		}	
 		
 		public class AriphExpr : Operation
 		{
@@ -588,7 +561,16 @@ public partial class NinjaParser : Parser {
 			}
 
 
-			GoThroughCalls(NinjaParser.metTable["main"]);
+			//GoThroughCalls(NinjaParser.metTable["main"]);
+								if (NinjaParser.metTable.ContainsKey("main"))
+			                	{
+			                		++depth;
+			                		//GoThroughCalls(NinjaParser.metTable[call.name]);
+			                		foreach(var sm in NinjaParser.metTable["main"].callList)
+			                		{
+			                			sm.Eval();
+			                		}
+			                	}
 
 
 			}
@@ -2097,7 +2079,6 @@ public partial class NinjaParser : Parser {
 				                   try
 				                   {
 				                     _localctx.value =  metTable[currentMet].varTable[(_localctx._ID!=null?_localctx._ID.Text:null)].value;
-				                     Console.WriteLine($"founy idd {(_localctx._ID!=null?_localctx._ID.Text:null)} val {_localctx.value}");
 				                   }
 				                   catch (KeyNotFoundException)
 				                   {
@@ -2241,7 +2222,6 @@ public partial class NinjaParser : Parser {
 			State = 270; _localctx._ariphOperand = ariphOperand();
 
 			                _localctx.value =  _localctx._ariphOperand.value;
-			                Debug("\t terarpy1");
 			            
 			}
 			Context.Stop = TokenStream.LT(-1);
@@ -2268,7 +2248,6 @@ public partial class NinjaParser : Parser {
 						State = 275; _localctx.right = _localctx._ariphOperand = ariphOperand();
 
 						                          _localctx.value =  _localctx.left.value * _localctx.right.value;
-						                          Debug("\t terarpy2");
 						                      
 						}
 						break;
@@ -2283,7 +2262,6 @@ public partial class NinjaParser : Parser {
 						State = 280; _localctx.right = _localctx._ariphOperand = ariphOperand();
 
 						                          _localctx.value =  _localctx.left.value / _localctx.right.value;
-						                          Debug("\t terarpy3");
 						                      
 						}
 						break;
@@ -2355,7 +2333,6 @@ public partial class NinjaParser : Parser {
 			State = 289; _localctx._ariphTerm = ariphTerm(0);
 
 			                _localctx.value =  _localctx._ariphTerm.value;
-			                Debug("\t rarpy1");
 			            
 			}
 			Context.Stop = TokenStream.LT(-1);
@@ -2465,7 +2442,6 @@ public partial class NinjaParser : Parser {
 				State = 307; _localctx._ariphExpr = ariphExpr(0);
 
 				                _localctx.value =  _localctx._ariphExpr.value;
-				                Debug("\t arpy1"); 
 				            
 				}
 				break;
@@ -2485,7 +2461,6 @@ public partial class NinjaParser : Parser {
 				                        data.value = (double)_localctx._ariphExprEx.value;
 				                    else
 				                        Error("Can't convert \"" + (_localctx._ariphExprEx!=null?TokenStream.GetText(_localctx._ariphExprEx.Start,_localctx._ariphExprEx.Stop):null) + "\" to Int");
-				                        
 				                }
 				                catch (KeyNotFoundException)
 				                {
@@ -2999,7 +2974,7 @@ public partial class NinjaParser : Parser {
 				                  VarData data = metTable[currentMet].varTable[(_localctx._ID!=null?_localctx._ID.Text:null)];
 				                  if (data.value.GetType() == _localctx._ariphExprEx.value.GetType()){
 				                    data.value = _localctx._ariphExprEx.value;
-				                   	Debug("\tAssigning1 it value of " + (_localctx._ariphExprEx!=null?TokenStream.GetText(_localctx._ariphExprEx.Start,_localctx._ariphExprEx.Stop):null) + $" = {data.value}"); 
+				                   	Debug("\tAssigning it value of " + (_localctx._ariphExprEx!=null?TokenStream.GetText(_localctx._ariphExprEx.Start,_localctx._ariphExprEx.Stop):null) + $" = {data.value}"); 
 				                  }else
 				                    Error("Can't convert \"" + (_localctx._ariphExprEx!=null?TokenStream.GetText(_localctx._ariphExprEx.Start,_localctx._ariphExprEx.Stop):null) + "\" to Int");
 				                }
@@ -3038,7 +3013,7 @@ public partial class NinjaParser : Parser {
 
 				           if ((_localctx._ariphExprEx!=null?TokenStream.GetText(_localctx._ariphExprEx.Start,_localctx._ariphExprEx.Stop):null) != null)
 				           {
-				                Debug("\tAssigning2 it value of " + (_localctx._ariphExprEx!=null?TokenStream.GetText(_localctx._ariphExprEx.Start,_localctx._ariphExprEx.Stop):null));
+				                Debug("\tAssigning it value of " + (_localctx._ariphExprEx!=null?TokenStream.GetText(_localctx._ariphExprEx.Start,_localctx._ariphExprEx.Stop):null));
 				                try
 				                {
 				                  VarData data = metTable[currentMet].varTable[(_localctx._ID!=null?_localctx._ID.Text:null)];
@@ -3082,7 +3057,7 @@ public partial class NinjaParser : Parser {
 
 				           if ((_localctx._boolExprEx!=null?TokenStream.GetText(_localctx._boolExprEx.Start,_localctx._boolExprEx.Stop):null) != null)
 				           {
-				                Debug("\tAssigning3 it value of " + (_localctx._boolExprEx!=null?TokenStream.GetText(_localctx._boolExprEx.Start,_localctx._boolExprEx.Stop):null));
+				                Debug("\tAssigning it value of " + (_localctx._boolExprEx!=null?TokenStream.GetText(_localctx._boolExprEx.Start,_localctx._boolExprEx.Stop):null));
 				                try
 				                {
 				                  metTable[currentMet].varTable[(_localctx._ID!=null?_localctx._ID.Text:null)].value = _localctx._boolExprEx.value;

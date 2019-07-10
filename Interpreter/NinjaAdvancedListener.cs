@@ -59,8 +59,8 @@ namespace Interpreter
 
 		public void VisitErrorNode(IErrorNode node)
 		{
-			Console.WriteLine("error node==================");
-			Console.WriteLine(node.Symbol);
+			NinjaParser.Error("error node==================");
+			NinjaParser.Error(node.GetText());
 		}
 
 		public void EnterEveryRule(ParserRuleContext ctx)
@@ -117,7 +117,7 @@ namespace Interpreter
 				Console.WriteLine($"Method {pair.Key} contains calls of ");
 				foreach (var call in pair.Value.callList)
 				{
-					Console.WriteLine(call.name);
+					//Console.WriteLine(call.name);
 				}
 			}
             List<int> test;
@@ -143,58 +143,7 @@ namespace Interpreter
 			Console.WriteLine("ent main");
 			Console.WriteLine(context.ToString());
 		}
-
-		public void GoThroughCalls(NinjaParser.MethodData methodData)
-		{
-			string formatter = new string('\t', depth);
-			Console.WriteLine($"{formatter}--Entering method {methodData.name}, params {ParamListToString(methodData.paramList)}:");
-			foreach (var call in methodData.callList)
-			{
-				if (call.callType == NinjaParser.CallType.Custom)
-				{
-					if (NinjaParser.metTable.ContainsKey(call.name) && CheckParams(call, NinjaParser.metTable[call.name]))
-					{
-						++depth;
-						GoThroughCalls(NinjaParser.metTable[call.name]);
-					}
-				}
-				else
-				{
-					Console.WriteLine($"{formatter}Calling builtin method {call.name} with params {ParamListToString(call.paramList)}");
-//					Console.WriteLine(call.name);
-					switch (call.name)
-					{
-						case "move":
-//							Console.WriteLine($"move byte");
-							_bytes.Add(1);
-							break;
-						case "turn":
-//							Console.WriteLine("turn byte");
-							_bytes.Add(2);
-							break;
-						case "hit":
-//							Console.WriteLine($"hit byte");
-							_bytes.Add(3);
-							break;
-						case "shoot":
-//							Console.WriteLine($"shoot byte");
-							_bytes.Add(4);
-							break;
-						default:
-							Console.WriteLine($"no byte for this op {call.name}");
-							break;
-					}
-				}
-			}
-
-			if (methodData.isMeaningful)
-			{
-				Console.WriteLine($"{formatter}Returning {methodData.returnValue} of type {methodData.returnType}");
-			}
-			--depth;
-			Console.WriteLine($"{formatter}--Exiting method {methodData.name}");
-		}
-
+		
 		public void ExitMain(NinjaParser.MainContext context)
 		{
 			Console.WriteLine("ext main");
