@@ -15,3 +15,4 @@ C:\Users\Василий\Documents\ДЗ Вышка\1 Практика\Interpreter
 C:\Users\Василий\Documents\ДЗ Вышка\1 Практика\Interpreter\Interpreter\bin\Debug\Interpreter.pdb
 C:\Users\Василий\Documents\ДЗ Вышка\1 Практика\Interpreter\Interpreter\bin\Debug\Antlr4.Runtime.Standard.dll
 C:\Users\Василий\Documents\ДЗ Вышка\1 Практика\Interpreter\Interpreter\obj\Debug\Interpreter.csproj.CopyComplete
+D:\Coding\C#\Interpreter\Interpreter\bin\Debug\Interpreter.exe.config

@@ -33,3 +33,10 @@ fun void main(){
 	scd(true, 5)
 	hit()
 }
+
+
+
+
+
+
+

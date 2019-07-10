@@ -1450,15 +1450,16 @@ public partial class NinjaParser : Parser {
 				    data.paramList.Add(d);
 					
 					string methodName = "";
-					if (_localctx.Parent.Parent is V_functionContext parentContext)
+					Console.WriteLine(_localctx.Parent.Parent.Parent.GetType());
+					if (_localctx.Parent.Parent.Parent is V_functionContext parentContext)
 					{
 						methodName = parentContext.v_fun_signature().ID().GetText();
 					}		
-					if (_localctx.Parent.Parent is M_functionContext parContext)
+					if (_localctx.Parent.Parent.Parent is M_functionContext parContext)
 					{
 						methodName = parContext.m_fun_signature().ID().GetText();
 					}
-					if (_localctx.Parent.Parent is MainContext)
+					if (_localctx.Parent.Parent.Parent is MainContext)
 					{
 						methodName = "main";
 					}	
@@ -1484,15 +1485,15 @@ public partial class NinjaParser : Parser {
 					};
 
 					string methodName = "";
-					if (_localctx.Parent.Parent is V_functionContext parentContext)
+					if (_localctx.Parent.Parent.Parent is V_functionContext parentContext)
 					{
 						methodName = parentContext.v_fun_signature().ID().GetText();
 					}		
-					if (_localctx.Parent.Parent is M_functionContext parContext)
+					if (_localctx.Parent.Parent.Parent is M_functionContext parContext)
 					{
 						methodName = parContext.m_fun_signature().ID().GetText();
 					}
-					if (_localctx.Parent.Parent is MainContext)
+					if (_localctx.Parent.Parent.Parent is MainContext)
 					{
 						methodName = "main";
 					}	
@@ -1680,15 +1681,15 @@ public partial class NinjaParser : Parser {
 				}
 				
 				string methodName = "";
-			    if (_localctx.Parent.Parent is V_functionContext parentContext)
+			    if (_localctx.Parent.Parent.Parent is V_functionContext parentContext)
 			    {
 			    	methodName = parentContext.v_fun_signature().ID().GetText();
 			    }		
-			    if (_localctx.Parent.Parent is M_functionContext parContext)
+			    if (_localctx.Parent.Parent.Parent is M_functionContext parContext)
 			   	{
 			   		methodName = parContext.m_fun_signature().ID().GetText();
 			   	}
-			   	if (_localctx.Parent.Parent is MainContext)
+			   	if (_localctx.Parent.Parent.Parent is MainContext)
 			   	{
 			    	methodName = "main";
 			    }
