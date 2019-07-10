@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from Ninja.g4 by ANTLR 4.7.2
+// Generated from ..\..\..\Interpreter\Ninja.g4 by ANTLR 4.7.2
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -325,14 +325,25 @@ public partial class NinjaParser : Parser {
 	    	return s;
 	    }
 		
-		abstract class Operation
+		public class Block
+		{
+			public List<Operation> operations = new List<Operation>();
+			
+			public void Eval()
+			{
+				for (int i = 0; i < operations.Count; ++i)
+					operations[i].Eval();
+			}
+		}
+		
+		public abstract class Operation
 		{
 			public string currentMet;
 			
 			public abstract void Eval();
 		}
 		
-		class AriphExpr : Operation
+		public class AriphExpr : Operation
 		{
 			public enum ObjType
 			{
@@ -501,6 +512,8 @@ public partial class NinjaParser : Parser {
 				}
 			}
 		}
+		
+		
 
 		public NinjaParser(ITokenStream input) : this(input, Console.Out, Console.Error) { }
 

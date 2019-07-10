@@ -222,14 +222,25 @@ options {
     	return s;
     }
 	
-	abstract class Operation
+	public class Block
+	{
+		public List<Operation> operations = new List<Operation>();
+		
+		public void Eval()
+		{
+			for (int i = 0; i < operations.Count; ++i)
+				operations[i].Eval();
+		}
+	}
+	
+	public abstract class Operation
 	{
 		public string currentMet;
 		
 		public abstract void Eval();
 	}
 	
-	class AriphExpr : Operation
+	public class AriphExpr : Operation
 	{
 		public enum ObjType
 		{
@@ -398,6 +409,8 @@ options {
 			}
 		}
 	}
+	
+	
 }
 
 program : function* main function* {
