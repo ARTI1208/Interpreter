@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from ..\..\..\Interpreter\Ninja.g4 by ANTLR 4.7.2
+// Generated from Ninja.g4 by ANTLR 4.7.2
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -324,6 +324,183 @@ public partial class NinjaParser : Parser {
 	    	s = (s.Length > 1 ? s.Substring(0, s.Length - 1) : s) + " }";
 	    	return s;
 	    }
+		
+		abstract class Operation
+		{
+			public string currentMet;
+			
+			public abstract void Eval();
+		}
+		
+		class AriphExpr : Operation
+		{
+			public enum ObjType
+			{
+				Number, Var, Operation
+			}
+			
+			class ExprStackObject
+			{
+				public ObjType type;
+				public dynamic value;
+				
+				public ExprStackObject(double value)
+				{
+					type = ObjType.Number;
+					this.value = value;
+				}
+				
+				public ExprStackObject(int value)
+				{
+					type = ObjType.Number;
+					this.value = value;
+				}
+				
+				public void Calc()
+				{
+					if (type == ObjType.Number)
+						return;
+					if (type == ObjType.Var)
+					{
+						value = varTable[value].value;
+						return;
+					}
+					Error("System error: \"" + value + "\" is operation");
+				}
+			}
+			
+			List<ExprStackObject> exprStack;
+			
+			ExprStackObject Pop()
+			{
+				var ret = exprStack[exprStack.Count - 1];
+				exprStack.RemoveAt(exprStack.Count - 1);
+				return ret;
+			}
+			
+			void Push(ExprStackObject value)
+			{
+				exprStack.Add(value);
+			}
+			
+			public override void Eval()
+			{
+				while (exprStack.Count != 0)
+				{
+					var last = Pop();
+					ExprStackObject left, right;
+					switch (last.value)
+					{
+						case "+":
+							right = Pop();
+							left = Pop();
+							right.Calc();
+							left.Calc();
+							Push(left.value + right.value);
+							break;
+							
+						case "-":
+							right = Pop();
+							left = Pop();
+							right.Calc();
+							left.Calc();
+							Push(left.value - right.value);
+							break;
+							
+						case "*":
+							right = Pop();
+							left = Pop();
+							right.Calc();
+							left.Calc();
+							Push(left.value * right.value);
+							break;
+							
+						case "/":
+							right = Pop();
+							left = Pop();
+							right.Calc();
+							left.Calc();
+							Push(left.value / right.value);
+							break;
+							
+						case "=":
+							right = Pop();
+							left = Pop();
+							right.Calc();
+							try
+						   {
+							 metTable[currentMet].varTable[left.value].value = right.value;
+							 Push(right.value);
+						   }
+						   catch (KeyNotFoundException)
+						   {
+							 Error("Variable " + left.value + " does not exist in current context");
+						   }
+							break;
+						
+						case "+=":
+							right = Pop();
+							left = Pop();
+							right.Calc();
+							try
+						   {
+							 metTable[currentMet].varTable[left.value].value += right.value;
+							 Push(right.value);
+						   }
+						   catch (KeyNotFoundException)
+						   {
+							 Error("Variable " + left.value + " does not exist in current context");
+						   }
+							break;
+						
+						case "-=":
+							right = Pop();
+							left = Pop();
+							right.Calc();
+							try
+						   {
+							 metTable[currentMet].varTable[left.value].value -= right.value;
+							 Push(right.value);
+						   }
+						   catch (KeyNotFoundException)
+						   {
+							 Error("Variable " + left.value + " does not exist in current context");
+						   }
+							break;
+						
+						case "*=":
+							right = Pop();
+							left = Pop();
+							right.Calc();
+							try
+						   {
+							 metTable[currentMet].varTable[left.value].value *= right.value;
+							 Push(right.value);
+						   }
+						   catch (KeyNotFoundException)
+						   {
+							 Error("Variable " + left.value + " does not exist in current context");
+						   }
+							break;
+						
+						case "/=":
+							right = Pop();
+							left = Pop();
+							right.Calc();
+							try
+						   {
+							 metTable[currentMet].varTable[left.value].value /= right.value;
+							 Push(right.value);
+						   }
+						   catch (KeyNotFoundException)
+						   {
+							 Error("Variable " + left.value + " does not exist in current context");
+						   }
+							break;
+					}
+				}
+			}
+		}
 
 		public NinjaParser(ITokenStream input) : this(input, Console.Out, Console.Error) { }
 

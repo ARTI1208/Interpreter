@@ -120,6 +120,7 @@ namespace Interpreter
 					Console.WriteLine(call.name);
 				}
 			}
+            List<int> test;
 			File.Delete("cmds.txt");
 			var stream = File.Create("cmds.txt");
 			stream.WriteByte((byte) _bytes.Count);
