@@ -341,6 +341,36 @@ public interface INinjaListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitAriphID([NotNull] NinjaParser.AriphIDContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.boolID"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterBoolID([NotNull] NinjaParser.BoolIDContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.boolID"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitBoolID([NotNull] NinjaParser.BoolIDContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.trig"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterTrig([NotNull] NinjaParser.TrigContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.trig"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitTrig([NotNull] NinjaParser.TrigContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.trig2"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterTrig2([NotNull] NinjaParser.Trig2Context context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.trig2"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitTrig2([NotNull] NinjaParser.Trig2Context context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="NinjaParser.sin"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

@@ -153,10 +153,10 @@ options {
 			return operations[operations.Count - 1];
 		}
 		
-		public AriphExprClass ToAriphExpr()
+		public ExprClass ToExpr()
 		{
 			int lastInd = operations.Count - 1;
-			var res = new AriphExprClass(operations[lastInd]);
+			var res = new ExprClass(operations[lastInd]);
 			operations[lastInd] = res;
 			return res;
 		}
@@ -279,11 +279,11 @@ options {
 		}
 	}
 	
-	public class AriphExprClass : OperationClass
+	public class ExprClass : OperationClass
 	{
 		public List<ExprStackObject> exprStack;
 		
-		public AriphExprClass(OperationClass parent) : base(parent)
+		public ExprClass(OperationClass parent) : base(parent)
 		{
 			exprStack = new List<ExprStackObject>();
 		}
@@ -312,6 +312,54 @@ options {
 					ExprStackObject left, right;
 					switch (elem.value)
 					{
+						case "&&":
+							right = Pop(stack);
+							left = Pop(stack);
+							stack.Add(new ExprStackObject(left.Calc() && right.Calc()));
+							break;
+						
+						case "||":
+							right = Pop(stack);
+							left = Pop(stack);
+							stack.Add(new ExprStackObject(left.Calc() || right.Calc()));
+							break;
+							
+						case "<":
+							right = Pop(stack);
+							left = Pop(stack);
+							stack.Add(new ExprStackObject(left.Calc() < right.Calc()));
+							break;
+						
+						case ">":
+							right = Pop(stack);
+							left = Pop(stack);
+							stack.Add(new ExprStackObject(left.Calc() > right.Calc()));
+							break;
+						
+						case "==":
+							right = Pop(stack);
+							left = Pop(stack);
+							stack.Add(new ExprStackObject(left.Calc() == right.Calc()));
+							break;
+						
+						case "!=":
+							right = Pop(stack);
+							left = Pop(stack);
+							stack.Add(new ExprStackObject(left.Calc() != right.Calc()));
+							break;
+						
+						case "<=":
+							right = Pop(stack);
+							left = Pop(stack);
+							stack.Add(new ExprStackObject(left.Calc() <= right.Calc()));
+							break;
+						
+						case ">=":
+							right = Pop(stack);
+							left = Pop(stack);
+							stack.Add(new ExprStackObject(left.Calc() >= right.Calc()));
+							break;
+					
 						case "+":
 							right = Pop(stack);
 							left = Pop(stack);
@@ -348,7 +396,7 @@ options {
 								else if (data.type == VarType.Double)
 									data.value = (double)rightval;
 								else
-									Error("Can't convert \"" + "" + "\" to Int");
+									Error("Can't convert \"" + rightval + "\" to " + data.type);
 								stack.Add(new ExprStackObject(data.value));
 							}
 							catch (KeyNotFoundException)
@@ -369,7 +417,7 @@ options {
 								else if (data.type == VarType.Double)
 									data.value += (double)rightval;
 								else
-									Error("Can't convert \"" + "" + "\" to Int");
+									Error("Can't convert \"" + rightval + "\" to " + data.type);
 								stack.Add(new ExprStackObject(data.value));
 							}
 							catch (KeyNotFoundException)
@@ -390,7 +438,7 @@ options {
 								else if (data.type == VarType.Double)
 									data.value -= (double)rightval;
 								else
-									Error("Can't convert \"" + "" + "\" to Int");
+									Error("Can't convert \"" + rightval + "\" to " + data.type);
 								stack.Add(new ExprStackObject(data.value));
 							}
 							catch (KeyNotFoundException)
@@ -411,7 +459,7 @@ options {
 								else if (data.type == VarType.Double)
 									data.value *= (double)rightval;
 								else
-									Error("Can't convert \"" + "" + "\" to Int");
+									Error("Can't convert \"" + rightval + "\" to " + data.type);
 								stack.Add(new ExprStackObject(data.value));
 							}
 							catch (KeyNotFoundException)
@@ -432,7 +480,7 @@ options {
 								else if (data.type == VarType.Double)
 									data.value /= (double)rightval;
 								else
-									Error("Can't convert \"" + "" + "\" to Int");
+									Error("Can't convert \"" + rightval + "\" to " + data.type);
 								stack.Add(new ExprStackObject(data.value));
 							}
 							catch (KeyNotFoundException)
@@ -440,54 +488,46 @@ options {
 								Error("Variable " + left.value + " does not exist in current context");
 							}
 							break;
+							
+						case "sin":
+							right = Pop(stack);
+							stack.Add(new ExprStackObject(Math.Sin(right.Calc())));
+							break;
+						
+						case "cos":
+							right = Pop(stack);
+							stack.Add(new ExprStackObject(Math.Cos(right.Calc())));
+							break;
+						
+						case "tan":
+							right = Pop(stack);
+							stack.Add(new ExprStackObject(Math.Tan(right.Calc())));
+							break;
+						
+						case "asin":
+							right = Pop(stack);
+							stack.Add(new ExprStackObject(Math.Asin(right.Calc())));
+							break;
+						
+						case "acos":
+							right = Pop(stack);
+							stack.Add(new ExprStackObject(Math.Acos(right.Calc())));
+							break;
+						
+						case "atan":
+							right = Pop(stack);
+							stack.Add(new ExprStackObject(Math.Atan(right.Calc())));
+							break;
+						
+						case "atan2":
+							right = Pop(stack);
+							left = Pop(stack);
+							stack.Add(new ExprStackObject(Math.Atan2(left.Calc(), right.Calc())));
+							break;
 					}
 					
 				}
 			}
-			var res = stack[0];
-			res.Calc();
-			return res.value;
-		}
-	}
-	
-	public class BoolExpr : OperationClass
-	{
-		public List<ExprStackObject> exprStack;
-		
-		public BoolExpr(OperationClass parent) : base(parent)
-		{
-			exprStack = new List<ExprStackObject>();
-		}
-		
-		public ExprStackObject Pop()
-		{
-			var ret = exprStack[exprStack.Count - 1];
-			exprStack.RemoveAt(exprStack.Count - 1);
-			return ret;
-		}
-		
-		public void Push(ExprStackObject value)
-		{
-			exprStack.Add(value);
-		}
-		
-		public override dynamic Eval()
-		{
-			List<ExprStackObject> stack = new List<ExprStackObject>();
-			/*foreach (var elem in exprStack)
-			{
-				if (elem.type == ObjType.Number || elem.type == ObjType.Var)
-					stack.Add(elem);
-				else
-				{
-					ExprStackObject left, right;
-					switch (elem.value)
-					{
-						
-					}
-					
-				}
-			}*/
 			var res = stack[0];
 			res.Calc();
 			return res.value;
@@ -609,7 +649,7 @@ code : (operation[curBlock.createOperationClass()])*;
 
 main_code : (operation[curBlock.createOperationClass()])*;
 
-operation[OperationClass oper] : call[$oper] | custom_call[$oper] | declare[curBlock.ToAriphExpr()] | ariphExprEx[curBlock.ToAriphExpr()] | boolExprEx
+operation[OperationClass oper] : call[$oper] | custom_call[$oper] | declare[curBlock.ToExpr()] | ariphExprEx[curBlock.ToExpr()] | boolExprEx[curBlock.ToExpr()]
 			| myif|myif_short|mywhile|mydo_while|myfor;
 
 method_return returns [string type, dynamic value]: RETURN_KEYWORD val_or_id[curBlock.createOperationClass()] {
@@ -685,7 +725,7 @@ call[OperationClass oper] : parameterized_call {
 	}
 };
 
-parameterized_call : builtin_func_p LPAREN ariphExprEx[new AriphExprClass(curBlock.createOperationClass())] RPAREN ;
+parameterized_call : builtin_func_p LPAREN ariphExprEx[new ExprClass(curBlock.createOperationClass())] RPAREN ;
 
 simple_call : builtin_func_e LPAREN RPAREN;
 
@@ -734,7 +774,7 @@ custom_call[OperationClass oper] returns [string funName]: ID LPAREN call_params
 call_params[OperationClass oper] : (val_or_id[$oper] (COMMA val_or_id[$oper])*)?;
 
 val_or_id[OperationClass oper] returns [string type, dynamic value]: 
-			ariphExprEx[curBlock.ToAriphExpr()]
+			ariphExprEx[curBlock.ToExpr()]
 			{
 				$value = 0;
 				if (false) //ariphExprEx.value.GetType() == typeof(int)")
@@ -742,7 +782,7 @@ val_or_id[OperationClass oper] returns [string type, dynamic value]:
 				else
 					$type = "double";
 			}
-		  | boolExprEx
+		  | boolExprEx[curBlock.ToExpr()]
 			{
 				$value = false;
 				$type = "bool";
@@ -750,7 +790,7 @@ val_or_id[OperationClass oper] returns [string type, dynamic value]:
 
 
 //Code related to variables
-ariphOperand[AriphExprClass oper]:
+ariphOperand[ExprClass oper]:
                INT
                {
                    $oper.Push(new ExprStackObject(int.Parse($INT.text)));
@@ -776,145 +816,103 @@ ariphOperand[AriphExprClass oper]:
                {
                    Console.WriteLine($"founy idd {$ariphID.text} val undefined");
                }
-             /*| LPAREN ariphExprEx[null] RPAREN
-               {
-                   $value = $ariphExprEx[null].value;
-               }*/;
-ariphTerm[AriphExprClass oper]:
+			 | trig[$oper] | trig2[$oper]
+             | LPAREN ariphExprEx[$oper] RPAREN;
+ariphTerm[ExprClass oper]:
             ariphOperand[$oper]
             {
                 Debug("\t terarpy1 operand\"" + $ariphOperand.text + "\"");
             }
-           (MUL ariphOperand[$oper])*
+           (muldiv=(MUL|DIV) ariphOperand[$oper])*
             {
-				if ($MUL.text != null)
+				if ($muldiv.text != null)
 				{
 					$oper.Push(new ExprStackObject()
 					 {
 						type = ObjType.Operation,
-						value = $MUL.text
+						value = $muldiv.text
 					 });
 					Debug("\t terarpy2 operand\"" + $ariphOperand.text + "\"");
 				}
             };
-ariphExpr[AriphExprClass oper]:
+ariphExpr[ExprClass oper]:
             ariphTerm[$oper]
             {
                 Debug("\t rarpy1 term\"" + $ariphTerm.text + "\"");
             }
-           (ADD ariphTerm[$oper])*
+			(addsub=(ADD|SUB) ariphTerm[$oper])*
             {
-				if ($ADD.text != null)
+				if ($addsub.text != null)
 				{
 					$oper.Push(new ExprStackObject()
 					 {
 						type = ObjType.Operation,
-						value = $ADD.text
+						value = $addsub.text
 					 });
 					 Debug("\t rarpy2 term\"" + $ariphTerm.text + "\"");
-				 }
+				}
             };
-ariphExprEx[AriphExprClass oper]:
+ariphExprEx[ExprClass oper]:
             ariphExpr[$oper]
             {
                 Debug("\t arpy1 expr\"" + $ariphExpr.text + "\"");
             }
-          | ariphID[$oper] ASSIGN ariphExprEx[$oper]
+          | ariphID[$oper] assigns=(ASSIGN|ADDASSIGN|SUBASSIGN|MULASSIGN|DIVASSIGN) ariphExprEx[$oper]
             {
                 $oper.Push(new ExprStackObject()
 					 {
 						type = ObjType.Operation,
-						value = "="
+						value = $assigns.text
 					 });
 				Debug("\t arpy2 expr\"" + $ariphExprEx.text + "\"");
             };
 
-boolOperand returns[bool value]/*[BoolExpr oper]*/:
+boolOperand[ExprClass oper]:
               BOOL
-              /*{
-                  //$oper.Push(new ExprStackObject($BOOL.text));
-              }*/
-            | ID
-              /*{
-                  $oper.Push(new ExprStackObject()
-				  {
-						type = ObjType.var;
-						
-				  });
-              }*/
-            | left=ariphExprEx[null] LESS right=ariphExprEx[null]
-              /*{
-                  $value = $left.value < $right.value;
-              }*/
-            | left=ariphExprEx[null] GREATER right=ariphExprEx[null]
-              /*{
-                  $value = $left.value > $right.value;
-              }*/
-            | left=ariphExprEx[null] EQUAL right=ariphExprEx[null]
-              /*{
-                  $value = $left.value == $right.value;
-              }*/
-            | left=ariphExprEx[null] NOTEQUAL right=ariphExprEx[null]
-              /*{
-                  $value = $left.value != $right.value;
-              }*/
-            | left=ariphExprEx[null] LESSEQUAL right=ariphExprEx[null]
-              /*{
-                  $value = $left.value <= $right.value;
-              }*/
-            | left=ariphExprEx[null] GREQUAL right=ariphExprEx[null]
-              /*{
-                  $value = $left.value >= $right.value;
-              }*/
-            /*| leftBool=boolExprEx EQUAL rightBool=boolExprEx
               {
-                  $value = $leftBool.value == $rightBool.value;
+                  $oper.Push(new ExprStackObject(bool.Parse($BOOL.text)));
               }
-            | leftBool=boolExprEx NOTEQUAL rightBool=boolExprEx
+            | boolID[$oper]
+            | ariphExprEx[$oper] comp=(LESS|GREATER|EQUAL|NOTEQUAL|LESSEQUAL|GREQUAL) ariphExprEx[$oper]
               {
-                  $value = $leftBool.value != $rightBool.value;
+				$oper.Push(new ExprStackObject()
+				{
+					type = ObjType.Operation,
+					value = $comp.text
+				}); 
+			  }
+            /*| boolExprEx[$oper] EQUAL boolExprEx[$oper]
+              {
+                  
+              }
+            | boolExprEx[$oper] NOTEQUAL boolExprEx[$oper]
+              {
+                  
               }*/
-            | LPAREN boolExprEx RPAREN
-              {
-                  $value = $boolExprEx.value;
-              };
-boolExpr returns [bool value]:
-           boolOperand
+            | LPAREN boolExprEx[$oper] RPAREN;
+boolExpr[ExprClass oper]:
+           boolOperand[$oper]
+         | boolOperand[$oper] andor=(AND|OR) boolExpr[$oper]
            {
-               $value = $boolOperand.value;
-           }
-         | left=boolOperand OR right=boolExpr
-           {
-               $value = $left.value || $right.value;
-           }
-         | left=boolOperand AND right=boolExpr
-           {
-               $value = $left.value && $right.value;
+				$oper.Push(new ExprStackObject()
+				{
+					type = ObjType.Operation,
+					value = $andor.text
+				});
            };
-boolExprEx returns [bool value]:
-           boolExpr
+boolExprEx[ExprClass oper]:
+           boolExpr[$oper]
+         | boolID[$oper] ASSIGN boolExprEx[$oper]
            {
-              $value = $boolExpr.value;
-           }
-         | ID ASSIGN boolExprEx
-           {
-              try
-              {
-                VarData data = curBlock.varTable[$ID.text];
-                $value = data.value = $boolExprEx.value;
-                if (data.type != VarType.Bool)
-                {
-                    Error("Can't convert " + data.type + " to Bool");
-                }
-              }
-              catch (KeyNotFoundException)
-              {
-                Error("Variable " + $ID.text + " does not exist in current context");
-              }
+				$oper.Push(new ExprStackObject()
+				{
+					type = ObjType.Operation,
+					value = "="
+				});
            };
 
 //declaration
-declare[AriphExprClass oper]: INTKEY ariphID[$oper]
+declare[ExprClass oper]: INTKEY ariphID[$oper]
           {
            VarData newVar = new VarData
            {
@@ -929,7 +927,7 @@ declare[AriphExprClass oper]: INTKEY ariphID[$oper]
            if ($ariphExprEx.text != null)
            {
 				Debug("\tAssigning it value of " + $ariphExprEx.text);
-                $oper.Push(new ExprStackObject()
+				$oper.Push(new ExprStackObject()
 					 {
 						type = ObjType.Operation,
 						value = "="
@@ -954,38 +952,43 @@ declare[AriphExprClass oper]: INTKEY ariphID[$oper]
                 Debug("\tAssigning it value of " + $ariphExprEx.text);
                 $oper.Push(new ExprStackObject()
 					 {
-						type = ObjType.Var,
+						type = ObjType.Operation,
 						value = "="
 					 });
            }
           }
-        | BOOLKEY ID
+        | BOOLKEY boolID[$oper]
           {
            VarData newVar = new VarData
            {
                 type = VarType.Bool,
                 value = false
            };
-           curBlock.varTable.Add($ID.text, newVar);
-           Debug("Create var " + $ID.text);
+           curBlock.varTable.Add($boolID.text, newVar);
+           Debug("Create var " + $boolID.text);
           }
-          (ASSIGN boolExprEx)?
+          (ASSIGN boolExprEx[$oper])?
           {
            if ($boolExprEx.text != null)
            {
                 Debug("\tAssigning3 it value of " + $boolExprEx.text);
-                try
-                {
-                  curBlock.varTable[$ID.text].value = $boolExprEx.value;
-                }
-                catch (KeyNotFoundException)
-                {
-                  Error("Variable " + $ID.text + " does not exist in cyrrent context");
-                }
+                $oper.Push(new ExprStackObject()
+				{
+					type = ObjType.Operation,
+					value = "="
+				});
            }
           };
 
-ariphID[AriphExprClass oper] : ID
+ariphID[ExprClass oper] : ID
+		{
+			$oper.Push(new ExprStackObject()
+					 {
+						type = ObjType.Var,
+						value = $ID.text
+					 });
+		};
+boolID[ExprClass oper] : ID
 		{
 			$oper.Push(new ExprStackObject()
 					 {
@@ -995,6 +998,24 @@ ariphID[AriphExprClass oper] : ID
 		};
 
 //trigonometry
+trig[ExprClass oper]:
+		trfun=(SIN|COS|TAN|ASIN|ACOS|ATAN) LPAREN ariphExprEx[$oper] RPAREN
+		{
+			$oper.Push(new ExprStackObject()
+					 {
+						type = ObjType.Operation,
+						value = $trfun.text
+					 });
+		};
+trig2[ExprClass oper]:
+		ATAN2 LPAREN ariphExprEx[$oper] COMMA ariphExprEx[$oper] RPAREN
+		{
+			$oper.Push(new ExprStackObject()
+					 {
+						type = ObjType.Operation,
+						value = "atan2"
+					 });
+		};
 sin returns [double value]:
 		SIN LPAREN ariphExprEx[null] RPAREN
 		/*{
@@ -1033,7 +1054,7 @@ atan2 returns [double value]:
 		
 
 //code related to cycles
-myif: IF LPAREN boolExprEx RPAREN // вместо INT  нужен BOOL
+myif: IF LPAREN boolExprEx[null] RPAREN // вместо INT  нужен BOOL
      OBRACE 
     (operation[null])+
     CBRACE
@@ -1042,12 +1063,12 @@ myif: IF LPAREN boolExprEx RPAREN // вместо INT  нужен BOOL
     (operation[null])+
     CBRACE
    ;
-myif_short: IF LPAREN boolExprEx  RPAREN // вместо INT  нужен BOOL
+myif_short: IF LPAREN boolExprEx[null]  RPAREN // вместо INT  нужен BOOL
     OBRACE
     (operation[null])+
     CBRACE
    ;
-mywhile: WHILE LPAREN boolExprEx RPAREN // вместо INT  нужен BOOL
+mywhile: WHILE LPAREN boolExprEx[null] RPAREN // вместо INT  нужен BOOL
      OBRACE
      (operation[null])+
      CBRACE 
@@ -1056,9 +1077,9 @@ mydo_while: DO
           OBRACE
             (operation[null])+
           CBRACE
-          WHILE LPAREN boolExprEx RPAREN // вместо INT  нужен BOOL
+          WHILE LPAREN boolExprEx[null] RPAREN // вместо INT  нужен BOOL
           ;
-myfor:  FOR LPAREN ~SEMICOLON+ SEMICOLON boolExprEx SEMICOLON ~SEMICOLON+ RPAREN // ~SEMICOLON+ заменяется на INT BOOL оператор
+myfor:  FOR LPAREN ~SEMICOLON+ SEMICOLON boolExprEx[null] SEMICOLON ~SEMICOLON+ RPAREN // ~SEMICOLON+ заменяется на INT BOOL оператор
         OBRACE
         (operation[null])+
         CBRACE
@@ -1089,16 +1110,13 @@ ATAN2		: 'atan2' ;
 //operators
 ADD     : '+' ;
 SUB     : '-' ;
-ADDSUB	: ADD | SUB ;
 MUL     : '*' ;
 DIV     : '/' ;
-MULDIV	: MUL | DIV ;
 ASSIGN		: '=' ;
 ADDASSIGN   : '+=' ;
 SUBASSIGN   : '-=' ;
 MULASSIGN   : '*=' ;
 DIVASSIGN   : '/=' ;
-ASSIGNS		: ASSIGN | ADDASSIGN | SUBASSIGN | MULASSIGN | DIVASSIGN ;
 AND       : '&&' ;
 OR        : '||' ;
 LESS      : '<' ;

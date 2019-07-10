@@ -1,10 +1,13 @@
-fun double test(double a)
+fun void foo(int a)
 {
-	return 5 + 2
+	bool b = true
+	bool c = b || false
 }
 
 fun void main()
 {
-	int f = 5
-	test(f)
+	int f = 1
+	double sn = asin(1)
+	foo(f)
+	bool res = 2 < (2 + 1)
 }

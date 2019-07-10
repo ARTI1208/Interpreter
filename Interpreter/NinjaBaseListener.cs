@@ -407,6 +407,42 @@ public partial class NinjaBaseListener : INinjaListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitAriphID([NotNull] NinjaParser.AriphIDContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.boolID"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterBoolID([NotNull] NinjaParser.BoolIDContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.boolID"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitBoolID([NotNull] NinjaParser.BoolIDContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.trig"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterTrig([NotNull] NinjaParser.TrigContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.trig"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitTrig([NotNull] NinjaParser.TrigContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.trig2"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterTrig2([NotNull] NinjaParser.Trig2Context context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.trig2"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitTrig2([NotNull] NinjaParser.Trig2Context context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="NinjaParser.sin"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

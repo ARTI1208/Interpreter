@@ -624,5 +624,35 @@ namespace Interpreter
         {
             
         }
+
+        public void EnterBoolID([NotNull] NinjaParser.BoolIDContext context)
+        {
+            
+        }
+
+        public void ExitBoolID([NotNull] NinjaParser.BoolIDContext context)
+        {
+            
+        }
+
+        public void EnterTrig([NotNull] NinjaParser.TrigContext context)
+        {
+            
+        }
+
+        public void ExitTrig([NotNull] NinjaParser.TrigContext context)
+        {
+            
+        }
+
+        public void EnterTrig2([NotNull] NinjaParser.Trig2Context context)
+        {
+            
+        }
+
+        public void ExitTrig2([NotNull] NinjaParser.Trig2Context context)
+        {
+            
+        }
     }
 }
