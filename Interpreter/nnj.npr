@@ -2,7 +2,8 @@ fun void main()
 {
 	turn(3)
 	int u = 5
-	int t = 0
+	int t = 0	
+	
 	do
 	{
 		t = 0
@@ -14,5 +15,21 @@ fun void main()
 		hit()
 		u = u + 1
 	} while (u < 7)
-	move(5)
+	if (false)
+	{
+		move(7)
+	}
+	else
+    {
+    	if(7 > 5)
+    	{
+    		move(7 + 5)
+    	}
+    
+    	move(-13)
+    }
+    int i = 1
+    for(i = 1; i < 3; i++){
+    	move(i)
+    }
 }

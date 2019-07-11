@@ -380,6 +380,22 @@ options {
             				Error("\"" + value + "\" is an operation");
             				return null;
 		}
+		
+		public new Type GetType()
+		{
+			VarType type = FindVar(value).type;
+        	switch (type)
+        	{
+        		case VarType.Int:
+	        		return typeof(int);	
+        		case VarType.Double:
+        			return typeof(double);		
+        		case VarType.Bool:
+        			return typeof(bool);
+			}
+			Error("Variable " + value + " has an unknown type");
+        	return null;
+        }
 	}
 	
 	public class ExprClass : OperationClass
@@ -403,6 +419,17 @@ options {
 			vals.RemoveAt(vals.Count - 1);
 			return res;
 		}
+		
+		public bool isCompatible(dynamic value1, dynamic value2, bool isLeftVar = false)
+		{
+			if (value1.GetType() == value1.GetType())
+				return true;
+			else if (value1.GetType() == typeof(double) && value2.GetType() == typeof(int))
+				return true;
+			else if (!isLeftVar && value1.GetType == typeof(int) && value2.GetType() == typeof(double))
+				return true;
+			return false;
+		}		
 		
 		public ReturnType expectedReturnType;
 		public dynamic value;
@@ -451,254 +478,375 @@ options {
 				else
 				{
 					ExprStackObject left, right;
-					switch (elem.value)
-					{
-						case "&&":
-							right = Pop(stack);
-							left = Pop(stack);
-							stack.Add(new ExprStackObject(left.Calc() && right.Calc()));
-							break;
-						
-						case "||":
-							right = Pop(stack);
-							left = Pop(stack);
-							stack.Add(new ExprStackObject(left.Calc() || right.Calc()));
-							break;
-						
-						case "!":
-							right = Pop(stack);
-							stack.Add(new ExprStackObject(!right.Calc()));
-							break;
-							
-						case "<":
-							right = Pop(stack);
-							left = Pop(stack);
-							stack.Add(new ExprStackObject(left.Calc() < right.Calc()));
-							break;
-						
-						case ">":
-							right = Pop(stack);
-							left = Pop(stack);
-							stack.Add(new ExprStackObject(left.Calc() > right.Calc()));
-							break;
-						
-						case "==":
-							right = Pop(stack);
-							left = Pop(stack);
-							stack.Add(new ExprStackObject(left.Calc() == right.Calc()));
-							break;
-						
-						case "!=":
-							right = Pop(stack);
-							left = Pop(stack);
-							stack.Add(new ExprStackObject(left.Calc() != right.Calc()));
-							break;
-						
-						case "<=":
-							right = Pop(stack);
-							left = Pop(stack);
-							stack.Add(new ExprStackObject(left.Calc() <= right.Calc()));
-							break;
-						
-						case ">=":
-							right = Pop(stack);
-							left = Pop(stack);
-							stack.Add(new ExprStackObject(left.Calc() >= right.Calc()));
-							break;
-					
-						case "+":
-							right = Pop(stack);
-							left = Pop(stack);
-							stack.Add(new ExprStackObject(left.Calc() + right.Calc()));
-							break;
-						
-						case "-":
-							right = Pop(stack);
-							left = Pop(stack);
-							stack.Add(new ExprStackObject(left.Calc() - right.Calc()));
-							break;
-						
-						case "*":
-							right = Pop(stack);
-							left = Pop(stack);
-							stack.Add(new ExprStackObject(left.Calc() * right.Calc()));
-							break;
-						
-						case "/":
-							right = Pop(stack);
-							left = Pop(stack);
-							stack.Add(new ExprStackObject(left.Calc() / right.Calc()));
-							break;
-						
-						case "++pre":
-							right = Pop(stack);
-							++FindVar(right.value).value;
-							stack.Add(new ExprStackObject(right.Calc()));
-							break;
-							
-						case "++post":
-							right = Pop(stack);
-							stack.Add(new ExprStackObject(right.Calc()));
-							++FindVar(right.value).value;
-							break;
-							
-						case "--pre":
-							right = Pop(stack);
-							--FindVar(right.value).value;
-							stack.Add(new ExprStackObject(right.Calc()));
-							break;
-							
-						case "--post":
-							right = Pop(stack);
-							stack.Add(new ExprStackObject(right.Calc()));
-							--FindVar(right.value).value;
-							break;
-							
-						case "=":
-							right = Pop(stack);
-							left = Pop(stack);
-							try
-							{
-								dynamic rightval = right.Calc();
-								string su = (string) left.value;
-								VarData data = FindVar(su);
-								Debug("ishere?");
-								if (data.value.GetType() == rightval.GetType())
-									data.value = rightval;
-								else if (data.type == VarType.Double)
-									data.value = (double)rightval;
-								else
-									Error("Can't convert \"" + rightval + "\" to " + data.type);
-								Debug("oshere?");
-								Debug($"var \"{left.value}\" of type {FindVar(left.value).type} = {data.value}");	
-								stack.Add(new ExprStackObject(data.value));
-							}
-							catch (KeyNotFoundException e)
-							{							
-								Error("Variable " + left.value + " does not exist in current context1\n" + e.StackTrace);
-							}
-							break;
-						
-						case "+=":
-							right = Pop(stack);
-							left = Pop(stack);
-							try
-							{
-								dynamic rightval = right.Calc();
-								VarData data = FindVar(left.value);
-								if (data.value.GetType() == rightval.GetType())
-									data.value += rightval;
-								else if (data.type == VarType.Double)
-									data.value += (double)rightval;
-								else
-									Error("Can't convert \"" + rightval + "\" to " + data.type);
-								stack.Add(new ExprStackObject(data.value));
-							}
-							catch (KeyNotFoundException)
-							{
-								Error("Variable " + left.value + " does not exist in current context2");
-							}
-							break;
-						
-						case "-=":
-							right = Pop(stack);
-							left = Pop(stack);
-							try
-							{
-								dynamic rightval = right.Calc();
-								VarData data = FindVar(left.value);
-								if (data.value.GetType() == rightval.GetType())
-									data.value -= rightval;
-								else if (data.type == VarType.Double)
-									data.value -= (double)rightval;
-								else
-									Error("Can't convert \"" + rightval + "\" to " + data.type);
-								stack.Add(new ExprStackObject(data.value));
-							}
-							catch (KeyNotFoundException)
-							{
-								Error("Variable " + left.value + " does not exist in current context3");
-							}
-							break;
-						
-						case "*=":
-							right = Pop(stack);
-							left = Pop(stack);
-							try
-							{
-								dynamic rightval = right.Calc();
-								VarData data = FindVar(left.value);
-								if (data.value.GetType() == rightval.GetType())
-									data.value *= rightval;
-								else if (data.type == VarType.Double)
-									data.value *= (double)rightval;
-								else
-									Error("Can't convert \"" + rightval + "\" to " + data.type);
-								stack.Add(new ExprStackObject(data.value));
-							}
-							catch (KeyNotFoundException)
-							{
-								Error("Variable " + left.value + " does not exist in current context4");
-							}
-							break;
-						
-						case "/=":
-							right = Pop(stack);
-							left = Pop(stack);
-							try
-							{
-								dynamic rightval = right.Calc();
-								VarData data = FindVar(left.value);
-								if (data.value.GetType() == rightval.GetType())
-									data.value /= rightval;
-								else if (data.type == VarType.Double)
-									data.value /= (double)rightval;
-								else
-									Error("Can't convert \"" + rightval + "\" to " + data.type);
-								stack.Add(new ExprStackObject(data.value));
-							}
-							catch (KeyNotFoundException)
-							{
-								Error("Variable " + left.value + " does not exist in current context5");
-							}
-							break;
-							
-						case "sin":
-							right = Pop(stack);
-							stack.Add(new ExprStackObject(Math.Sin(right.Calc())));
-							break;
-						
-						case "cos":
-							right = Pop(stack);
-							stack.Add(new ExprStackObject(Math.Cos(right.Calc())));
-							break;
-						
-						case "tan":
-							right = Pop(stack);
-							stack.Add(new ExprStackObject(Math.Tan(right.Calc())));
-							break;
-						
-						case "asin":
-							right = Pop(stack);
-							stack.Add(new ExprStackObject(Math.Asin(right.Calc())));
-							break;
-						
-						case "acos":
-							right = Pop(stack);
-							stack.Add(new ExprStackObject(Math.Acos(right.Calc())));
-							break;
-						
-						case "atan":
-							right = Pop(stack);
-							stack.Add(new ExprStackObject(Math.Atan(right.Calc())));
-							break;
-						
-						case "atan2":
-							right = Pop(stack);
-							left = Pop(stack);
-							stack.Add(new ExprStackObject(Math.Atan2(left.Calc(), right.Calc())));
-							break;
-					}
+					dynamic leftVal, rightVal;
+                    					switch (elem.value)
+                    					{
+                    						case "&&":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							leftVal = left.Calc();
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(leftVal, rightVal))
+                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
+                    							stack.Add(new ExprStackObject(leftVal && rightVal));
+                    							break;
+                    						
+                    						case "||":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							leftVal = left.Calc();
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(leftVal, rightVal))
+                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
+                    							stack.Add(new ExprStackObject(leftVal || rightVal));
+                    							break;
+                    						
+                    						case "!":
+                    							right = Pop(stack);
+                    							rightVal = right.Calc();
+                    							if (rightVal.GetType() != typeof(bool))
+                    								Error("Bool is required instead of " + rightVal);
+                    							stack.Add(new ExprStackObject(!rightVal));
+                    							break;
+                    							
+                    						case "<":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							leftVal = left.Calc();
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(leftVal, rightVal))
+                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
+                    							stack.Add(new ExprStackObject(leftVal < rightVal));
+                    							break;
+                    						
+                    						case ">":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							leftVal = left.Calc();
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(leftVal, rightVal))
+                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
+                    							stack.Add(new ExprStackObject(leftVal > rightVal));
+                    							break;
+                    						
+                    						case "==":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							leftVal = left.Calc();
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(leftVal, rightVal))
+                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
+                    							stack.Add(new ExprStackObject(leftVal == rightVal));
+                    							break;
+                    						
+                    						case "!=":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							leftVal = left.Calc();
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(leftVal, rightVal))
+                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
+                    							stack.Add(new ExprStackObject(leftVal != rightVal));
+                    							break;
+                    						
+                    						case "<=":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							leftVal = left.Calc();
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(leftVal, rightVal))
+                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
+                    							stack.Add(new ExprStackObject(leftVal <= rightVal));
+                    							break;
+                    						
+                    						case ">=":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							leftVal = left.Calc();
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(leftVal, rightVal))
+                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
+                    							stack.Add(new ExprStackObject(leftVal >= rightVal));
+                    							break;
+                    					
+                    						case "+":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							leftVal = left.Calc();
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(leftVal, rightVal))
+                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
+                    							stack.Add(new ExprStackObject(leftVal + rightVal));
+                    							break;
+                    						
+                    						case "-":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							leftVal = left.Calc();
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(leftVal, rightVal))
+                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
+                    							stack.Add(new ExprStackObject(leftVal - rightVal));
+                    							break;
+                    						
+                    						case "*":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							leftVal = left.Calc();
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(leftVal, rightVal))
+                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
+                    							stack.Add(new ExprStackObject(leftVal * rightVal));
+                    							break;
+                    						
+                    						case "/":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							leftVal = left.Calc();
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(leftVal, rightVal))
+                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
+                    							stack.Add(new ExprStackObject(leftVal / rightVal));
+                    							break;
+                    						
+                    						case "++pre":
+                    							right = Pop(stack);
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(0, rightVal))
+                    								Error(rightVal + " can't be incremented");
+                    							++FindVar(right.value).value;
+                    							stack.Add(new ExprStackObject(rightVal));
+                    							break;
+                    							
+                    						case "++post":
+                    							right = Pop(stack);
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(0, rightVal))
+                    								Error(rightVal + " can't be incremented");
+                    							stack.Add(new ExprStackObject(rightVal));
+                    							++FindVar(right.value).value;
+                    							break;
+                    							
+                    						case "--pre":
+                    							right = Pop(stack);
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(0, rightVal))
+                    								Error(rightVal + " can't be decremented");
+                    							--FindVar(right.value).value;
+                    							stack.Add(new ExprStackObject(rightVal));
+                    							break;
+                    							
+                    						case "--post":
+                    							right = Pop(stack);
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(0, rightVal))
+                    								Error(rightVal + " can't be decremented");
+                    							stack.Add(new ExprStackObject(rightVal));
+                    							--FindVar(right.value).value;
+                    							break;
+                    							
+                    						case "=":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							try
+                    							{
+                    								foreach(var key in curBlock.varTable.Keys)
+                    								{
+                    									Debug($"|||{key}||| with type {curBlock.varTable[key].value.GetType()}");
+                    									if (key == "op")
+                    									{
+                    										Debug(curBlock.varTable["op"].value + "nono");
+                    									}
+                    								}
+                    								rightVal = right.Calc();
+                    								if (!isCompatible(left, rightVal, true))
+                    									Error("Can't assign " + rightVal + " to " + left.value);
+                    								dynamic rightval = rightVal;
+                    								string su = (string) left.value;
+                    								VarData data = FindVar(su);
+                    								Debug("ishere?");
+                    								if (data.value.GetType() == rightval.GetType())
+                    									data.value = rightval;
+                    								else if (data.type == VarType.Double)
+                    									data.value = (double)rightval;
+                    								else
+                    									Error("Can't convert \"" + rightval + "\" to " + data.type);
+                    								Debug("oshere?");
+                    								Debug($"var \"{left.value}\" of type {FindVar(left.value).type} = {data.value}");	
+                    								stack.Add(new ExprStackObject(data.value));
+                    							}
+                    							catch (KeyNotFoundException e)
+                    							{
+                    								Debug("what exist");
+                    								foreach(var key in curBlock.varTable.Keys)
+                    								{
+                    									Debug($"|||{key}||| with type {curBlock.varTable[key].value.GetType()}");
+                    									if (key == "op")
+                    									{
+                    										Debug(curBlock.varTable["op"].value + "ioio");
+                    									}
+                    								}
+                                                								
+                    								Error("Variable " + left.value + " does not exist in current context1\n" + e.StackTrace);
+                    							}
+                    							break;
+                    						
+                    						case "+=":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							try
+                    							{
+                    								rightVal = right.Calc();
+                    								if (!isCompatible(left, rightVal, true))
+                    									Error("Can't assign " + rightVal + " to " + left.value);
+                    								dynamic rightval = rightVal;
+                    								VarData data = FindVar(left.value);
+                    								if (data.value.GetType() == rightval.GetType())
+                    									data.value += rightval;
+                    								else if (data.type == VarType.Double)
+                    									data.value += (double)rightval;
+                    								else
+                    									Error("Can't convert \"" + rightval + "\" to " + data.type);
+                    								stack.Add(new ExprStackObject(data.value));
+                    							}
+                    							catch (KeyNotFoundException)
+                    							{
+                    								Error("Variable " + left.value + " does not exist in current context2");
+                    							}
+                    							break;
+                    						
+                    						case "-=":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							try
+                    							{
+                    								rightVal = right.Calc();
+                    								if (!isCompatible(left, rightVal, true))
+                    									Error("Can't assign " + rightVal + " to " + left.value);
+                    								dynamic rightval = rightVal;
+                    								VarData data = FindVar(left.value);
+                    								if (data.value.GetType() == rightval.GetType())
+                    									data.value -= rightval;
+                    								else if (data.type == VarType.Double)
+                    									data.value -= (double)rightval;
+                    								else
+                    									Error("Can't convert \"" + rightval + "\" to " + data.type);
+                    								stack.Add(new ExprStackObject(data.value));
+                    							}
+                    							catch (KeyNotFoundException)
+                    							{
+                    								Error("Variable " + left.value + " does not exist in current context3");
+                    							}
+                    							break;
+                    						
+                    						case "*=":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							try
+                    							{
+                    								rightVal = right.Calc();
+                    								if (!isCompatible(left, rightVal, true))
+                    									Error("Can't assign " + rightVal + " to " + left.value);
+                    								dynamic rightval = rightVal;
+                    								VarData data = FindVar(left.value);
+                    								if (data.value.GetType() == rightval.GetType())
+                    									data.value *= rightval;
+                    								else if (data.type == VarType.Double)
+                    									data.value *= (double)rightval;
+                    								else
+                    									Error("Can't convert \"" + rightval + "\" to " + data.type);
+                    								stack.Add(new ExprStackObject(data.value));
+                    							}
+                    							catch (KeyNotFoundException)
+                    							{
+                    								Error("Variable " + left.value + " does not exist in current context4");
+                    							}
+                    							break;
+                    						
+                    						case "/=":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							try
+                    							{
+                    								rightVal = right.Calc();
+                    								if (!isCompatible(left, rightVal, true))
+                    									Error("Can't assign " + rightVal + " to " + left.value);
+                    								dynamic rightval = rightVal;
+                    								VarData data = FindVar(left.value);
+                    								if (data.value.GetType() == rightval.GetType())
+                    									data.value /= rightval;
+                    								else if (data.type == VarType.Double)
+                    									data.value /= (double)rightval;
+                    								else
+                    									Error("Can't convert \"" + rightval + "\" to " + data.type);
+                    								stack.Add(new ExprStackObject(data.value));
+                    							}
+                    							catch (KeyNotFoundException)
+                    							{
+                    								Error("Variable " + left.value + " does not exist in current context5");
+                    							}
+                    							break;
+                    							
+                    						case "sin":
+                    							right = Pop(stack);
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(0.0, rightVal))
+                    								Error("Can't convert " + rightVal + " to double");
+                    							stack.Add(new ExprStackObject(Math.Sin(rightVal)));
+                    							break;
+                    						
+                    						case "cos":
+                    							right = Pop(stack);
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(0.0, rightVal))
+                    								Error("Can't convert " + rightVal + " to double");
+                    							stack.Add(new ExprStackObject(Math.Cos(rightVal)));
+                    							break;
+                    						
+                    						case "tan":
+                    							right = Pop(stack);
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(0.0, rightVal))
+                    								Error("Can't convert " + rightVal + " to double");
+                    							stack.Add(new ExprStackObject(Math.Tan(rightVal)));
+                    							break;
+                    						
+                    						case "asin":
+                    							right = Pop(stack);
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(0.0, rightVal))
+                    								Error("Can't convert " + rightVal + " to double");
+                    							stack.Add(new ExprStackObject(Math.Asin(rightVal)));
+                    							break;
+                    						
+                    						case "acos":
+                    							right = Pop(stack);
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(0.0, rightVal))
+                    								Error("Can't convert " + rightVal + " to double");
+                    							stack.Add(new ExprStackObject(Math.Acos(rightVal)));
+                    							break;
+                    						
+                    						case "atan":
+                    							right = Pop(stack);
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(0.0, rightVal))
+                    								Error("Can't convert " + rightVal + " to double");
+                    							stack.Add(new ExprStackObject(Math.Atan(rightVal)));
+                    							break;
+                    						
+                    						case "atan2":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							rightVal = right.Calc();
+                    							leftVal = left.Calc();
+                    							if (!isCompatible(0.0, rightVal))
+                    								Error("Can't convert " + rightVal + " to double");
+                    							if (!isCompatible(0.0, leftVal))
+                    								Error("Can't convert " + leftVal + " to double");
+                    							stack.Add(new ExprStackObject(Math.Atan2(leftVal, rightVal)));
+                    							break;
+                    					}
 					
 				}
 			}
@@ -706,7 +854,7 @@ options {
             {
             	var res = stack[0];
             	res.Calc();
-            	if (res.value is string ss && curBlock.varTable.ContainsKey(ss))
+            	if (res.value is string ss && FindVar(ss) != null)
 				{
             		Debug($"Result is {FindVar(ss).value}");
             		value = FindVar(ss).value;
@@ -736,7 +884,7 @@ options {
 		{
 			Error($"Unknown var {name}!!!");
 		}
-		return par.varTable[name];
+		return par?.varTable[name];
 	} 
 	
 	public class Cycles: OperationClass
@@ -780,16 +928,16 @@ options {
     
     public class For:Cycles
     {
-		ExprClass refExpr2;
-    	ExprClass refExpr3;
+		public ExprClass first;
+    	public ExprClass last;
     	
         public override dynamic Eval()
         {
-			refExpr2.Eval();
+			first.Eval();
             while(cond.Eval())
             {
             	cycleBlock.Eval();
-				refExpr3.Eval(); 
+				last.Eval(); 
             }
     		return null;
         }
@@ -992,7 +1140,7 @@ code : (operation[curBlock.createOperationClass()])*;
 main_code : (operation[curBlock.createOperationClass()])*;
 
 operation[OperationClass oper] : call[curBlock.ToExpr()] | custom_call[curBlock.ToExpr()] | declare[curBlock.ToExpr()] | ariphExprEx[curBlock.ToExpr()] | boolExprEx[curBlock.ToExpr()]
-			| myif[new Condition()]|myif_short[new Condition()]|mywhile[curBlock.ToExpr()]|mydo_while[curBlock.ToExpr()]|myfor[new For()];
+			| myif[curBlock.ToExpr()]|myif_short[curBlock.ToExpr()]|mywhile[curBlock.ToExpr()]|mydo_while[curBlock.ToExpr()]|myfor[curBlock.ToExpr()];
 
 method_return[OperationClass oper] returns [string type, dynamic value]: RETURN_KEYWORD val_or_id[curBlock.ToExpr()] {
 	Debug($"val_or_id3 is {$val_or_id.text}");
@@ -1185,29 +1333,47 @@ val_or_id[ExprClass oper] returns [string type, dynamic value]:
 			};
 
 //cyclemetka
-myif[Condition condition]: IF LPAREN boolExprEx[null]{condition.cond=$boolExprEx.res;} RPAREN 
+myif[ExprClass oper]: IF LPAREN boolExprEx[$oper] RPAREN 
      OBRACE 
      {
-     	
-     	//curBlock = 
+     	Condition ifer = new Condition()
+		{
+			cond=$boolExprEx.res
+		};
+		curBlock.operations.Add(ifer);
+		ifer.cycleBlock.Parent = curBlock;
+		curBlock = ifer.cycleBlock;
      }
     (operation[curBlock.createOperationClass()])* 
     CBRACE
      ELSE 
-      OBRACE  
+      OBRACE
+      {
+      	ifer.elseIfBlock.Parent = curBlock.Parent;
+      	curBlock = ifer.elseIfBlock;
+      } 
     (operation[curBlock.createOperationClass()])*
     CBRACE
     {
-        // добавление в общую таблицу вызовов?
+        curBlock = curBlock.Parent;
      }
    ;
-myif_short[Condition condition]: IF LPAREN boolExprEx[null]{condition.cond=$boolExprEx.res;}  RPAREN 
-    OBRACE
+myif_short[ExprClass oper]: IF LPAREN boolExprEx[$oper] RPAREN 
+    OBRACE 
+    {
+    		Condition ifer = new Condition()
+         	{
+         		cond=$boolExprEx.res
+         	};
+         	curBlock.operations.Add(ifer);
+         	ifer.cycleBlock.Parent = curBlock;
+         	curBlock = ifer.cycleBlock;
+    }
     (operation[curBlock.createOperationClass()])* 
     CBRACE
     {
-        // добавление в общую таблицу вызовов?
-     }
+        curBlock = curBlock.Parent;
+    }
    ;
 mywhile[ExprClass oper]: WHILE LPAREN boolExprEx[$oper] RPAREN 
      OBRACE 
@@ -1242,15 +1408,26 @@ mydo_while[ExprClass oper]: DO
             	curBlock = curBlock.Parent;
            }
           ;
-myfor[For obj]:  FOR LPAREN ariphExprEx[null]
-                 SEMICOLON boolExprEx[null] 
-                 SEMICOLON ariphExprEx[null] RPAREN
+myfor[ExprClass oper]:  FOR LPAREN f=ariphExprEx[$oper]
+                 SEMICOLON boolExprEx[$oper] 
+                 SEMICOLON l=ariphExprEx[$oper] RPAREN
         OBRACE
+        {
+        				For forer = new For()
+        				{
+                             cond = $boolExprEx.res,
+                             first = $f.res,
+                             last = $l.res
+                        };
+                       	curBlock.operations.Add(forer);
+                       	forer.cycleBlock.Parent = curBlock;
+                       	curBlock = forer.cycleBlock;
+        }
         (operation[curBlock.createOperationClass()])*
         CBRACE
         { 
-            // добавление в общую таблицу вызовов?
-         }
+        	curBlock = curBlock.Parent;    
+        }
      ;
 
 //Code related to variables
