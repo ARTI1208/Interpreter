@@ -1,7 +1,7 @@
-fun int soo(int res, int dec)
+fun bool soo(int res, int dec)
 {
 	int w = res
-	return res + 20
+	return res < 20
 }
 
 fun int foo(int res, int sec, int th, int y)
@@ -16,4 +16,10 @@ fun void main()
 	move(5.9)
 	shoot()
 	turn(7.3)
+	int y = getSelfId()
+	double w = getHealth(3)
+	double z = getPositionX(7)
+	double zu = getPositionY(5)
+	int zuz = getDirection(5)
+	bool ty = soo(5, 8)
 }

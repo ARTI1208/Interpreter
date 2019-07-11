@@ -55,7 +55,7 @@ options {
     {
         public string name;
 		public bool isMeaningful;
-        public ReturnType returnType;
+        public ReturnType returnType = ReturnType.Void;
         public ArrayList<NinjaParser.ParamData> paramList = new ArrayList<NinjaParser.ParamData>();
         
 		public dynamic returnValue;
@@ -151,6 +151,16 @@ options {
     		if (CheckType(r.GetType(), method.paramList[i].type))
     		{
     			method.paramList[i].value = r;
+				if (!method.varTable.ContainsKey(method.paramList[i].name))
+               	{
+                	VarData varData = new VarData()
+                	{
+                		name = method.paramList[i].name,
+						type = method.paramList[i].type
+               		};
+               		method.varTable.Add(varData.name, varData);
+               	}
+                	                
     			method.varTable[method.paramList[i].name].value = r;
     			Console.WriteLine($"Param \"{method.paramList[i].name}\" of type {method.paramList[i].type} with val {call.paramList[i].value}");
     		}
@@ -257,29 +267,35 @@ options {
 			}
 			else
 			{
-				Console.WriteLine($"Calling builtin method {name} with params {ParamListToString(paramList)}");
-				//					Console.WriteLine(call.name);
-				switch (name)
+				if (NinjaParser.metTable.ContainsKey(name))
 				{
-					case "move":
-				//							Console.WriteLine($"move byte");
-						_bytes.Add(1);
-						break;
-					case "turn":
-				//							Console.WriteLine("turn byte");
-						_bytes.Add(2);
-						break;
-					case "hit":
-				//							Console.WriteLine($"hit byte");
-						_bytes.Add(3);
-						break;
-					case "shoot":
-				//							Console.WriteLine($"shoot byte");
-						_bytes.Add(4);
-						break;
-					default:
-						Console.WriteLine($"no byte for this op {name}");
-						break;
+					if(CheckParams(this, NinjaParser.metTable[name]))
+					{
+						Console.WriteLine($"Calling builtin method {name} with params {ParamListToString(paramList)}, ret {NinjaParser.metTable[name].returnValue}");
+						return NinjaParser.metTable[name].returnValue;
+					}	
+				} 
+				else
+				{			
+					Console.WriteLine($"Calling builtin method {name} with params {ParamListToString(paramList)}");
+					switch (name)
+					{
+						case "move":
+							_bytes.Add(1);
+							break;
+						case "turn":
+							_bytes.Add(2);
+							break;
+						case "hit":
+							_bytes.Add(3);
+							break;
+						case "shoot":
+							_bytes.Add(4);
+							break;
+						default:
+							Error($"Unknown builtin method {name}");
+							break;
+					}
 				}
 			}
 			return null;
@@ -400,7 +416,22 @@ options {
 						val.Calc();
 						pars[i].value = val.value;
 					}
-					var result = elem.value.Eval();
+					dynamic result;
+					if (elem.value == null)
+					{
+						result = -1;
+					}
+					else
+					{
+						if (elem.value.GetType() == typeof(int))
+							result = elem.value;
+						else if (elem.value.GetType() == typeof(double))
+							result = elem.value;
+						else if (elem.value.GetType() == typeof(bool))
+							result = elem.value;
+						else
+							result = elem.value.Eval();
+					}
 					stack.Add(new ExprStackObject(result));
 				}
 				else
@@ -707,6 +738,60 @@ program : function* main function* {
                 			sm.Eval();
                 		}
                 	}*/
+                MethodData getSelfId = new MethodData(){
+                	name = "getSelfId",
+                    returnType = ReturnType.Int
+                };	
+                MethodData getHealth = new MethodData(){
+                    name = "getHealth",
+                    returnType = ReturnType.Int
+                };
+                ParamData ghp = new ParamData();
+                ghp.name = "id";
+				ghp.paramType = ParamType.Receive;
+				ghp.type = VarType.Int;
+				getHealth.paramList.Add(ghp);
+                MethodData getPositionX = new MethodData(){
+					name = "getPositionX",
+					returnType = ReturnType.Double
+				};
+				ParamData gpxp = new ParamData();
+				gpxp.name = "id";
+                gpxp.paramType = ParamType.Receive;
+                gpxp.type = VarType.Int;
+               	getPositionX.paramList.Add(gpxp);
+                MethodData getPositionY = new MethodData(){
+                    name = "getPositionY",
+					returnType = ReturnType.Double
+				};
+				ParamData gpyp = new ParamData();
+				gpyp.name = "id";
+				gpyp.paramType = ParamType.Receive;
+				gpyp.type = VarType.Int;
+                getPositionY.paramList.Add(gpyp);
+				MethodData getDirection = new MethodData(){
+					name = "getDirection",
+					returnType = ReturnType.Double
+				};
+                ParamData gdp = new ParamData();
+                gdp.name = "id";
+				gdp.paramType = ParamType.Receive;
+				gdp.type = VarType.Int;
+				getDirection.paramList.Add(gdp);
+				
+				
+				getSelfId.returnValue = 0;
+				getHealth.returnValue = 10;
+				getPositionX.returnValue = 0.0;
+				getPositionY.returnValue = 0.0;
+                getDirection.returnValue = 90.0;
+                
+                               	
+                metTable.Add("getSelfId", getSelfId);
+                metTable.Add("getHealth", getHealth);
+                metTable.Add("getPositionX", getPositionX);
+                metTable.Add("getPositionY", getPositionY);
+                metTable.Add("getDirection", getDirection);
 				metTable["main"].Eval();
 };
 
@@ -868,7 +953,7 @@ builtin_func_p : 'move'|'turn' ;
 
 builtin_func_e : 'hit'|'shoot' ;  
 
-call[ExprClass oper] : parameterized_call[$oper] {
+call[ExprClass oper] returns [CallData callData] : parameterized_call[$oper] {
 
 	CallData data = new CallData(){
 		callType = CallType.BuiltIn, 
@@ -877,24 +962,42 @@ call[ExprClass oper] : parameterized_call[$oper] {
 		parent = curBlock
 	};
 	
-	ParamData d = new ParamData()
-	{
-		type = VarType.Double, 
-		value = _localctx._parameterized_call.ariphExprEx().GetText()
-	};
-	
-	//if($parameterized_call.res.isEvaluated)
-	//	d.value = $parameterized_call.res.value;
-	//else	
-		d.value = $parameterized_call.res;
-    d.paramType = ParamType.Pass;				
-    data.paramList.Add(d);
-    Debug($"Adding param, type {d.value.GetType()}");
-	
 	string methodName = currentMet;
 	if(methodName != "?"){
 		metTable[methodName].operations.Add(data);
 	}
+	
+	foreach (var par in _localctx._parameterized_call.call_params().val_or_id())
+    	{
+    		
+    		ParamData d = new ParamData();
+    		d.paramType = ParamType.Pass;
+    		switch (par.type)
+            {
+            	case "int":
+            		d.type = VarType.Int;		
+            		break;
+            	case "double":
+            		d.type = VarType.Double;
+            		break;
+            	case "bool":
+            		d.type = VarType.Bool;
+            		break;
+            	//case "other":
+            	//	break;
+            						
+            	default:
+            		Error($"Unknown type {par.type}");
+            		//throw new NotImplementedException();
+            		break;
+            }
+            d.value = par.value;
+            //Debug($"{d.value} of {d.value.GetType()}");
+    		data.paramList.Insert(0, d);    
+    		Debug($"Adding param, type {d.value.GetType()}");			
+    		//data.paramList.Add(d);    			
+    	}
+		$callData = data;
 
 } | simple_call {
 
@@ -904,16 +1007,16 @@ call[ExprClass oper] : parameterized_call[$oper] {
 		returnType = ReturnType.Void,
         parent = curBlock
 	};
-
+	$callData = data;
 	string methodName = currentMet;
 	if(methodName != "?"){
 		metTable[methodName].operations.Add(data);
 	}
 };
 
-parameterized_call[ExprClass oper] returns [ExprClass res, ReturnType type]: builtin_func_p LPAREN ariphExprEx[new ExprClass(curBlock.createOperationClass())] RPAREN {
+parameterized_call[ExprClass oper] returns [ExprClass res, ReturnType type]: builtin_func_p LPAREN call_params[$oper] RPAREN {
 	$type = ReturnType.Void;
-	$res = $ariphExprEx.res;
+	$res = $oper;
 } | builtin_func_state LPAREN call_params[$oper] RPAREN {
     $type = $builtin_func_state.returnType;
     $res = $oper;
@@ -1027,6 +1130,15 @@ ariphOperand[ExprClass oper]:
 					});
 					Debug("rrigthCall");
              	}
+             | call[$oper]
+             	{
+                    $oper.Push(new ExprStackObject()
+             		{
+             			type = ObjType.Function,
+             			value = $call.callData
+             		});
+             		Debug("parrrigthCall");
+                }	
              | ariphID[$oper]
                {
                    Console.WriteLine($"founy idd {$ariphID.text} val undefined");
