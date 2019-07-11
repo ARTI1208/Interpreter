@@ -1051,7 +1051,7 @@ call[ExprClass oper] returns [CallData callData] : parameterized_call[$oper] {
 	
 	string methodName = currentMet;
 	if(methodName != "?"){
-		metTable[methodName].operations.Add(data);
+		curBlock.operations.Add(data);
 	}
 	
 	foreach (var par in _localctx._parameterized_call.call_params().val_or_id())
@@ -1097,7 +1097,7 @@ call[ExprClass oper] returns [CallData callData] : parameterized_call[$oper] {
 	$callData = data;
 	string methodName = currentMet;
 	if(methodName != "?"){
-		metTable[methodName].operations.Add(data);
+		curBlock.operations.Add(data);
 	}
 };
 
@@ -1153,11 +1153,7 @@ custom_call[ExprClass oper] returns [string funName, CallData callData]: ID LPAR
 	}
 	
 	string methodName = currentMet;
-    /*if(methodName != "?" && CheckParams(data, metTable[callName])){
-    	metTable[methodName].operations.Add(data);
-    }*/
 	$callData = data;
-
 };
 
 call_params[ExprClass oper] : (val_or_id[$oper] {Debug($"val_or_id1 is {$val_or_id.text}");} (COMMA val_or_id[$oper] {Debug($"val_or_id2 is {$val_or_id.text}");})*)?;
@@ -1227,7 +1223,7 @@ mywhile[ExprClass oper]: WHILE LPAREN boolExprEx[$oper]{} RPAREN
      (operation[curBlock.createOperationClass()])*
      CBRACE 
      {
-        // добавление в общую таблицу вызовов?
+        curBlock = curBlock.Parent;
       }
        ;
 mydo_while[Do_while obj]: DO 

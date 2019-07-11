@@ -2187,7 +2187,7 @@ public partial class NinjaParser : Parser {
 					
 					string methodName = currentMet;
 					if(methodName != "?"){
-						metTable[methodName].operations.Add(data);
+						curBlock.operations.Add(data);
 					}
 					
 					foreach (var par in _localctx._parameterized_call.call_params().val_or_id())
@@ -2241,7 +2241,7 @@ public partial class NinjaParser : Parser {
 					_localctx.callData =  data;
 					string methodName = currentMet;
 					if(methodName != "?"){
-						metTable[methodName].operations.Add(data);
+						curBlock.operations.Add(data);
 					}
 
 				}
@@ -2473,11 +2473,7 @@ public partial class NinjaParser : Parser {
 				}
 				
 				string methodName = currentMet;
-			    /*if(methodName != "?" && CheckParams(data, metTable[callName])){
-			    	metTable[methodName].operations.Add(data);
-			    }*/
 				_localctx.callData =  data;
-
 
 			}
 		}
@@ -2907,7 +2903,7 @@ public partial class NinjaParser : Parser {
 			}
 			State = 304; Match(CBRACE);
 
-			        // добавление в общую таблицу вызовов?
+			        curBlock = curBlock.Parent;
 			      
 			}
 		}

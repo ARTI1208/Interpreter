@@ -1,9 +1,18 @@
 fun void main()
 {
+	turn(3)
 	int u = 5
+	int t = 0
 	while (u < 10)
 	{
+		t = 0
+		while (t < 2)
+        {
+			shoot()
+			t++	        	
+        }
 		hit()
 		u = u + 1
 	}
+	move(5)
 }
