@@ -171,7 +171,8 @@ public partial class NinjaParser : Parser {
 	        	Debug($"===Entering fun {name} with params {ParamListToString(paramList)}");
 	            foreach(var sm in operations)
 	            {
-	            	sm.Eval();
+	            	if(sm.GetType().IsSubclassOf(typeof(OperationClass)))
+	            		sm.Eval();
 	            }
 	            
 	            Debug($"---Vars of block met {name} ----");	
@@ -275,13 +276,21 @@ public partial class NinjaParser : Parser {
 	    	string s = "{";
 	    	foreach (var data in list)
 	    	{
-	    		if (data.paramType == NinjaParser.ParamType.Pass)
-	    		{
-	    			s += $" {data.type} {data.value},";	
-	    		}
+	    	
+	    		if(data.value.GetType() == typeof(ExprClass))
+	    			s += $" {data.type} {data.value.Eval()},";
 	    		else
 	    		{
-	    			s += $" {data.type} {data.name} = {data.value},";	
+	    	
+	    			if (data.paramType == NinjaParser.ParamType.Pass)
+	    			{
+		    			s += $" {data.type} {data.value},";	
+	    			}
+		    		else
+	    			{
+	    				s += $" {data.type} {data.name} = {data.value},";	
+	    			}
+	    		
 	    		}
 	    	}
 	    
