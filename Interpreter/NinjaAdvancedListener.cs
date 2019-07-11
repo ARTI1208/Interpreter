@@ -274,6 +274,16 @@ namespace Interpreter
             
         }
 
+        public void EnterBuiltin_func_state(NinjaParser.Builtin_func_stateContext context)
+        {
+	        
+        }
+
+        public void ExitBuiltin_func_state(NinjaParser.Builtin_func_stateContext context)
+        {
+	        
+        }
+
         public void EnterBuiltin_func_p([NotNull] NinjaParser.Builtin_func_pContext context)
         {
             

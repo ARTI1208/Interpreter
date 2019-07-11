@@ -203,6 +203,18 @@ public partial class NinjaBaseListener : INinjaListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitVar_signature([NotNull] NinjaParser.Var_signatureContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.builtin_func_state"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterBuiltin_func_state([NotNull] NinjaParser.Builtin_func_stateContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.builtin_func_state"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitBuiltin_func_state([NotNull] NinjaParser.Builtin_func_stateContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="NinjaParser.builtin_func_p"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

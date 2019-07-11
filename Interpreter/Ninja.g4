@@ -125,8 +125,10 @@ options {
     
     	for (int i = 0; i < call.paramList.Count; i++)
     	{
-    		var r = call.paramList[i].value;//.Eval();		
+    		var r = call.paramList[call.paramList.Count - i - 1].value;//.Eval();		
     		//if (call.paramList[i].type == method.paramList[i].type)
+    		if (r.GetType() == typeof(string))
+    			r = curBlock.varTable[r].value;
     		if (CheckType(r.GetType(), method.paramList[i].type))
     		{
     			method.paramList[i].value = r;
@@ -135,7 +137,7 @@ options {
     		}
     		else
     		{
-    			Console.WriteLine($"Type mismatch: expected {method.paramList[i].type}, found {call.paramList[i].type} with value {call.paramList[i].value}");
+    			Console.WriteLine($"Type mismatch ({i+1}/{call.paramList.Count}): expected {method.paramList[i].type}, found {r.GetType()} with value {call.paramList[call.paramList.Count - i - 1].value}");
     			return false;
     		}
     	}
@@ -308,7 +310,7 @@ options {
             					return value;
             				if (type == ObjType.Var)
             				{
-            					Debug(value);					
+            					Debug(value + curBlock.varTable[value].value);					
             					return curBlock.varTable[value].value;
             				}
             
@@ -822,16 +824,22 @@ var_signature[string funName]: meaningfulType ID
 					metTable[funName].varTable[$ID.text] = newVar;
 				};
 
+builtin_func_state returns [ReturnType returnType] : 	'getSelfId' {$returnType = ReturnType.Int;}|
+														'getPositionX' {$returnType = ReturnType.Double;}|
+														'getPositionY' {$returnType = ReturnType.Double;}|
+														'getDirection' {$returnType = ReturnType.Double;}|
+														'getHealth' {$returnType = ReturnType.Int;};
+
 builtin_func_p : 'move'|'turn' ;
 
 builtin_func_e : 'hit'|'shoot' ;  
 
-call[OperationClass oper] : parameterized_call {
+call[ExprClass oper] : parameterized_call[$oper] {
 
 	CallData data = new CallData(){
 		callType = CallType.BuiltIn, 
 		name = $parameterized_call.text.Substring(0, $parameterized_call.text.IndexOf("(")),
-		returnType = ReturnType.Void,
+		returnType = $parameterized_call.type,
 		parent = curBlock
 	};
 	
@@ -847,6 +855,7 @@ call[OperationClass oper] : parameterized_call {
 		d.value = $parameterized_call.res;
     d.paramType = ParamType.Pass;				
     data.paramList.Add(d);
+    Debug($"Adding param, type {d.value.GetType()}");
 	
 	string methodName = currentMet;
 	if(methodName != "?"){
@@ -868,9 +877,12 @@ call[OperationClass oper] : parameterized_call {
 	}
 };
 
-parameterized_call returns [ExprClass res]: builtin_func_p LPAREN ariphExprEx[new ExprClass(curBlock.createOperationClass())] RPAREN {
-
+parameterized_call[ExprClass oper] returns [ExprClass res, ReturnType type]: builtin_func_p LPAREN ariphExprEx[new ExprClass(curBlock.createOperationClass())] RPAREN {
+	$type = ReturnType.Void;
 	$res = $ariphExprEx.res;
+} | builtin_func_state LPAREN call_params[$oper] RPAREN {
+    $type = $builtin_func_state.returnType;
+    $res = $oper;
 };
 
 simple_call : builtin_func_e LPAREN RPAREN;
@@ -887,7 +899,7 @@ custom_call[ExprClass oper] returns [string funName, CallData callData]: ID LPAR
 
 	foreach (var par in _localctx.call_params().val_or_id())
 	{
-	
+		
 		ParamData d = new ParamData();
 		d.paramType = ParamType.Pass;
 		switch (par.type)
@@ -910,7 +922,10 @@ custom_call[ExprClass oper] returns [string funName, CallData callData]: ID LPAR
         		break;
         }
         d.value = par.value;
-		data.paramList.Add(d);    			
+        //Debug($"{d.value} of {d.value.GetType()}");
+		data.paramList.Insert(0, d);    
+		Debug($"Adding param, type {d.value.GetType()}");			
+		//data.paramList.Add(d);    			
 	}
 	
 	string methodName = currentMet;
@@ -1310,7 +1325,7 @@ WS : [ \t\r\n]+ -> skip ;
 
 //literals
 BOOL    : ('true'|'false') ;
-DOUBLE  : [+-]?DIGIT*[,.]DIGIT+ ;
+DOUBLE  : [+-]?DIGIT*[.]DIGIT+ ;
 INT     : [+-]?DIGIT+ ;
 
 RETURN_KEYWORD : 'return';

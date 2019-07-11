@@ -171,6 +171,16 @@ public interface INinjaListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitVar_signature([NotNull] NinjaParser.Var_signatureContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.builtin_func_state"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterBuiltin_func_state([NotNull] NinjaParser.Builtin_func_stateContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.builtin_func_state"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitBuiltin_func_state([NotNull] NinjaParser.Builtin_func_stateContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="NinjaParser.builtin_func_p"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
