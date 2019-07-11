@@ -1,5 +1,11 @@
+fun bool foo(int res)
+{
+	int w = res
+	return res < 20
+}
+
 fun void main()
 {
-	bool f = false
-	bool g = false || !f
+	int k = 6
+	bool op = foo(6 + k)
 }
