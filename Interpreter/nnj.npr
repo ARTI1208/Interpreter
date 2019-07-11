@@ -1,7 +1,13 @@
 fun bool ret(int ch)
 {
-	int r = ch
+	int r = ch + 5
 	return false
+}
+
+fun void boo(bool is)
+{
+	bool isb = true
+	bool isc = is || false
 }
 
 fun void foo(int a)
@@ -13,10 +19,8 @@ fun void foo(int a)
 fun void main()
 {
 	int f = 1
-	double sn = asin(1)
-	foo(f)
-	int g = f * 2
+	foo(f + 3)
 	bool k = true
 	k = ret(3)
-	bool res = 2 < 2 + 1
+	boo(true)
 }

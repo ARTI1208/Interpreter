@@ -119,6 +119,7 @@ options {
     		{
     			method.paramList[i].value = call.paramList[i].value;
     			method.varTable[method.paramList[i].name].value = call.paramList[i].value;
+    			Console.WriteLine($"Param \"{method.paramList[i].name}\" of type {method.paramList[i].type} with val {call.paramList[i].value}");
     		}
     		else
     		{
@@ -302,6 +303,8 @@ options {
 	{
 		public List<ExprStackObject> exprStack;
 		
+		public bool isEvaluated{get; private set;}
+		
 		public ExprClass(OperationClass parent) : base(parent)
 		{
 			exprStack = new List<ExprStackObject>();
@@ -320,6 +323,8 @@ options {
 			return res;
 		}
 		
+		public dynamic value;
+		
 		public override dynamic Eval()
 		{
 			string s = "";
@@ -327,7 +332,7 @@ options {
 			{
 				s += v.value;
 			}
-			//Debug($"Evaluating {s}");
+			Debug($"Evaluating {s}");
 			List<ExprStackObject> stack = new List<ExprStackObject>();
 			foreach (var elem in exprStack)
 			{
@@ -559,6 +564,15 @@ options {
             {
             	var res = stack[0];
             	res.Calc();
+            	if (res.value is string ss && curBlock.varTable.ContainsKey(ss)){
+            		isEvaluated = true;
+            		Debug($"Result is {curBlock.varTable[ss].value}");
+            		value = curBlock.varTable[ss].value;
+            		return curBlock.varTable[ss].value;
+            	}
+            	isEvaluated = true;
+            	Debug($"Result is {res.value}");
+            	value = res.value;
             	return res.value;	
             }
             Error("Nothing in stack left");
@@ -740,6 +754,11 @@ call[OperationClass oper] : parameterized_call {
 		type = VarType.Double, 
 		value = _localctx._parameterized_call.ariphExprEx().GetText()
 	};
+	
+	if($parameterized_call.res.isEvaluated)
+		d.value = $parameterized_call.res.value;
+	else	
+		d.value = $parameterized_call.res.Eval();
     d.paramType = ParamType.Pass;				
     data.paramList.Add(d);
 	
@@ -763,7 +782,10 @@ call[OperationClass oper] : parameterized_call {
 	}
 };
 
-parameterized_call : builtin_func_p LPAREN ariphExprEx[new ExprClass(curBlock.createOperationClass())] RPAREN ;
+parameterized_call returns [ExprClass res]: builtin_func_p LPAREN ariphExprEx[new ExprClass(curBlock.createOperationClass())] RPAREN {
+
+	$res = $ariphExprEx.res;
+};
 
 simple_call : builtin_func_e LPAREN RPAREN;
 
@@ -816,8 +838,12 @@ val_or_id[OperationClass oper] returns [string type, dynamic value]:
 			ariphExprEx[curBlock.ToExpr()]
 			{
 				
-				$value = 0;
-				if (true) //ariphExprEx.value.GetType() == typeof(int)")
+				if($ariphExprEx.res.isEvaluated)
+                		$value = $ariphExprEx.res.value;
+                	else	
+                		$value = $ariphExprEx.res.Eval();
+				Debug($"param value is {$value}");
+				if ($value.GetType() == typeof(int)) //ariphExprEx.value.GetType() == typeof(int)")
 					$type = "int";
 				else
 					$type = "double";
@@ -825,7 +851,11 @@ val_or_id[OperationClass oper] returns [string type, dynamic value]:
 		  | boolExprEx[curBlock.ToExpr()]
 			{
 				//Debug($"val_or_id is {$boolExprEx.text}");
-				$value = false;
+				if($boolExprEx.res.isEvaluated)
+                     $value = $boolExprEx.res.value;
+                else	
+                      $value = $boolExprEx.res.Eval();
+                Debug($"param value is {$value}");
 				$type = "bool";
 			};
 
@@ -896,10 +926,11 @@ ariphExpr[ExprClass oper]:
 					 Debug("\t rarpy2 term\"" + $ariphTerm.text + "\"");
 				}
             };
-ariphExprEx[ExprClass oper]:
+ariphExprEx[ExprClass oper] returns [ExprClass res]:
             ariphExpr[$oper]
             {
                 Debug("\t arpy1 expr\"" + $ariphExpr.text + "\"");
+                $res = $oper;
             }
           | ariphID[$oper] assigns=(ASSIGN|ADDASSIGN|SUBASSIGN|MULASSIGN|DIVASSIGN) ariphExprEx[$oper]
             {
@@ -908,6 +939,7 @@ ariphExprEx[ExprClass oper]:
 						type = ObjType.Operation,
 						value = $assigns.text
 					 });
+				$res = $oper;
 				Debug("\t arpy2 expr\"" + $ariphExprEx.text + "\"");
             };
 
@@ -944,8 +976,8 @@ boolExpr[ExprClass oper]:
 					value = $andor.text
 				});
            };
-boolExprEx[ExprClass oper]:
-           boolExpr[$oper]
+boolExprEx[ExprClass oper] returns [ExprClass res]:
+           boolExpr[$oper] {$res = $oper;}
          | ariphID[$oper] ASSIGN boolExprEx[$oper]
            {
 				$oper.Push(new ExprStackObject()
@@ -953,6 +985,7 @@ boolExprEx[ExprClass oper]:
 					type = ObjType.Operation,
 					value = "="
 				});
+				$res = $oper;
            };
 
 //declaration
