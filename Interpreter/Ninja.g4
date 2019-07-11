@@ -372,6 +372,16 @@ options {
 								if (par == null)
 								{
 									Console.WriteLine($"Unknown var {value}!!!");
+									Debug($"nkeys {curBlock.varTable.Keys.Count}");
+									foreach (var key in curBlock.varTable.Keys)
+									{
+										Debug($"nkey {key}");
+									}
+									
+									foreach (var key in curBlock.Parent.varTable.Keys)
+                                    									{
+                                    										Debug($"nkey2 {key}");
+                                    									}
 								}
 								Debug(value + par.varTable[value].value);
             					return par.varTable[value].value;
@@ -933,11 +943,12 @@ options {
     	
         public override dynamic Eval()
         {
-			first.Eval();
+			Debug($"forfirst is {first.Eval()}");
+			Debug($"forcond is {cond.Eval()}");
             while(cond.Eval())
             {
             	cycleBlock.Eval();
-				last.Eval(); 
+				Debug($"forlast is {last.Eval()}"); 
             }
     		return null;
         }
@@ -1408,17 +1419,33 @@ mydo_while[ExprClass oper]: DO
             	curBlock = curBlock.Parent;
            }
           ;
-myfor[ExprClass oper]:  FOR LPAREN f=ariphExprEx[$oper]
-                 SEMICOLON boolExprEx[$oper] 
-                 SEMICOLON l=ariphExprEx[$oper] RPAREN
+myfor[ExprClass oper]: {
+
+	ExprClass fExpr = curBlock.ToExpr();
+	ExprClass cExpr = curBlock.ToExpr();
+	ExprClass lExpr = curBlock.ToExpr();
+	
+}  FOR LPAREN (declare[fExpr]
+{
+	fExpr = $declare.res;
+}
+
+
+|ariphExprEx[fExpr]
+{
+	fExpr = $ariphExprEx.res;
+})
+                 SEMICOLON boolExprEx[cExpr] 
+                 SEMICOLON l=ariphExprEx[lExpr] RPAREN
         OBRACE
         {
         				For forer = new For()
         				{
                              cond = $boolExprEx.res,
-                             first = $f.res,
+                             first = fExpr,
                              last = $l.res
                         };
+                        Debug($"cond is {$boolExprEx.text}");
                        	curBlock.operations.Add(forer);
                        	forer.cycleBlock.Parent = curBlock;
                        	curBlock = forer.cycleBlock;
@@ -1537,7 +1564,7 @@ ariphExprEx[ExprClass oper] returns [ExprClass res]:
 						value = $assigns.text
 					 });
 				$res = $oper;
-				Debug("\t arpy2 expr\"" + $ariphExprEx.text + "\"");
+				Debug("\t arpy2 expr\"" + $text + "\"");
             };
 
 boolOperand[ExprClass oper]:
@@ -1613,7 +1640,7 @@ boolExprEx[ExprClass oper] returns [ExprClass res]:
            };
 
 //declaration
-declare[ExprClass oper]: INTKEY ariphID[$oper]
+declare[ExprClass oper] returns [ExprClass res]: INTKEY ariphID[$oper]
           {
            VarData newVar = new VarData
            {
@@ -1634,6 +1661,7 @@ declare[ExprClass oper]: INTKEY ariphID[$oper]
 						value = "="
 					 });
            }
+           $res = $oper;
           }
           
         | DOUBLEKEY ariphID[$oper]
@@ -1657,6 +1685,7 @@ declare[ExprClass oper]: INTKEY ariphID[$oper]
 						value = "="
 					 });
            }
+           $res = $oper;
           }
         | BOOLKEY ariphID[$oper]
           {
@@ -1679,6 +1708,7 @@ declare[ExprClass oper]: INTKEY ariphID[$oper]
 					value = "="
 				});
            }
+           $res = $oper;
           };
 
 ariphID[ExprClass oper] : ID
