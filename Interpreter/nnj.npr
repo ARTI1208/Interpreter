@@ -1,4 +1,4 @@
-fun bool soo(int res, int dec)
+fun int soo(int res, int dec)
 {
 	int w = res
 	return res + 20

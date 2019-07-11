@@ -113,6 +113,17 @@ options {
             return true;
         return false;        	
     }
+    
+    public static bool CheckType(Type t, ReturnType vt)
+        {
+        	if(t.ToString().ToLower().Contains("bool") && vt.ToString().ToLower().Contains("bool"))
+        		return true;
+        	if(t.ToString().ToLower().Contains("int") && vt.ToString().ToLower().Contains("int"))
+                return true;
+            if(t.ToString().ToLower().Contains("double") && vt.ToString().ToLower().Contains("double"))
+                return true;
+            return false;        	
+        }
 	
 	public static bool CheckParams(NinjaParser.CallData call, NinjaParser.MethodData method)
     {
@@ -224,6 +235,12 @@ options {
 					
 					NinjaParser.metTable[name].Eval();
 					var ret = NinjaParser.metTable[name].returnValue.Eval();
+					
+					
+                    	if (!CheckType(ret.GetType(), metTable[name].returnType)){
+                    		throw new Exception($"Actual return is {ret.GetType()}, expected declared return type {metTable[name].returnType}");
+                    	}
+					
 					curBlock = parent;
 					return ret;
 					
@@ -348,6 +365,7 @@ options {
 			return res;
 		}
 		
+		public ReturnType expectedReturnType;
 		public dynamic value;
 		
 		public override dynamic Eval()
@@ -739,14 +757,14 @@ m_function : m_fun_signature OBRACE code method_return[curBlock.createOperationC
             actualReturn = ReturnType.Bool;
             break;		
         default:
-    		throw new NotImplementedException();     
+    		throw new Exception($"Actual return is {$method_return.type}, expected declared return type {metTable[methodName].returnType}");    
     }
 	
 	
 
 	if (actualReturn != metTable[methodName].returnType){
 		throw new Exception($"Actual return is {actualReturn}, expected declared return type {metTable[methodName].returnType}");
-	}*/
+	} */
 	
 	if ($method_return.value == null)
 	{
@@ -960,6 +978,8 @@ val_or_id[ExprClass oper] returns [string type, dynamic value]:
 					$type = "double";
 				else if ($value.GetType() == typeof(bool))
                     $type = "bool";
+                else if ($value.GetType() == typeof(ExprClass))
+                	$type = $value.GetType().ToString();
                 Debug($"param value1 is {$value} of type {$type}");    
 			}
 		  | boolExprEx[$oper]

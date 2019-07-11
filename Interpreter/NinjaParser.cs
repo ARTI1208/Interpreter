@@ -218,6 +218,17 @@ public partial class NinjaParser : Parser {
 	            return true;
 	        return false;        	
 	    }
+	    
+	    public static bool CheckType(Type t, ReturnType vt)
+	        {
+	        	if(t.ToString().ToLower().Contains("bool") && vt.ToString().ToLower().Contains("bool"))
+	        		return true;
+	        	if(t.ToString().ToLower().Contains("int") && vt.ToString().ToLower().Contains("int"))
+	                return true;
+	            if(t.ToString().ToLower().Contains("double") && vt.ToString().ToLower().Contains("double"))
+	                return true;
+	            return false;        	
+	        }
 		
 		public static bool CheckParams(NinjaParser.CallData call, NinjaParser.MethodData method)
 	    {
@@ -329,6 +340,12 @@ public partial class NinjaParser : Parser {
 						
 						NinjaParser.metTable[name].Eval();
 						var ret = NinjaParser.metTable[name].returnValue.Eval();
+						
+						
+	                    	if (!CheckType(ret.GetType(), metTable[name].returnType)){
+	                    		throw new Exception($"Actual return is {ret.GetType()}, expected declared return type {metTable[name].returnType}");
+	                    	}
+						
 						curBlock = parent;
 						return ret;
 						
@@ -453,6 +470,7 @@ public partial class NinjaParser : Parser {
 				return res;
 			}
 			
+			public ReturnType expectedReturnType;
 			public dynamic value;
 			
 			public override dynamic Eval()
@@ -1207,14 +1225,14 @@ public partial class NinjaParser : Parser {
 			            actualReturn = ReturnType.Bool;
 			            break;		
 			        default:
-			    		throw new NotImplementedException();     
+			    		throw new Exception($"Actual return is {_localctx._method_return.type}, expected declared return type {metTable[methodName].returnType}");    
 			    }
 				
 				
 
 				if (actualReturn != metTable[methodName].returnType){
 					throw new Exception($"Actual return is {actualReturn}, expected declared return type {metTable[methodName].returnType}");
-				}*/
+				} */
 				
 				if (_localctx._method_return.value == null)
 				{
@@ -2407,6 +2425,8 @@ public partial class NinjaParser : Parser {
 									_localctx.type =  "double";
 								else if (_localctx.value.GetType() == typeof(bool))
 				                    _localctx.type =  "bool";
+				                else if (_localctx.value.GetType() == typeof(ExprClass))
+				                	_localctx.type =  _localctx.value.GetType().ToString();
 				                Debug($"param value1 is {_localctx.value} of type {_localctx.type}");    
 							
 				}
