@@ -127,8 +127,15 @@ options {
     	{
     		var r = call.paramList[call.paramList.Count - i - 1].value;//.Eval();		
     		//if (call.paramList[i].type == method.paramList[i].type)
-    		if (r.GetType() == typeof(string))
-    			r = curBlock.varTable[r].value;
+    		if (r is string varId)
+    			if(curBlock.varTable.ContainsKey(varId))
+    				r = curBlock.varTable[varId].value;
+    			else
+    			{
+    				Console.WriteLine($"Type mismatch ({i+1}/{call.paramList.Count}): expected {method.paramList[i].type}, found {r.GetType()} with value {call.paramList[call.paramList.Count - i - 1].value}");
+                    return false;
+    			}
+    				
     		if (CheckType(r.GetType(), method.paramList[i].type))
     		{
     			method.paramList[i].value = r;
