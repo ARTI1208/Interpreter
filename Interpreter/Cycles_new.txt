@@ -1,0 +1,125 @@
+
+//классы
+public abstract class Cycles: OperationClass
+        {
+            public List<OperationClass> callList = new ArrayList<OperationClass>();
+            ExprClass refExpr1;
+        }
+        public class While:Cycles
+        {
+            public override dynamic Eval()
+            {
+                while(refExpr1.Eval())
+                {
+                    foreach(var temp in callList)
+                        temp.Eval();
+                 }
+		 return null;
+            }
+         }
+        public class Do_while:Cycles
+        {
+            public override dynamic Eval()
+            {
+                do
+                {
+                 foreach(var temp in callList)
+                    temp.Eval();
+                 }
+                while(refExpr1.Eval())
+				return null;
+            }
+         }
+        public class For:Cycles
+        {
+            ExprClass refExpr2;
+			ExprClass refExpr3;
+            public override dynamic Eval()
+            {
+             refExpr2.Eval(); // Объявление переменной?
+            while(refExpr1.Eval())
+            {
+                foreach(var temp in callList)
+                    temp.Eval();
+                refExpr3.Eval(); // Изменение переменной
+            }
+            }
+			return null;
+        }
+        public class Condition:Cycles 
+        {
+            public List<OperationClass> callListElse = new ArrayList<OperationClass>();
+            public override dynamic Eval()
+            {
+                if(refExpr1.Eval())
+                {
+                foreach(var temp in callList)
+                    temp.Eval();
+                }
+                else
+                {
+                    foreach(var temp in callListElse)
+                        temp.Eval();
+                 }
+		return null;
+            }
+        }
+		
+		
+		//code related to cycles
+myif[Condition condition]: IF LPAREN boolExprEx[]{condition.refExpr1=$boolExprEx.res;} RPAREN 
+     OBRACE 
+    (operation[])+ {condition.callList.Add($operation.res);}
+    CBRACE
+     ELSE 
+      OBRACE  
+    (operation[])+ {condition.callListElse.Add($operation.res);}
+    CBRACE
+    {
+        // добавление в общую таблицу вызовов?
+     }
+   ;
+myif_short[Condition condition]: IF LPAREN boolExprEx[]{condition.refExpr1=$boolExprEx.res;}  RPAREN 
+    OBRACE
+    (operation[])+ {condition.callList.Add($operation.res);condition.callListElse=null;}
+    CBRACE
+    {
+        // добавление в общую таблицу вызовов?
+     }
+   ;
+mywhile[While obj]: WHILE LPAREN boolExprEx[]{condition.refExpr1=$boolExprEx.res;} RPAREN 
+     OBRACE
+     (operation[OperationClass oper])+ {obj.callList.Add($operation.res);}
+     CBRACE 
+     {
+        // добавление в общую таблицу вызовов?
+      }
+       ;
+mydo_while[Do_while obj]: DO 
+          OBRACE
+            (operation[OperationClass oper])+ {obj.callList.Add($operation.res);}
+          CBRACE
+          WHILE LPAREN boolExprEx[] {obj.refExpr1=$boolExprEx.res;} RPAREN 
+          {
+            // добавление в общую таблицу вызовов?      
+           }
+          ;
+myfor[For obj]:  FOR LPAREN ariphExprEx[ExprClass expr2]{obj.refExpr1=$boolExprEx.res;}
+                 SEMICOLON boolExprEx[ExprClass expr1] {obj.refExpr2=$ariphExprEx.res;}
+                 SEMICOLON ariphExprEx[ExprClass expr3]{obj.refExpr3=$ariphExprEx.res;} RPAREN
+        OBRACE
+        (operation[OperationClass oper])+ {obj.callList.Add($operation.res);}
+        CBRACE
+        { 
+            // добавление в общую таблицу вызовов?
+         }
+     ;
+		
+		
+		
+		
+		
+		
+		
+		
+		

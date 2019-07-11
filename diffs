@@ -1,0 +1,106 @@
+218c218,227
+< 					return NinjaParser.metTable[name].returnValue;
+---
+> 					//Debug($"Adding result {NinjaParser.metTable[name].returnValue.Eval()} to parrnt");
+> 					//parent.varTable["result"] = NinjaParser.metTable[name].returnValue;
+> 					if (NinjaParser.metTable[name].returnValue == null)
+> 					{
+> 						Error($"fffuuu return {name}");
+> 						return null;
+> 					}
+> 					value = NinjaParser.metTable[name].returnValue.Eval();
+> 					lastCall = name;
+> 					return NinjaParser.metTable[name].returnValue.Eval();
+275c284
+< 		Number, Logic, Var, Operation, Function
+---
+> 		Number, Logic, Var, Operation, CallReturn
+277a287,288
+> 	public static string lastCall;
+> 
+304a316
+> 		Debug($"basalculating {value}");
+308a321,327
+> 			if (type == ObjType.CallReturn)
+> 			{
+> 				Debug($"calculating {value}");
+> 				return metTable[value].returnValue.Eval();
+> 				
+> 			}
+>                 
+351,361d369
+< 				else if (elem.type == ObjType.Function)
+< 				{
+< 					ArrayList<ParamData> pars = elem.value.paramList;
+< 					for (int i = 0; i < pars.Count; ++i)
+< 					{
+< 						dynamic val = Pop(stack);
+< 						val.Calc();
+< 						pars[i].value = val.value;
+< 					}
+< 					stack.Add(new ExprStackObject(elem.value.Eval()));
+< 				}
+608a617,619
+> 						default :
+> 							Debug($"WATA {elem.value}");	
+> 							break;
+691,704c702,721
+< 	switch($method_return.type)
+<     {
+<         case "int":
+<         	actualReturn = ReturnType.Int;
+<         	break;
+<         case "double":
+<             actualReturn = ReturnType.Double;
+<             break;
+<         case "bool":
+<             actualReturn = ReturnType.Bool;
+<             break;		
+<         default:
+<     		throw new NotImplementedException();     
+<     }
+---
+> //	switch($method_return.type)
+> //    {
+> //        case "int":
+> //        	actualReturn = ReturnType.Int;
+> //        	break;
+> //        case "double":
+> //            actualReturn = ReturnType.Double;
+> //            break;
+> //        case "bool":
+> //            actualReturn = ReturnType.Bool;
+> //            break;		
+> //        default:
+> //    		throw new NotImplementedException();     
+> //    }
+> 
+> 	//if (actualReturn != metTable[methodName].returnType){
+> 	
+> 		//metka
+> 	//	throw new Exception($"Actual return is {actualReturn}, expected declared return type {metTable[methodName].returnType}");
+> 	//}
+706,707c723,725
+< 	if (actualReturn != metTable[methodName].returnType){
+< 		throw new Exception($"Actual return is {actualReturn}, expected declared return type {metTable[methodName].returnType}");
+---
+> 	if ($method_return.value == null)
+> 	{
+> 		Error($"null return foeee {methodName}");
+934,936c952,963
+<              				dynamic value = metTable[$custom_call.funName].returnValue;			
+<              	
+<              	
+---
+>              		Debug($"RETURN VALUE NEEDED");	
+>              				dynamic value = metTable[$custom_call.funName].returnValue;		
+>              				//Debug($"MEthodzReturn {value}");
+>              				Debug($"MEthodzReturnType {new ExprStackObject(metTable[$custom_call.funName].returnValue.Eval())}");		
+> //             				$oper.Push(new ExprStackObject(metTable[$custom_call.funName].returnValue.Eval()));
+> 						$oper.Push(new ExprStackObject()
+>                                        					{
+>                                        						type = ObjType.CallReturn,
+>                                        						value = $custom_call.funName
+>                                        					});
+> //             			Debug($"MEthodzReturn {value.Eval()}");	
+>                 				             				//_localctx.oper.Push(new ExprStackObject(metTable[_localctx._custom_call.funName].returnValue.Eval()));

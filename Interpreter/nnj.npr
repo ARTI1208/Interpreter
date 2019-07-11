@@ -1,8 +1,6 @@
 fun void main()
 {
-	turn(3)
-	int u = 5
-	int t = 0	
+	int t	
 	
 	do
 	{

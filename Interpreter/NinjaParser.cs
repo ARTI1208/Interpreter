@@ -158,8 +158,7 @@ public partial class NinjaParser : Parser {
 	    }
 
 	    public class MethodData : Block
-	    {
-	        public string name;
+	    {public string name;
 			public bool isMeaningful;
 	        public ReturnType returnType = ReturnType.Void;
 	        public ArrayList<NinjaParser.ParamData> paramList = new ArrayList<NinjaParser.ParamData>();
@@ -168,7 +167,7 @@ public partial class NinjaParser : Parser {
 			
 			public override void Eval()
 	        {
-	        	curBlock = this;
+	        	parser.curBlock = this;
 	        	Debug($"===Entering fun {name} with params {ParamListToString(paramList)}");
 	            foreach(var sm in operations)
 	            {
@@ -192,10 +191,9 @@ public partial class NinjaParser : Parser {
 	        }
 	    }
 	 
-	 	public static Dictionary<string, VarData> varTable = new Dictionary<string, VarData>();
-	    public static Dictionary<string, MethodData> metTable = new Dictionary<string, MethodData>();
+	    public Dictionary<string, MethodData> metTable = new Dictionary<string, MethodData>();
 	    int depth = 0;
-	    static string currentMet = "?";
+	    string currentMet = "?";
 	    
 	    public static void Debug(string line)
 	    {
@@ -232,7 +230,7 @@ public partial class NinjaParser : Parser {
 	            return false;        	
 	        }
 		
-		public static bool CheckParams(NinjaParser.CallData call, NinjaParser.MethodData method)
+		public bool CheckParams(NinjaParser.CallData call, NinjaParser.MethodData method)
 	    {
 	    	Console.WriteLine($"Checking params of {call.name}");
 	    	if (call.paramList.Count != method.paramList.Count)
@@ -280,7 +278,7 @@ public partial class NinjaParser : Parser {
 	    	return true;
 	    }
 	            		
-		static ArrayList<byte> _bytes = new ArrayList<byte>();
+		ArrayList<byte> _bytes = new ArrayList<byte>();
 		
 		static string ParamListToString(ArrayList<NinjaParser.ParamData> list)
 	    {
@@ -311,6 +309,8 @@ public partial class NinjaParser : Parser {
 		
 		public class Block
 		{
+			public NinjaParser parser;
+			
 			public List<OperationClass> operations = new List<OperationClass>();
 			public Dictionary<string, VarData> varTable = new Dictionary<string, VarData>();
 			
@@ -332,6 +332,7 @@ public partial class NinjaParser : Parser {
 			{
 				int lastInd = operations.Count - 1;
 				var res = new ExprClass(operations[lastInd]);
+				res.parser = parser;
 				operations[lastInd] = res;
 				return res;
 			}
@@ -355,30 +356,30 @@ public partial class NinjaParser : Parser {
 			{
 				if (callType == NinjaParser.CallType.Custom)
 				{
-					if (NinjaParser.metTable.ContainsKey(name) && CheckParams(this, NinjaParser.metTable[name]))
+					if (parser.metTable.ContainsKey(name) && parser.CheckParams(this, parser.metTable[name]))
 					{
 						
-						NinjaParser.metTable[name].Eval();
-						var ret = NinjaParser.metTable[name].returnValue.Eval();
+						parser.metTable[name].Eval();
+						var ret = parser.metTable[name].returnValue.Eval();
 						
 						
-	                    	if (!CheckType(ret.GetType(), metTable[name].returnType)){
-	                    		throw new Exception($"Actual return is {ret.GetType()}, expected declared return type {metTable[name].returnType}");
+	                    	if (!CheckType(ret.GetType(), parser.metTable[name].returnType)){
+	                    		throw new Exception($"Actual return is {ret.GetType()}, expected declared return type {parser.metTable[name].returnType}");
 	                    	}
 						
-						curBlock = parent;
+						parser.curBlock = parent;
 						return ret;
 						
 					}
 				}
 				else
 				{
-					if (NinjaParser.metTable.ContainsKey(name))
+					if (parser.metTable.ContainsKey(name))
 					{
-						if(CheckParams(this, NinjaParser.metTable[name]))
+						if(parser.CheckParams(this, parser.metTable[name]))
 						{
-							Console.WriteLine($"Calling builtin method {name} with params {ParamListToString(paramList)}, ret {NinjaParser.metTable[name].returnValue}");
-							return NinjaParser.metTable[name].returnValue;
+							Console.WriteLine($"Calling builtin method {name} with params {ParamListToString(paramList)}, ret {parser.metTable[name].returnValue}");
+							return parser.metTable[name].returnValue;
 						}	
 					} 
 					else
@@ -387,16 +388,16 @@ public partial class NinjaParser : Parser {
 						switch (name)
 						{
 							case "move":
-								_bytes.Add(1);
+								parser._bytes.Add(1);
 								break;
 							case "turn":
-								_bytes.Add(2);
+								parser._bytes.Add(2);
 								break;
 							case "hit":
-								_bytes.Add(3);
+								parser._bytes.Add(3);
 								break;
 							case "shoot":
-								_bytes.Add(4);
+								parser._bytes.Add(4);
 								break;
 							default:
 								Error($"Unknown builtin method {name}");
@@ -408,10 +409,12 @@ public partial class NinjaParser : Parser {
 			}
 		}
 		
-		public static Block curBlock = new Block();
+		public Block curBlock = new Block();
 		
 		public class OperationClass
 		{
+			public NinjaParser parser;
+			
 			public OperationClass()
 			{
 				
@@ -435,27 +438,31 @@ public partial class NinjaParser : Parser {
 
 		public class ExprStackObject
 		{
+			public NinjaParser parser;
 			public ObjType type;
 			public dynamic value;
 			
-			public ExprStackObject(): this(0) { }
+			public ExprStackObject(): this(0, null) { }
 			
-			public ExprStackObject(double value)
+			public ExprStackObject(double value, NinjaParser parser)
 			{
 				type = ObjType.Number;
 				this.value = value;
+				this.parser = parser;
 			}
 
-			public ExprStackObject(int value)
+			public ExprStackObject(int value, NinjaParser parser)
 			{
 				type = ObjType.Number;
 				this.value = value;
+				this.parser = parser;
 			}
 			
-			public ExprStackObject(bool value)
+			public ExprStackObject(bool value, NinjaParser parser)
 			{
 				type = ObjType.Number;
 				this.value = value;
+				this.parser = parser;
 			}
 			
 			public dynamic Calc()
@@ -465,7 +472,7 @@ public partial class NinjaParser : Parser {
 	            					return value;
 	            				if (type == ObjType.Var)
 	            				{
-	            					Block par = curBlock;
+	            					Block par = parser.curBlock;
 									while (!par.varTable.ContainsKey(value))
 									{
 										par = par.Parent;
@@ -478,13 +485,13 @@ public partial class NinjaParser : Parser {
 									if (par == null)
 									{
 										Console.WriteLine($"Unknown var {value}!!!");
-										Debug($"nkeys {curBlock.varTable.Keys.Count}");
-										foreach (var key in curBlock.varTable.Keys)
+										Debug($"nkeys {parser.curBlock.varTable.Keys.Count}");
+										foreach (var key in parser.curBlock.varTable.Keys)
 										{
 											Debug($"nkey {key}");
 										}
 										
-										foreach (var key in curBlock.Parent.varTable.Keys)
+										foreach (var key in parser.curBlock.Parent.varTable.Keys)
 	                                    									{
 	                                    										Debug($"nkey2 {key}");
 	                                    									}
@@ -499,7 +506,7 @@ public partial class NinjaParser : Parser {
 			
 			public new Type GetType()
 			{
-				VarType type = FindVar(value).type;
+				VarType type = parser.FindVar(value).type;
 	        	switch (type)
 	        	{
 	        		case VarType.Int:
@@ -521,7 +528,7 @@ public partial class NinjaParser : Parser {
 			public ExprClass(OperationClass parent) : base(parent)
 			{
 				exprStack = new List<ExprStackObject>();
-				//curBlock.operations.Add(this);
+				//parser.curBlock.operations.Add(this);
 			}
 			
 			public void Push(ExprStackObject value)
@@ -589,7 +596,7 @@ public partial class NinjaParser : Parser {
 							else
 								result = elem.value.Eval();
 						}
-						stack.Add(new ExprStackObject(result));
+						stack.Add(new ExprStackObject(result, parser));
 					}
 					else
 					{
@@ -604,7 +611,7 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(leftVal, rightVal))
 	                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
-	                    							stack.Add(new ExprStackObject(leftVal && rightVal));
+	                    							stack.Add(new ExprStackObject(leftVal && rightVal, parser));
 	                    							break;
 	                    						
 	                    						case "||":
@@ -614,7 +621,7 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(leftVal, rightVal))
 	                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
-	                    							stack.Add(new ExprStackObject(leftVal || rightVal));
+	                    							stack.Add(new ExprStackObject(leftVal || rightVal, parser));
 	                    							break;
 	                    						
 	                    						case "!":
@@ -622,7 +629,7 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (rightVal.GetType() != typeof(bool))
 	                    								Error("Bool is required instead of " + rightVal);
-	                    							stack.Add(new ExprStackObject(!rightVal));
+	                    							stack.Add(new ExprStackObject(!rightVal, parser));
 	                    							break;
 	                    							
 	                    						case "<":
@@ -632,7 +639,7 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(leftVal, rightVal))
 	                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
-	                    							stack.Add(new ExprStackObject(leftVal < rightVal));
+	                    							stack.Add(new ExprStackObject(leftVal < rightVal, parser));
 	                    							break;
 	                    						
 	                    						case ">":
@@ -642,7 +649,7 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(leftVal, rightVal))
 	                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
-	                    							stack.Add(new ExprStackObject(leftVal > rightVal));
+	                    							stack.Add(new ExprStackObject(leftVal > rightVal, parser));
 	                    							break;
 	                    						
 	                    						case "==":
@@ -652,7 +659,7 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(leftVal, rightVal))
 	                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
-	                    							stack.Add(new ExprStackObject(leftVal == rightVal));
+	                    							stack.Add(new ExprStackObject(leftVal == rightVal, parser));
 	                    							break;
 	                    						
 	                    						case "!=":
@@ -662,7 +669,7 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(leftVal, rightVal))
 	                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
-	                    							stack.Add(new ExprStackObject(leftVal != rightVal));
+	                    							stack.Add(new ExprStackObject(leftVal != rightVal, parser));
 	                    							break;
 	                    						
 	                    						case "<=":
@@ -672,7 +679,7 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(leftVal, rightVal))
 	                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
-	                    							stack.Add(new ExprStackObject(leftVal <= rightVal));
+	                    							stack.Add(new ExprStackObject(leftVal <= rightVal, parser));
 	                    							break;
 	                    						
 	                    						case ">=":
@@ -682,7 +689,7 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(leftVal, rightVal))
 	                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
-	                    							stack.Add(new ExprStackObject(leftVal >= rightVal));
+	                    							stack.Add(new ExprStackObject(leftVal >= rightVal, parser));
 	                    							break;
 	                    					
 	                    						case "+":
@@ -692,7 +699,7 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(leftVal, rightVal))
 	                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
-	                    							stack.Add(new ExprStackObject(leftVal + rightVal));
+	                    							stack.Add(new ExprStackObject(leftVal + rightVal, parser));
 	                    							break;
 	                    						
 	                    						case "-":
@@ -702,7 +709,7 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(leftVal, rightVal))
 	                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
-	                    							stack.Add(new ExprStackObject(leftVal - rightVal));
+	                    							stack.Add(new ExprStackObject(leftVal - rightVal, parser));
 	                    							break;
 	                    						
 	                    						case "*":
@@ -712,7 +719,7 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(leftVal, rightVal))
 	                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
-	                    							stack.Add(new ExprStackObject(leftVal * rightVal));
+	                    							stack.Add(new ExprStackObject(leftVal * rightVal, parser));
 	                    							break;
 	                    						
 	                    						case "/":
@@ -722,7 +729,7 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(leftVal, rightVal))
 	                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
-	                    							stack.Add(new ExprStackObject(leftVal / rightVal));
+	                    							stack.Add(new ExprStackObject(leftVal / rightVal, parser));
 	                    							break;
 	                    						
 	                    						case "++pre":
@@ -730,8 +737,8 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(0, rightVal))
 	                    								Error(rightVal + " can't be incremented");
-	                    							++FindVar(right.value).value;
-	                    							stack.Add(new ExprStackObject(rightVal));
+	                    							++parser.FindVar(right.value).value;
+	                    							stack.Add(new ExprStackObject(rightVal, parser));
 	                    							break;
 	                    							
 	                    						case "++post":
@@ -739,8 +746,8 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(0, rightVal))
 	                    								Error(rightVal + " can't be incremented");
-	                    							stack.Add(new ExprStackObject(rightVal));
-	                    							++FindVar(right.value).value;
+	                    							stack.Add(new ExprStackObject(rightVal, parser));
+	                    							++parser.FindVar(right.value).value;
 	                    							break;
 	                    							
 	                    						case "--pre":
@@ -748,8 +755,8 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(0, rightVal))
 	                    								Error(rightVal + " can't be decremented");
-	                    							--FindVar(right.value).value;
-	                    							stack.Add(new ExprStackObject(rightVal));
+	                    							--parser.FindVar(right.value).value;
+	                    							stack.Add(new ExprStackObject(rightVal, parser));
 	                    							break;
 	                    							
 	                    						case "--post":
@@ -757,8 +764,8 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(0, rightVal))
 	                    								Error(rightVal + " can't be decremented");
-	                    							stack.Add(new ExprStackObject(rightVal));
-	                    							--FindVar(right.value).value;
+	                    							stack.Add(new ExprStackObject(rightVal, parser));
+	                    							--parser.FindVar(right.value).value;
 	                    							break;
 	                    							
 	                    						case "=":
@@ -766,12 +773,12 @@ public partial class NinjaParser : Parser {
 	                    							left = Pop(stack);
 	                    							try
 	                    							{
-	                    								foreach(var key in curBlock.varTable.Keys)
+	                    								foreach(var key in parser.curBlock.varTable.Keys)
 	                    								{
-	                    									Debug($"|||{key}||| with type {curBlock.varTable[key].value.GetType()}");
+	                    									Debug($"|||{key}||| with type {parser.curBlock.varTable[key].value.GetType()}");
 	                    									if (key == "op")
 	                    									{
-	                    										Debug(curBlock.varTable["op"].value + "nono");
+	                    										Debug(parser.curBlock.varTable["op"].value + "nono");
 	                    									}
 	                    								}
 	                    								rightVal = right.Calc();
@@ -779,7 +786,7 @@ public partial class NinjaParser : Parser {
 	                    									Error("Can't assign " + rightVal + " to " + left.value);
 	                    								dynamic rightval = rightVal;
 	                    								string su = (string) left.value;
-	                    								VarData data = FindVar(su);
+	                    								VarData data = parser.FindVar(su);
 	                    								Debug("ishere?");
 	                    								if (data.value.GetType() == rightval.GetType())
 	                    									data.value = rightval;
@@ -788,18 +795,18 @@ public partial class NinjaParser : Parser {
 	                    								else
 	                    									Error("Can't convert \"" + rightval + "\" to " + data.type);
 	                    								Debug("oshere?");
-	                    								Debug($"var \"{left.value}\" of type {FindVar(left.value).type} = {data.value}");	
-	                    								stack.Add(new ExprStackObject(data.value));
+	                    								Debug($"var \"{left.value}\" of type {parser.FindVar(left.value).type} = {data.value}");	
+	                    								stack.Add(new ExprStackObject(data.value, parser));
 	                    							}
 	                    							catch (KeyNotFoundException e)
 	                    							{
 	                    								Debug("what exist");
-	                    								foreach(var key in curBlock.varTable.Keys)
+	                    								foreach(var key in parser.curBlock.varTable.Keys)
 	                    								{
-	                    									Debug($"|||{key}||| with type {curBlock.varTable[key].value.GetType()}");
+	                    									Debug($"|||{key}||| with type {parser.curBlock.varTable[key].value.GetType()}");
 	                    									if (key == "op")
 	                    									{
-	                    										Debug(curBlock.varTable["op"].value + "ioio");
+	                    										Debug(parser.curBlock.varTable["op"].value + "ioio");
 	                    									}
 	                    								}
 	                                                								
@@ -816,14 +823,14 @@ public partial class NinjaParser : Parser {
 	                    								if (!isCompatible(left, rightVal, true))
 	                    									Error("Can't assign " + rightVal + " to " + left.value);
 	                    								dynamic rightval = rightVal;
-	                    								VarData data = FindVar(left.value);
+	                    								VarData data = parser.FindVar(left.value);
 	                    								if (data.value.GetType() == rightval.GetType())
 	                    									data.value += rightval;
 	                    								else if (data.type == VarType.Double)
 	                    									data.value += (double)rightval;
 	                    								else
 	                    									Error("Can't convert \"" + rightval + "\" to " + data.type);
-	                    								stack.Add(new ExprStackObject(data.value));
+	                    								stack.Add(new ExprStackObject(data.value, parser));
 	                    							}
 	                    							catch (KeyNotFoundException)
 	                    							{
@@ -840,14 +847,14 @@ public partial class NinjaParser : Parser {
 	                    								if (!isCompatible(left, rightVal, true))
 	                    									Error("Can't assign " + rightVal + " to " + left.value);
 	                    								dynamic rightval = rightVal;
-	                    								VarData data = FindVar(left.value);
+	                    								VarData data = parser.FindVar(left.value);
 	                    								if (data.value.GetType() == rightval.GetType())
 	                    									data.value -= rightval;
 	                    								else if (data.type == VarType.Double)
 	                    									data.value -= (double)rightval;
 	                    								else
 	                    									Error("Can't convert \"" + rightval + "\" to " + data.type);
-	                    								stack.Add(new ExprStackObject(data.value));
+	                    								stack.Add(new ExprStackObject(data.value, parser));
 	                    							}
 	                    							catch (KeyNotFoundException)
 	                    							{
@@ -864,14 +871,14 @@ public partial class NinjaParser : Parser {
 	                    								if (!isCompatible(left, rightVal, true))
 	                    									Error("Can't assign " + rightVal + " to " + left.value);
 	                    								dynamic rightval = rightVal;
-	                    								VarData data = FindVar(left.value);
+	                    								VarData data = parser.FindVar(left.value);
 	                    								if (data.value.GetType() == rightval.GetType())
 	                    									data.value *= rightval;
 	                    								else if (data.type == VarType.Double)
 	                    									data.value *= (double)rightval;
 	                    								else
 	                    									Error("Can't convert \"" + rightval + "\" to " + data.type);
-	                    								stack.Add(new ExprStackObject(data.value));
+	                    								stack.Add(new ExprStackObject(data.value, parser));
 	                    							}
 	                    							catch (KeyNotFoundException)
 	                    							{
@@ -888,14 +895,14 @@ public partial class NinjaParser : Parser {
 	                    								if (!isCompatible(left, rightVal, true))
 	                    									Error("Can't assign " + rightVal + " to " + left.value);
 	                    								dynamic rightval = rightVal;
-	                    								VarData data = FindVar(left.value);
+	                    								VarData data = parser.FindVar(left.value);
 	                    								if (data.value.GetType() == rightval.GetType())
 	                    									data.value /= rightval;
 	                    								else if (data.type == VarType.Double)
 	                    									data.value /= (double)rightval;
 	                    								else
 	                    									Error("Can't convert \"" + rightval + "\" to " + data.type);
-	                    								stack.Add(new ExprStackObject(data.value));
+	                    								stack.Add(new ExprStackObject(data.value, parser));
 	                    							}
 	                    							catch (KeyNotFoundException)
 	                    							{
@@ -908,7 +915,7 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(0.0, rightVal))
 	                    								Error("Can't convert " + rightVal + " to double");
-	                    							stack.Add(new ExprStackObject(Math.Sin(rightVal)));
+	                    							stack.Add(new ExprStackObject(Math.Sin(rightVal), parser));
 	                    							break;
 	                    						
 	                    						case "cos":
@@ -916,7 +923,7 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(0.0, rightVal))
 	                    								Error("Can't convert " + rightVal + " to double");
-	                    							stack.Add(new ExprStackObject(Math.Cos(rightVal)));
+	                    							stack.Add(new ExprStackObject(Math.Cos(rightVal), parser));
 	                    							break;
 	                    						
 	                    						case "tan":
@@ -924,7 +931,7 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(0.0, rightVal))
 	                    								Error("Can't convert " + rightVal + " to double");
-	                    							stack.Add(new ExprStackObject(Math.Tan(rightVal)));
+	                    							stack.Add(new ExprStackObject(Math.Tan(rightVal), parser));
 	                    							break;
 	                    						
 	                    						case "asin":
@@ -932,7 +939,7 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(0.0, rightVal))
 	                    								Error("Can't convert " + rightVal + " to double");
-	                    							stack.Add(new ExprStackObject(Math.Asin(rightVal)));
+	                    							stack.Add(new ExprStackObject(Math.Asin(rightVal), parser));
 	                    							break;
 	                    						
 	                    						case "acos":
@@ -940,7 +947,7 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(0.0, rightVal))
 	                    								Error("Can't convert " + rightVal + " to double");
-	                    							stack.Add(new ExprStackObject(Math.Acos(rightVal)));
+	                    							stack.Add(new ExprStackObject(Math.Acos(rightVal), parser));
 	                    							break;
 	                    						
 	                    						case "atan":
@@ -948,7 +955,7 @@ public partial class NinjaParser : Parser {
 	                    							rightVal = right.Calc();
 	                    							if (!isCompatible(0.0, rightVal))
 	                    								Error("Can't convert " + rightVal + " to double");
-	                    							stack.Add(new ExprStackObject(Math.Atan(rightVal)));
+	                    							stack.Add(new ExprStackObject(Math.Atan(rightVal), parser));
 	                    							break;
 	                    						
 	                    						case "atan2":
@@ -960,7 +967,7 @@ public partial class NinjaParser : Parser {
 	                    								Error("Can't convert " + rightVal + " to double");
 	                    							if (!isCompatible(0.0, leftVal))
 	                    								Error("Can't convert " + leftVal + " to double");
-	                    							stack.Add(new ExprStackObject(Math.Atan2(leftVal, rightVal)));
+	                    							stack.Add(new ExprStackObject(Math.Atan2(leftVal, rightVal), parser));
 	                    							break;
 	                    					}
 						
@@ -970,11 +977,11 @@ public partial class NinjaParser : Parser {
 	            {
 	            	var res = stack[0];
 	            	res.Calc();
-	            	if (res.value is string ss && FindVar(ss) != null)
+	            	if (res.value is string ss && parser.FindVar(ss) != null)
 					{
-	            		Debug($"Result is {FindVar(ss).value}");
-	            		value = FindVar(ss).value;
-	            		return FindVar(ss).value;
+	            		Debug($"Result is {parser.FindVar(ss).value}");
+	            		value = parser.FindVar(ss).value;
+	            		return parser.FindVar(ss).value;
 	            	}
 	            	Debug($"Result is {res.value}");
 	            	value = res.value;
@@ -985,7 +992,7 @@ public partial class NinjaParser : Parser {
 			}
 		}
 		
-		public static VarData FindVar(string name)
+		public VarData FindVar(string name)
 		{
 			Block par = curBlock;
 			while (!par.varTable.ContainsKey(name))
@@ -1015,7 +1022,7 @@ public partial class NinjaParser : Parser {
 		{
 			public override dynamic Eval()
 	        {
-	        	curBlock = cycleBlock;
+	        	parser.curBlock = cycleBlock;
 	        	Debug("---Entering whilecycle");
 	        	int i = 0;
 	        	while(cond.Eval())
@@ -1024,7 +1031,7 @@ public partial class NinjaParser : Parser {
 					cycleBlock.Eval();
 	            }
 	            Debug("---Exiting whilecycle");
-	            curBlock = curBlock.Parent;
+	            parser.curBlock = parser.curBlock.Parent;
 	    		return null;
 	        }
 	    }
@@ -1150,23 +1157,25 @@ public partial class NinjaParser : Parser {
 				_la = TokenStream.LA(1);
 			}
 
-
-			/*if (NinjaParser.metTable.ContainsKey("main"))
+							curBlock.parser = this;
+			/*if (parser.metTable.ContainsKey("main"))
 			                	{
 			                		++depth;
-			                		//GoThroughCalls(NinjaParser.metTable[call.name]);
-			                		foreach(var sm in NinjaParser.metTable["main"].operations)
+			                		//GoThroughCalls(parser.metTable[call.name]);
+			                		foreach(var sm in parser.metTable["main"].operations)
 			                		{
 			                			sm.Eval();
 			                		}
 			                	}*/
 			                MethodData getSelfId = new MethodData(){
 			                	name = "getSelfId",
-			                    returnType = ReturnType.Int
+			                    returnType = ReturnType.Int,
+								parser = this
 			                };	
 			                MethodData getHealth = new MethodData(){
 			                    name = "getHealth",
-			                    returnType = ReturnType.Int
+			                    returnType = ReturnType.Int,
+								parser = this
 			                };
 			                ParamData ghp = new ParamData();
 			                ghp.name = "id";
@@ -1175,7 +1184,8 @@ public partial class NinjaParser : Parser {
 							getHealth.paramList.Add(ghp);
 			                MethodData getPositionX = new MethodData(){
 								name = "getPositionX",
-								returnType = ReturnType.Double
+								returnType = ReturnType.Double,
+								parser = this
 							};
 							ParamData gpxp = new ParamData();
 							gpxp.name = "id";
@@ -1184,7 +1194,8 @@ public partial class NinjaParser : Parser {
 			               	getPositionX.paramList.Add(gpxp);
 			                MethodData getPositionY = new MethodData(){
 			                    name = "getPositionY",
-								returnType = ReturnType.Double
+								returnType = ReturnType.Double,
+								parser = this
 							};
 							ParamData gpyp = new ParamData();
 							gpyp.name = "id";
@@ -1193,7 +1204,8 @@ public partial class NinjaParser : Parser {
 			                getPositionY.paramList.Add(gpyp);
 							MethodData getDirection = new MethodData(){
 								name = "getDirection",
-								returnType = ReturnType.Double
+								returnType = ReturnType.Double,
+								parser = this
 							};
 			                ParamData gdp = new ParamData();
 			                gdp.name = "id";
@@ -1317,7 +1329,8 @@ public partial class NinjaParser : Parser {
 				MethodData newMet = new MethodData
 				{
 					name = "main",
-					returnType = ReturnType.Void
+					returnType = ReturnType.Void,
+					parser = this
 				};
 				metTable.Add("main", newMet);
 				currentMet = "main";
@@ -1484,7 +1497,8 @@ public partial class NinjaParser : Parser {
 				MethodData newMet = new MethodData
 				{
 					name = methodName,
-					returnType = ReturnType.Void
+					returnType = ReturnType.Void,
+					parser = this
 				};
 				
 				metTable.Add(newMet.name, newMet);
@@ -1645,7 +1659,8 @@ public partial class NinjaParser : Parser {
 				MethodData newMet = new MethodData
 				{
 					name = methodName,
-					isMeaningful = true
+					isMeaningful = true,
+					parser = this
 				};
 				
 				switch((_localctx._meaningfulType!=null?TokenStream.GetText(_localctx._meaningfulType.Start,_localctx._meaningfulType.Stop):null))
@@ -2341,7 +2356,8 @@ public partial class NinjaParser : Parser {
 						callType = CallType.BuiltIn, 
 						name = (_localctx._parameterized_call!=null?TokenStream.GetText(_localctx._parameterized_call.Start,_localctx._parameterized_call.Stop):null).Substring(0, (_localctx._parameterized_call!=null?TokenStream.GetText(_localctx._parameterized_call.Start,_localctx._parameterized_call.Stop):null).IndexOf("(")),
 						returnType = _localctx._parameterized_call.type,
-						parent = curBlock
+						parent = curBlock,
+						parser = this
 					};
 					
 					string methodName = currentMet;
@@ -2395,7 +2411,8 @@ public partial class NinjaParser : Parser {
 						callType = CallType.BuiltIn, 
 						name = (_localctx._simple_call!=null?TokenStream.GetText(_localctx._simple_call.Start,_localctx._simple_call.Stop):null).Substring(0, (_localctx._simple_call!=null?TokenStream.GetText(_localctx._simple_call.Start,_localctx._simple_call.Stop):null).IndexOf("(")),
 						returnType = ReturnType.Void,
-				        parent = curBlock
+				        parent = curBlock,
+						parser = this
 					};
 					_localctx.callData =  data;
 					string methodName = currentMet;
@@ -2597,7 +2614,8 @@ public partial class NinjaParser : Parser {
 				CallData data = new CallData(){
 					callType = CallType.Custom, 
 					name = callName,
-			        parent = curBlock
+			        parent = curBlock,
+					parser = this
 				};
 
 				foreach (var par in _localctx.call_params().val_or_id())
@@ -2864,7 +2882,8 @@ public partial class NinjaParser : Parser {
 
 			     	Condition ifer = new Condition()
 					{
-						cond=_localctx._boolExprEx.res
+						cond=_localctx._boolExprEx.res,
+						parser = this
 					};
 					curBlock.operations.Add(ifer);
 					ifer.cycleBlock.Parent = curBlock;
@@ -2970,7 +2989,8 @@ public partial class NinjaParser : Parser {
 
 			    		Condition ifer = new Condition()
 			         	{
-			         		cond=_localctx._boolExprEx.res
+			         		cond=_localctx._boolExprEx.res,
+							parser = this
 			         	};
 			         	curBlock.operations.Add(ifer);
 			         	ifer.cycleBlock.Parent = curBlock;
@@ -3056,7 +3076,8 @@ public partial class NinjaParser : Parser {
 
 			     	While whiler = new While()
 			     	{
-			     		cond=_localctx._boolExprEx.res
+			     		cond=_localctx._boolExprEx.res,
+						parser = this
 			     	};
 			     	curBlock.operations.Add(whiler);
 			     	whiler.cycleBlock.Parent = curBlock;
@@ -3139,6 +3160,7 @@ public partial class NinjaParser : Parser {
 			State = 307; Match(OBRACE);
 
 			          		Do_while doer = new Do_while();
+							doer.parser = this;
 			               	curBlock.operations.Add(doer);
 			               	doer.cycleBlock.Parent = curBlock;
 			               	curBlock = doer.cycleBlock;
@@ -3301,7 +3323,8 @@ public partial class NinjaParser : Parser {
 			        				{
 			                             cond = _localctx._boolExprEx.res,
 			                             first = fExpr,
-			                             last = _localctx.l.res
+			                             last = _localctx.l.res,
+										 parser = this
 			                        };
 			                        Debug($"cond is {(_localctx._boolExprEx!=null?TokenStream.GetText(_localctx._boolExprEx.Start,_localctx._boolExprEx.Stop):null)}");
 			                       	curBlock.operations.Add(forer);
@@ -3401,7 +3424,7 @@ public partial class NinjaParser : Parser {
 				{
 				State = 349; _localctx._INT = Match(INT);
 
-				                   _localctx.oper.Push(new ExprStackObject(int.Parse((_localctx._INT!=null?_localctx._INT.Text:null))));
+				                   _localctx.oper.Push(new ExprStackObject(int.Parse((_localctx._INT!=null?_localctx._INT.Text:null)), this));
 				               
 				}
 				break;
@@ -3419,7 +3442,7 @@ public partial class NinjaParser : Parser {
 				                   	{
 				                   		value = double.Parse((_localctx._DOUBLE!=null?_localctx._DOUBLE.Text:null).Replace('.', ','));
 				                   	}
-									_localctx.oper.Push(new ExprStackObject(value));
+									_localctx.oper.Push(new ExprStackObject(value, this));
 				               
 				}
 				break;
@@ -3431,7 +3454,8 @@ public partial class NinjaParser : Parser {
 				             		_localctx.oper.Push(new ExprStackObject()
 									{
 										type = ObjType.Function,
-										value = _localctx._custom_call.callData
+										value = _localctx._custom_call.callData,
+										parser = this
 									});
 									Debug("rrigthCall");
 				             	
@@ -3445,7 +3469,8 @@ public partial class NinjaParser : Parser {
 				                    _localctx.oper.Push(new ExprStackObject()
 				             		{
 				             			type = ObjType.Function,
-				             			value = _localctx._call.callData
+				             			value = _localctx._call.callData,
+										parser = this
 				             		});
 				             		Debug("parrrigthCall");
 				                
@@ -3490,7 +3515,8 @@ public partial class NinjaParser : Parser {
 									_localctx.oper.Push(new ExprStackObject()
 									{
 										type = ObjType.Operation,
-										value = (_localctx.incdec!=null?_localctx.incdec.Text:null) + "pre"
+										value = (_localctx.incdec!=null?_localctx.incdec.Text:null) + "pre",
+										parser = this
 									});
 							   
 				}
@@ -3513,7 +3539,8 @@ public partial class NinjaParser : Parser {
 									_localctx.oper.Push(new ExprStackObject()
 									{
 										type = ObjType.Operation,
-										value = (_localctx.incdec!=null?_localctx.incdec.Text:null) + "post"
+										value = (_localctx.incdec!=null?_localctx.incdec.Text:null) + "post",
+										parser = this
 									});
 							   
 				}
@@ -3615,7 +3642,8 @@ public partial class NinjaParser : Parser {
 								_localctx.oper.Push(new ExprStackObject()
 								 {
 									type = ObjType.Operation,
-									value = (_localctx.muldiv!=null?_localctx.muldiv.Text:null)
+									value = (_localctx.muldiv!=null?_localctx.muldiv.Text:null),
+									parser = this
 								 });
 								Debug("\t terarpy2 operand\"" + (_localctx._ariphOperand!=null?TokenStream.GetText(_localctx._ariphOperand.Start,_localctx._ariphOperand.Stop):null) + "\"");
 							}
@@ -3709,7 +3737,8 @@ public partial class NinjaParser : Parser {
 								_localctx.oper.Push(new ExprStackObject()
 								 {
 									type = ObjType.Operation,
-									value = (_localctx.addsub!=null?_localctx.addsub.Text:null)
+									value = (_localctx.addsub!=null?_localctx.addsub.Text:null),
+									parser = this
 								 });
 								 Debug("\t rarpy2 term\"" + (_localctx._ariphTerm!=null?TokenStream.GetText(_localctx._ariphTerm.Start,_localctx._ariphTerm.Stop):null) + "\"");
 							}
@@ -3801,7 +3830,8 @@ public partial class NinjaParser : Parser {
 				                _localctx.oper.Push(new ExprStackObject()
 									 {
 										type = ObjType.Operation,
-										value = (_localctx.assigns!=null?_localctx.assigns.Text:null)
+										value = (_localctx.assigns!=null?_localctx.assigns.Text:null),
+										parser = this
 									 });
 								_localctx.res =  _localctx.oper;
 								Debug("\t arpy2 expr\"" + TokenStream.GetText(_localctx.Start, TokenStream.LT(-1)) + "\"");
@@ -3889,7 +3919,7 @@ public partial class NinjaParser : Parser {
 				State = 410; _localctx._BOOL = Match(BOOL);
 
 								  Debug("Const " + (_localctx._BOOL!=null?_localctx._BOOL.Text:null));
-				                  _localctx.oper.Push(new ExprStackObject(bool.Parse((_localctx._BOOL!=null?_localctx._BOOL.Text:null))));
+				                  _localctx.oper.Push(new ExprStackObject(bool.Parse((_localctx._BOOL!=null?_localctx._BOOL.Text:null)), this));
 				              
 				}
 				break;
@@ -3901,7 +3931,8 @@ public partial class NinjaParser : Parser {
 				                          		_localctx.oper.Push(new ExprStackObject()
 				             					{
 				             						type = ObjType.Function,
-				             						value = _localctx._custom_call.callData
+				             						value = _localctx._custom_call.callData,
+													parser = this
 				             					});
 				             					Debug("rrigthCall2");
 				                          	
@@ -3935,7 +3966,8 @@ public partial class NinjaParser : Parser {
 								_localctx.oper.Push(new ExprStackObject()
 								{
 									type = ObjType.Operation,
-									value = (_localctx.comp!=null?_localctx.comp.Text:null)
+									value = (_localctx.comp!=null?_localctx.comp.Text:null),
+										parser = this
 								}); 
 							  
 				}
@@ -3950,7 +3982,8 @@ public partial class NinjaParser : Parser {
 								_localctx.oper.Push(new ExprStackObject()
 								{
 									type = ObjType.Operation,
-									value = (_localctx._NOT!=null?_localctx._NOT.Text:null)
+									value = (_localctx._NOT!=null?_localctx._NOT.Text:null),
+										parser = this
 								});
 							
 				}
@@ -4041,7 +4074,8 @@ public partial class NinjaParser : Parser {
 								_localctx.oper.Push(new ExprStackObject()
 								{
 									type = ObjType.Operation,
-									value = (_localctx.andor!=null?_localctx.andor.Text:null)
+									value = (_localctx.andor!=null?_localctx.andor.Text:null),
+										parser = this
 								});
 				           
 				}
@@ -4119,7 +4153,8 @@ public partial class NinjaParser : Parser {
 								_localctx.oper.Push(new ExprStackObject()
 								{
 									type = ObjType.Operation,
-									value = "="
+									value = "=",
+										parser = this
 								});
 								_localctx.res =  _localctx.oper;
 				           
@@ -4214,7 +4249,8 @@ public partial class NinjaParser : Parser {
 								_localctx.oper.Push(new ExprStackObject()
 									 {
 										type = ObjType.Operation,
-										value = "="
+										value = "=",
+										parser = this
 									 });
 				           }
 				           _localctx.res =  _localctx.oper;
@@ -4252,7 +4288,8 @@ public partial class NinjaParser : Parser {
 				                _localctx.oper.Push(new ExprStackObject()
 									 {
 										type = ObjType.Operation,
-										value = "="
+										value = "=",
+										parser = this
 									 });
 				           }
 				           _localctx.res =  _localctx.oper;
@@ -4290,7 +4327,8 @@ public partial class NinjaParser : Parser {
 				                _localctx.oper.Push(new ExprStackObject()
 								{
 									type = ObjType.Operation,
-									value = "="
+									value = "=",
+										parser = this
 								});
 				           }
 				           _localctx.res =  _localctx.oper;
@@ -4345,14 +4383,16 @@ public partial class NinjaParser : Parser {
 						_localctx.oper.Push(new ExprStackObject()
 								 {
 									type = ObjType.Var,
-									value = (_localctx._ID!=null?_localctx._ID.Text:null)
+									value = (_localctx._ID!=null?_localctx._ID.Text:null),
+									parser = this
 								 });
 						Debug($"arrriph id {(_localctx._ID!=null?_localctx._ID.Text:null)}");
 						
 						//_localctx.oper.Push(new ExprStackObject()
 			            //					 {
 			            //						type = ObjType.Var,
-			            //						value = (_localctx._ID!=null?_localctx._ID.Text:null)
+			            //						value = (_localctx._ID!=null?_localctx._ID.Text:null),
+						//			parser = this
 			            //					 });
 			            //			Debug($"boooooool id {(_localctx._ID!=null?_localctx._ID.Text:null)}");
 						
@@ -4426,7 +4466,8 @@ public partial class NinjaParser : Parser {
 						_localctx.oper.Push(new ExprStackObject()
 								 {
 									type = ObjType.Operation,
-									value = (_localctx.trfun!=null?_localctx.trfun.Text:null)
+									value = (_localctx.trfun!=null?_localctx.trfun.Text:null),
+									parser = this
 								 });
 					
 			}
@@ -4488,7 +4529,8 @@ public partial class NinjaParser : Parser {
 						_localctx.oper.Push(new ExprStackObject()
 								 {
 									type = ObjType.Operation,
-									value = "atan2"
+									value = "atan2",
+									parser = this
 								 });
 					
 			}
