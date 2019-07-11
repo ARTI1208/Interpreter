@@ -1,0 +1,27 @@
+fun bool ret(int ch)
+{
+	int r = ch + 5
+	return true
+}
+
+fun void boo(bool is, int ru)
+{
+	bool isb = true
+	bool isc = is || false
+	int y = ru * 3 - 1 
+}
+
+fun void foo(int a)
+{
+	bool b = false
+	bool c = b || true
+}
+
+fun void main()
+{
+	int f = 1
+	foo(f + 3)
+	bool k = true
+	ret(f + 1)
+	boo(false, f)
+}

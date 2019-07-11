@@ -315,8 +315,6 @@ options {
 	{
 		public List<ExprStackObject> exprStack;
 		
-		public bool isEvaluated{get; private set;}
-		
 		public ExprClass(OperationClass parent) : base(parent)
 		{
 			exprStack = new List<ExprStackObject>();
@@ -365,6 +363,11 @@ options {
 							right = Pop(stack);
 							left = Pop(stack);
 							stack.Add(new ExprStackObject(left.Calc() || right.Calc()));
+							break;
+						
+						case "!":
+							right = Pop(stack);
+							stack.Add(new ExprStackObject(!right.Calc()));
 							break;
 							
 						case "<":
@@ -427,6 +430,30 @@ options {
 							stack.Add(new ExprStackObject(left.Calc() / right.Calc()));
 							break;
 						
+						case "++pre":
+							right = Pop(stack);
+							++curBlock.varTable[right.value].value;
+							stack.Add(new ExprStackObject(right.Calc()));
+							break;
+							
+						case "++post":
+							right = Pop(stack);
+							stack.Add(new ExprStackObject(right.Calc()));
+							++curBlock.varTable[right.value].value;
+							break;
+							
+						case "--pre":
+							right = Pop(stack);
+							--curBlock.varTable[right.value].value;
+							stack.Add(new ExprStackObject(right.Calc()));
+							break;
+							
+						case "--post":
+							right = Pop(stack);
+							stack.Add(new ExprStackObject(right.Calc()));
+							--curBlock.varTable[right.value].value;
+							break;
+							
 						case "=":
 							right = Pop(stack);
 							left = Pop(stack);
@@ -576,13 +603,12 @@ options {
             {
             	var res = stack[0];
             	res.Calc();
-            	if (res.value is string ss && curBlock.varTable.ContainsKey(ss)){
-            		isEvaluated = true;
+            	if (res.value is string ss && curBlock.varTable.ContainsKey(ss))
+				{
             		Debug($"Result is {curBlock.varTable[ss].value}");
             		value = curBlock.varTable[ss].value;
             		return curBlock.varTable[ss].value;
             	}
-            	isEvaluated = true;
             	Debug($"Result is {res.value}");
             	value = res.value;
             	return res.value;	
@@ -867,11 +893,7 @@ val_or_id[OperationClass oper] returns [string type, dynamic value]:
 			}
 		  | boolExprEx[curBlock.ToExpr()]
 			{
-				//Debug($"val_or_id is {$boolExprEx.text}");
-				//if($boolExprEx.res.isEvaluated)
-                 //    $value = $boolExprEx.res.value;
-                //else	
-                      $value = $boolExprEx.res;
+				$value = $boolExprEx.res;
                 Debug($"param value2 is {$value}");
 				$type = "bool";
 			};
@@ -908,6 +930,22 @@ ariphOperand[ExprClass oper]:
                    Console.WriteLine($"founy idd {$ariphID.text} val undefined");
                }
 			 | trig[$oper] | trig2[$oper]
+			 | incdec=(INC|DEC) ariphID[$oper]
+			   {
+					$oper.Push(new ExprStackObject()
+					{
+						type = ObjType.Operation,
+						value = $incdec.text + "pre"
+					});
+			   }
+			 | ariphID[$oper] incdec=(INC|DEC)
+			   {
+					$oper.Push(new ExprStackObject()
+					{
+						type = ObjType.Operation,
+						value = $incdec.text + "post"
+					});
+			   }
              | LPAREN ariphExprEx[$oper] RPAREN;
 ariphTerm[ExprClass oper]:
             ariphOperand[$oper]
@@ -963,9 +1001,13 @@ ariphExprEx[ExprClass oper] returns [ExprClass res]:
 boolOperand[ExprClass oper]:
               BOOL
               {
+				  Debug("Const " + $BOOL.text);
                   $oper.Push(new ExprStackObject(bool.Parse($BOOL.text)));
               }
             | ariphID[$oper]
+			  {
+				Debug("Var " + $ariphID.text);
+			  }
             | ariphExprEx[$oper] comp=(LESS|GREATER|EQUAL|NOTEQUAL|LESSEQUAL|GREQUAL) ariphExprEx[$oper]
               {
 				$oper.Push(new ExprStackObject()
@@ -974,6 +1016,15 @@ boolOperand[ExprClass oper]:
 					value = $comp.text
 				}); 
 			  }
+			| NOT boolOperand[$oper]
+			{
+				Debug("\tNOT " + $boolOperand.text);
+				$oper.Push(new ExprStackObject()
+				{
+					type = ObjType.Operation,
+					value = $NOT.text
+				});
+			}
             /*| boolExprEx[$oper] EQUAL boolExprEx[$oper]
               {
                   
@@ -985,8 +1036,9 @@ boolOperand[ExprClass oper]:
             | LPAREN boolExprEx[$oper] RPAREN;
 boolExpr[ExprClass oper]:
            boolOperand[$oper]
-         | boolOperand[$oper] andor=(AND|OR) boolExpr[$oper]
+         | left=boolOperand[$oper] andor=(AND|OR) right=boolExpr[$oper]
            {
+				Debug("\t" + $left.text + " AND/OR " + $right.text);
 				$oper.Push(new ExprStackObject()
 				{
 					type = ObjType.Operation,
@@ -994,9 +1046,13 @@ boolExpr[ExprClass oper]:
 				});
            };
 boolExprEx[ExprClass oper] returns [ExprClass res]:
-           boolExpr[$oper] {$res = $oper;}
-         | ariphID[$oper] ASSIGN boolExprEx[$oper]
+           boolExpr[$oper]
+		   {
+				$res = $oper;
+		   }
+         | left=ariphID[$oper] ASSIGN right=boolExprEx[$oper]
            {
+				Debug("\t" + $left.text + " ASSIGN " + $right.text);
 				$oper.Push(new ExprStackObject()
 				{
 					type = ObjType.Operation,
@@ -1111,41 +1167,6 @@ trig2[ExprClass oper]:
 						value = "atan2"
 					 });
 		};
-sin returns [double value]:
-		SIN LPAREN ariphExprEx[null] RPAREN
-		/*{
-			$value = Math.Sin($ariphExprEx[null].value);
-		}*/;
-cos returns [double value]:
-		COS LPAREN ariphExprEx[null] RPAREN
-		/*{
-			$value = Math.Cos($ariphExprEx[null].value);
-        }*/;
-tan returns [double value]:
-		TAN LPAREN ariphExprEx[null] RPAREN
-		/*{
-			$value = Math.Tan($ariphExprEx[null].value);
-		}*/;
-asin returns [double value]:
-		ASIN LPAREN ariphExprEx[null] RPAREN
-		/*{
-			$value = Math.Asin($ariphExprEx[null].value);
-		}*/;
-acos returns [double value]:
-		ACOS LPAREN ariphExprEx[null] RPAREN
-		/*{
-			$value = Math.Acos($ariphExprEx[null].value);
-		}*/;
-atan returns [double value]:
-		ATAN LPAREN ariphExprEx[null] RPAREN
-		/*{
-			$value = Math.Atan($ariphExprEx[null].value);
-		}*/;
-atan2 returns [double value]:
-		ATAN2 LPAREN y=ariphExprEx[null] COMMA x=ariphExprEx[null] RPAREN
-		/*{
-			$value = Math.Atan2($y.value, $x.value);
-		}*/;
 		
 
 //code related to cycles
@@ -1207,6 +1228,8 @@ ADD     : '+' ;
 SUB     : '-' ;
 MUL     : '*' ;
 DIV     : '/' ;
+INC		: '++' ;
+DEC		: '--' ;
 ASSIGN		: '=' ;
 ADDASSIGN   : '+=' ;
 SUBASSIGN   : '-=' ;
@@ -1214,6 +1237,7 @@ MULASSIGN   : '*=' ;
 DIVASSIGN   : '/=' ;
 AND       : '&&' ;
 OR        : '||' ;
+NOT		  : '!' ;
 LESS      : '<' ;
 GREATER   : '>' ;
 EQUAL     : '==' ;
