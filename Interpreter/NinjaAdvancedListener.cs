@@ -111,7 +111,7 @@ namespace Interpreter
 		{
 			Console.WriteLine("---------------------------------------------------End");
 
-			GoThroughCalls(NinjaParser.metTable["main"]);
+			//GoThroughCalls(NinjaParser.metTable["main"]);
 			File.Delete("cmds.txt");
 			var stream = File.Create("cmds.txt");
 			stream.WriteByte((byte) _bytes.Count);
@@ -122,11 +122,11 @@ namespace Interpreter
 
 			stream.Close();
 
-            Console.WriteLine("Variables of the program:");
-            foreach (var elem in NinjaParser.curBlock.varTable)
-            {
-                Console.WriteLine("\t" + elem.Key + " is " + elem.Value.type + " with value " + elem.Value.value);
-            }
+//            Console.WriteLine("Variables of the program:");
+//            foreach (var elem in NinjaParser.metTable["main"].varTable)
+//            {
+//                Console.WriteLine("\t" + elem.Key + " is " + elem.Value.type + " with value " + elem.Value.value);
+//            }
         }
 
 		public void EnterMain(NinjaParser.MainContext context)
@@ -134,58 +134,7 @@ namespace Interpreter
 			Console.WriteLine("ent main");
 			Console.WriteLine(context.ToString());
 		}
-
-		public void GoThroughCalls(NinjaParser.MethodData methodData)
-		{
-			string formatter = new string('\t', depth);
-			Console.WriteLine($"{formatter}--Entering method {methodData.name}, params {ParamListToString(methodData.paramList)}:");
-			foreach (var call in methodData.callList)
-			{
-				if (call.callType == NinjaParser.CallType.Custom)
-				{
-					if (NinjaParser.metTable.ContainsKey(call.name) && CheckParams(call, NinjaParser.metTable[call.name]))
-					{
-						++depth;
-						GoThroughCalls(NinjaParser.metTable[call.name]);
-					}
-				}
-				else
-				{
-					Console.WriteLine($"{formatter}Calling builtin method {call.name} with params {ParamListToString(call.paramList)}");
-//					Console.WriteLine(call.name);
-					switch (call.name)
-					{
-						case "move":
-//							Console.WriteLine($"move byte");
-							_bytes.Add(1);
-							break;
-						case "turn":
-//							Console.WriteLine("turn byte");
-							_bytes.Add(2);
-							break;
-						case "hit":
-//							Console.WriteLine($"hit byte");
-							_bytes.Add(3);
-							break;
-						case "shoot":
-//							Console.WriteLine($"shoot byte");
-							_bytes.Add(4);
-							break;
-						default:
-							Console.WriteLine($"no byte for this op {call.name}");
-							break;
-					}
-				}
-			}
-
-			if (methodData.isMeaningful)
-			{
-				Console.WriteLine($"{formatter}Returning {methodData.returnValue} of type {methodData.returnType}");
-			}
-			--depth;
-			Console.WriteLine($"{formatter}--Exiting method {methodData.name}");
-		}
-
+		
 		public void ExitMain(NinjaParser.MainContext context)
 		{
 			Console.WriteLine("ext main");
@@ -621,16 +570,6 @@ namespace Interpreter
         }
 
         public void ExitMeaningfulType([NotNull] NinjaParser.MeaningfulTypeContext context)
-        {
-            
-        }
-
-        public void EnterBoolID([NotNull] NinjaParser.BoolIDContext context)
-        {
-            
-        }
-
-        public void ExitBoolID([NotNull] NinjaParser.BoolIDContext context)
         {
             
         }

@@ -51,17 +51,33 @@ options {
         
     }
 
-    public class MethodData
+    public class MethodData : Block
     {
         public string name;
 		public bool isMeaningful;
         public ReturnType returnType;
         public ArrayList<NinjaParser.ParamData> paramList = new ArrayList<NinjaParser.ParamData>();
-        public List<CallData> callList = new ArrayList<CallData>();
         
 		public dynamic returnValue;
 		
-		public Dictionary<string, VarData> varTable = new Dictionary<string, VarData>();
+		public override void Eval()
+        {
+        	curBlock = this;
+        	Debug($"===Entering fun {name} with params {ParamListToString(paramList)}");
+            foreach(var sm in operations)
+            {
+            	sm.Eval();
+            }
+            
+            Debug($"---Vars of block met {name} ----");	
+            foreach (var elem in varTable)
+            {
+                Console.WriteLine("\t" + elem.Key + " is " + elem.Value.type + " with value " + elem.Value.value);
+            }
+            Debug($"---End Vars of block met {name} ----");
+            Debug($"===Exiting fun {name}");	
+        	
+        }
         
         public override string ToString()
         {
@@ -103,7 +119,6 @@ options {
     		{
     			method.paramList[i].value = call.paramList[i].value;
     			method.varTable[method.paramList[i].name].value = call.paramList[i].value;
-    			Console.WriteLine($"addf var {method.paramList[i].name}, val {method.varTable[method.paramList[i].name].value}");
     		}
     		else
     		{
@@ -141,7 +156,9 @@ options {
 		public List<OperationClass> operations = new List<OperationClass>();
 		public Dictionary<string, VarData> varTable = new Dictionary<string, VarData>();
 		
-		public void Eval()
+		public Block Parent;
+		
+		public virtual void Eval()
 		{
 			for (int i = 0; i < operations.Count; ++i)
 				operations[i].Eval();
@@ -171,6 +188,8 @@ options {
 		public CallType callType;
 		
 		public ReturnType returnType;
+		
+		public Block parent;
 			
 		public ArrayList<NinjaParser.ParamData> paramList = new ArrayList<NinjaParser.ParamData>();
 		
@@ -180,11 +199,11 @@ options {
 			{
 				if (NinjaParser.metTable.ContainsKey(name) && CheckParams(this, NinjaParser.metTable[name]))
 				{
-					//GoThroughCalls(NinjaParser.metTable[call.name]);
-					foreach(var sm in NinjaParser.metTable[name].callList)
-					{
-						sm.Eval();
-					}
+					
+					NinjaParser.metTable[name].Eval();
+					curBlock = parent;
+					return NinjaParser.metTable[name].returnValue;
+					
 				}
 			}
 			else
@@ -286,6 +305,7 @@ options {
 		public ExprClass(OperationClass parent) : base(parent)
 		{
 			exprStack = new List<ExprStackObject>();
+			//curBlock.operations.Add(this);
 		}
 		
 		public void Push(ExprStackObject value)
@@ -302,6 +322,12 @@ options {
 		
 		public override dynamic Eval()
 		{
+			string s = "";
+			foreach(var v in exprStack)
+			{
+				s += v.value;
+			}
+			//Debug($"Evaluating {s}");
 			List<ExprStackObject> stack = new List<ExprStackObject>();
 			foreach (var elem in exprStack)
 			{
@@ -397,11 +423,12 @@ options {
 									data.value = (double)rightval;
 								else
 									Error("Can't convert \"" + rightval + "\" to " + data.type);
+								Debug($"var \"{left.value}\" of type {curBlock.varTable[left.value].type} = {data.value}");	
 								stack.Add(new ExprStackObject(data.value));
 							}
 							catch (KeyNotFoundException)
 							{
-								Error("Variable " + left.value + " does not exist in current context");
+								Error("Variable " + left.value + " does not exist in current context1");
 							}
 							break;
 						
@@ -422,7 +449,7 @@ options {
 							}
 							catch (KeyNotFoundException)
 							{
-								Error("Variable " + left.value + " does not exist in current context");
+								Error("Variable " + left.value + " does not exist in current context2");
 							}
 							break;
 						
@@ -443,7 +470,7 @@ options {
 							}
 							catch (KeyNotFoundException)
 							{
-								Error("Variable " + left.value + " does not exist in current context");
+								Error("Variable " + left.value + " does not exist in current context3");
 							}
 							break;
 						
@@ -464,7 +491,7 @@ options {
 							}
 							catch (KeyNotFoundException)
 							{
-								Error("Variable " + left.value + " does not exist in current context");
+								Error("Variable " + left.value + " does not exist in current context4");
 							}
 							break;
 						
@@ -485,7 +512,7 @@ options {
 							}
 							catch (KeyNotFoundException)
 							{
-								Error("Variable " + left.value + " does not exist in current context");
+								Error("Variable " + left.value + " does not exist in current context5");
 							}
 							break;
 							
@@ -528,9 +555,14 @@ options {
 					
 				}
 			}
-			var res = stack[0];
-			res.Calc();
-			return res.value;
+			if (stack.Count > 0)
+            {
+            	var res = stack[0];
+            	res.Calc();
+            	return res.value;	
+            }
+            Error("Nothing in stack left");
+            return null;
 		}
 	}
 }
@@ -541,7 +573,7 @@ program : function* main function* {
                 	{
                 		++depth;
                 		//GoThroughCalls(NinjaParser.metTable[call.name]);
-                		foreach(var sm in NinjaParser.metTable["main"].callList)
+                		foreach(var sm in NinjaParser.metTable["main"].operations)
                 		{
                 			sm.Eval();
                 		}
@@ -551,7 +583,7 @@ program : function* main function* {
 
 main : main_signature OBRACE main_code CBRACE
 {
-	curBlock.Eval();
+	metTable["main"].Eval();
 };
 
 main_signature : FUN_KEYWORD VOID MAIN LPAREN RPAREN {
@@ -562,6 +594,7 @@ main_signature : FUN_KEYWORD VOID MAIN LPAREN RPAREN {
 	};
 	metTable.Add("main", newMet);
 	currentMet = "main";
+	curBlock = newMet;
 };
 
 function : v_function | m_function ;
@@ -583,6 +616,7 @@ v_fun_signature returns [string funName]: FUN_KEYWORD VOID ID
 	
 	metTable.Add(newMet.name, newMet);
 	currentMet = methodName;
+	curBlock = newMet;
 } LPAREN params[$ID.text] RPAREN;
 
 m_function : m_fun_signature OBRACE code method_return CBRACE {
@@ -642,7 +676,7 @@ m_fun_signature returns [string funName]: FUN_KEYWORD meaningfulType ID {
 
 	metTable.Add(newMet.name, newMet);
 	currentMet = methodName;
-
+	curBlock = newMet;
 } LPAREN params[$ID.text] RPAREN;
 
 code : (operation[curBlock.createOperationClass()])*;
@@ -653,6 +687,7 @@ operation[OperationClass oper] : call[$oper] | custom_call[$oper] | declare[curB
 			| myif|myif_short|mywhile|mydo_while|myfor;
 
 method_return returns [string type, dynamic value]: RETURN_KEYWORD val_or_id[curBlock.createOperationClass()] {
+	Debug($"val_or_id3 is {$val_or_id.text}");
 	$type = $val_or_id.type;
 	$value = $val_or_id.value;
 };
@@ -696,8 +731,10 @@ call[OperationClass oper] : parameterized_call {
 	CallData data = new CallData(){
 		callType = CallType.BuiltIn, 
 		name = $parameterized_call.text.Substring(0, $parameterized_call.text.IndexOf("(")),
-		returnType = ReturnType.Void
+		returnType = ReturnType.Void,
+		parent = curBlock
 	};
+	
 	ParamData d = new ParamData()
 	{
 		type = VarType.Double, 
@@ -708,7 +745,7 @@ call[OperationClass oper] : parameterized_call {
 	
 	string methodName = currentMet;
 	if(methodName != "?"){
-		metTable[methodName].callList.Add(data);
+		metTable[methodName].operations.Add(data);
 	}
 
 } | simple_call {
@@ -716,12 +753,13 @@ call[OperationClass oper] : parameterized_call {
 	CallData data = new CallData(){
 		callType = CallType.BuiltIn, 
 		name = $simple_call.text.Substring(0, $simple_call.text.IndexOf("(")),
-		returnType = ReturnType.Void
+		returnType = ReturnType.Void,
+        parent = curBlock
 	};
 
 	string methodName = currentMet;
 	if(methodName != "?"){
-		metTable[methodName].callList.Add(data);
+		metTable[methodName].operations.Add(data);
 	}
 };
 
@@ -735,7 +773,8 @@ custom_call[OperationClass oper] returns [string funName]: ID LPAREN call_params
 	$funName = callName;
 	CallData data = new CallData(){
 		callType = CallType.Custom, 
-		name = callName
+		name = callName,
+        parent = curBlock
 	};
 
 	foreach (var par in _localctx.call_params().val_or_id())
@@ -766,24 +805,26 @@ custom_call[OperationClass oper] returns [string funName]: ID LPAREN call_params
 	
 	string methodName = currentMet;
     if(methodName != "?" && CheckParams(data, metTable[callName])){
-    	metTable[methodName].callList.Add(data);
+    	metTable[methodName].operations.Add(data);
     }
 
 };
 
-call_params[OperationClass oper] : (val_or_id[$oper] (COMMA val_or_id[$oper])*)?;
+call_params[OperationClass oper] : (val_or_id[$oper] {Debug($"val_or_id1 is {$val_or_id.text}");} (COMMA val_or_id[$oper] {Debug($"val_or_id2 is {$val_or_id.text}");})*)?;
 
 val_or_id[OperationClass oper] returns [string type, dynamic value]: 
 			ariphExprEx[curBlock.ToExpr()]
 			{
+				
 				$value = 0;
-				if (false) //ariphExprEx.value.GetType() == typeof(int)")
+				if (true) //ariphExprEx.value.GetType() == typeof(int)")
 					$type = "int";
 				else
 					$type = "double";
 			}
 		  | boolExprEx[curBlock.ToExpr()]
 			{
+				//Debug($"val_or_id is {$boolExprEx.text}");
 				$value = false;
 				$type = "bool";
 			};
@@ -809,9 +850,12 @@ ariphOperand[ExprClass oper]:
 					$oper.Push(new ExprStackObject(value));
                }
              | custom_call[$oper]
-             	/*{
-             		$value = metTable[$custom_call.funName].returnValue;
-             	}*/
+             	{
+             				dynamic value = metTable[$custom_call.funName].returnValue;			
+             	
+             	
+             		
+             	}
              | ariphID[$oper]
                {
                    Console.WriteLine($"founy idd {$ariphID.text} val undefined");
@@ -872,7 +916,7 @@ boolOperand[ExprClass oper]:
               {
                   $oper.Push(new ExprStackObject(bool.Parse($BOOL.text)));
               }
-            | boolID[$oper]
+            | ariphID[$oper]
             | ariphExprEx[$oper] comp=(LESS|GREATER|EQUAL|NOTEQUAL|LESSEQUAL|GREQUAL) ariphExprEx[$oper]
               {
 				$oper.Push(new ExprStackObject()
@@ -902,7 +946,7 @@ boolExpr[ExprClass oper]:
            };
 boolExprEx[ExprClass oper]:
            boolExpr[$oper]
-         | boolID[$oper] ASSIGN boolExprEx[$oper]
+         | ariphID[$oper] ASSIGN boolExprEx[$oper]
            {
 				$oper.Push(new ExprStackObject()
 				{
@@ -957,15 +1001,15 @@ declare[ExprClass oper]: INTKEY ariphID[$oper]
 					 });
            }
           }
-        | BOOLKEY boolID[$oper]
+        | BOOLKEY ariphID[$oper]
           {
            VarData newVar = new VarData
            {
                 type = VarType.Bool,
                 value = false
            };
-           curBlock.varTable.Add($boolID.text, newVar);
-           Debug("Create var " + $boolID.text);
+           curBlock.varTable.Add($ariphID.text, newVar);
+           Debug("Create var " + $ariphID.text);
           }
           (ASSIGN boolExprEx[$oper])?
           {
@@ -987,14 +1031,15 @@ ariphID[ExprClass oper] : ID
 						type = ObjType.Var,
 						value = $ID.text
 					 });
-		};
-boolID[ExprClass oper] : ID
-		{
-			$oper.Push(new ExprStackObject()
-					 {
-						type = ObjType.Var,
-						value = $ID.text
-					 });
+			Debug($"arrriph id {$ID.text}");
+			
+			//$oper.Push(new ExprStackObject()
+            //					 {
+            //						type = ObjType.Var,
+            //						value = $ID.text
+            //					 });
+            //			Debug($"boooooool id {$ID.text}");
+			
 		};
 
 //trigonometry
