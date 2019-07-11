@@ -1,25 +1,9 @@
-fun bool soo(int res, int dec)
-{
-	int w = res
-	return res < 20
-}
-
-fun int foo(int res, int sec, int th, int y)
-{
-	int w = res
-	return res + 20
-}
-
 fun void main()
 {
-	hit()
-	move(5.9)
-	shoot()
-	turn(7.3)
-	int y = getSelfId()
-	double w = getHealth(3)
-	double z = getPositionX(7)
-	double zu = getPositionY(5)
-	int zuz = getDirection(5)
-	bool ty = soo(5, 8)
+	int u = 5
+	while (u < 10)
+	{
+		hit()
+		u = u + 1
+	}
 }

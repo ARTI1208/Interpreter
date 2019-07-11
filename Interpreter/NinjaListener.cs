@@ -261,6 +261,56 @@ public interface INinjaListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitVal_or_id([NotNull] NinjaParser.Val_or_idContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.myif"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterMyif([NotNull] NinjaParser.MyifContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.myif"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitMyif([NotNull] NinjaParser.MyifContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.myif_short"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterMyif_short([NotNull] NinjaParser.Myif_shortContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.myif_short"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitMyif_short([NotNull] NinjaParser.Myif_shortContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.mywhile"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterMywhile([NotNull] NinjaParser.MywhileContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.mywhile"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitMywhile([NotNull] NinjaParser.MywhileContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.mydo_while"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterMydo_while([NotNull] NinjaParser.Mydo_whileContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.mydo_while"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitMydo_while([NotNull] NinjaParser.Mydo_whileContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="NinjaParser.myfor"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterMyfor([NotNull] NinjaParser.MyforContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="NinjaParser.myfor"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitMyfor([NotNull] NinjaParser.MyforContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="NinjaParser.ariphOperand"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -370,56 +420,6 @@ public interface INinjaListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitTrig2([NotNull] NinjaParser.Trig2Context context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="NinjaParser.myif"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterMyif([NotNull] NinjaParser.MyifContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="NinjaParser.myif"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitMyif([NotNull] NinjaParser.MyifContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="NinjaParser.myif_short"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterMyif_short([NotNull] NinjaParser.Myif_shortContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="NinjaParser.myif_short"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitMyif_short([NotNull] NinjaParser.Myif_shortContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="NinjaParser.mywhile"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterMywhile([NotNull] NinjaParser.MywhileContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="NinjaParser.mywhile"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitMywhile([NotNull] NinjaParser.MywhileContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="NinjaParser.mydo_while"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterMydo_while([NotNull] NinjaParser.Mydo_whileContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="NinjaParser.mydo_while"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitMydo_while([NotNull] NinjaParser.Mydo_whileContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="NinjaParser.myfor"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterMyfor([NotNull] NinjaParser.MyforContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="NinjaParser.myfor"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitMyfor([NotNull] NinjaParser.MyforContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="NinjaParser.meaningfulType"/>.
 	/// </summary>

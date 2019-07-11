@@ -141,7 +141,7 @@ options {
     		//if (call.paramList[i].type == method.paramList[i].type)
     		if (r is string varId)
     			if(curBlock.varTable.ContainsKey(varId))
-    				r = curBlock.varTable[varId].value;
+    				r = FindVar(varId).value;
     			else
     			{
     				Console.WriteLine($"Type mismatch ({i+1}/{call.paramList.Count}): expected {method.paramList[i].type}, found {r.GetType()} with value {call.paramList[call.paramList.Count - i - 1].value}");
@@ -359,8 +359,22 @@ options {
             					return value;
             				if (type == ObjType.Var)
             				{
-            					Debug(value + curBlock.varTable[value].value);					
-            					return curBlock.varTable[value].value;
+            					Block par = curBlock;
+								while (!par.varTable.ContainsKey(value))
+								{
+									par = par.Parent;
+									if (par == null)
+									{
+										break;
+									}
+								}
+                                
+								if (par == null)
+								{
+									Console.WriteLine($"Unknown var {value}!!!");
+								}
+								Debug(value + par.varTable[value].value);
+            					return par.varTable[value].value;
             				}
             
             				Error("\"" + value + "\" is an operation");
@@ -518,26 +532,26 @@ options {
 						
 						case "++pre":
 							right = Pop(stack);
-							++curBlock.varTable[right.value].value;
+							++FindVar(right.value).value;
 							stack.Add(new ExprStackObject(right.Calc()));
 							break;
 							
 						case "++post":
 							right = Pop(stack);
 							stack.Add(new ExprStackObject(right.Calc()));
-							++curBlock.varTable[right.value].value;
+							++FindVar(right.value).value;
 							break;
 							
 						case "--pre":
 							right = Pop(stack);
-							--curBlock.varTable[right.value].value;
+							--FindVar(right.value).value;
 							stack.Add(new ExprStackObject(right.Calc()));
 							break;
 							
 						case "--post":
 							right = Pop(stack);
 							stack.Add(new ExprStackObject(right.Calc()));
-							--curBlock.varTable[right.value].value;
+							--FindVar(right.value).value;
 							break;
 							
 						case "=":
@@ -545,18 +559,9 @@ options {
 							left = Pop(stack);
 							try
 							{
-								foreach(var key in curBlock.varTable.Keys)
-                                									{
-                                										Debug($"|||{key}||| with type {curBlock.varTable[key].value.GetType()}");
-                                										if (key == "op")
-                                										{
-                                											Debug(curBlock.varTable["op"].value + "nono");
-                                										}
-                                									}
-                                									dynamic rightval = right.Calc();
-                                									Debug("mhere?");
+								dynamic rightval = right.Calc();
 								string su = (string) left.value;
-								VarData data = curBlock.varTable[su];
+								VarData data = FindVar(su);
 								Debug("ishere?");
 								if (data.value.GetType() == rightval.GetType())
 									data.value = rightval;
@@ -565,21 +570,11 @@ options {
 								else
 									Error("Can't convert \"" + rightval + "\" to " + data.type);
 								Debug("oshere?");
-								Debug($"var \"{left.value}\" of type {curBlock.varTable[left.value].type} = {data.value}");	
+								Debug($"var \"{left.value}\" of type {FindVar(left.value).type} = {data.value}");	
 								stack.Add(new ExprStackObject(data.value));
 							}
 							catch (KeyNotFoundException e)
-							{
-								Debug("what exist");
-								foreach(var key in curBlock.varTable.Keys)
-                            								{
-                            									Debug($"|||{key}||| with type {curBlock.varTable[key].value.GetType()}");
-                                                                	                            									if (key == "op")
-                                                                	                            									{
-                                                                	                            										Debug(curBlock.varTable["op"].value + "ioio");
-                                                                	                            									}
-                            								}
-                            								
+							{							
 								Error("Variable " + left.value + " does not exist in current context1\n" + e.StackTrace);
 							}
 							break;
@@ -590,7 +585,7 @@ options {
 							try
 							{
 								dynamic rightval = right.Calc();
-								VarData data = curBlock.varTable[left.value];
+								VarData data = FindVar(left.value);
 								if (data.value.GetType() == rightval.GetType())
 									data.value += rightval;
 								else if (data.type == VarType.Double)
@@ -611,7 +606,7 @@ options {
 							try
 							{
 								dynamic rightval = right.Calc();
-								VarData data = curBlock.varTable[left.value];
+								VarData data = FindVar(left.value);
 								if (data.value.GetType() == rightval.GetType())
 									data.value -= rightval;
 								else if (data.type == VarType.Double)
@@ -632,7 +627,7 @@ options {
 							try
 							{
 								dynamic rightval = right.Calc();
-								VarData data = curBlock.varTable[left.value];
+								VarData data = FindVar(left.value);
 								if (data.value.GetType() == rightval.GetType())
 									data.value *= rightval;
 								else if (data.type == VarType.Double)
@@ -653,7 +648,7 @@ options {
 							try
 							{
 								dynamic rightval = right.Calc();
-								VarData data = curBlock.varTable[left.value];
+								VarData data = FindVar(left.value);
 								if (data.value.GetType() == rightval.GetType())
 									data.value /= rightval;
 								else if (data.type == VarType.Double)
@@ -713,9 +708,9 @@ options {
             	res.Calc();
             	if (res.value is string ss && curBlock.varTable.ContainsKey(ss))
 				{
-            		Debug($"Result is {curBlock.varTable[ss].value}");
-            		value = curBlock.varTable[ss].value;
-            		return curBlock.varTable[ss].value;
+            		Debug($"Result is {FindVar(ss).value}");
+            		value = FindVar(ss).value;
+            		return FindVar(ss).value;
             	}
             	Debug($"Result is {res.value}");
             	value = res.value;
@@ -725,6 +720,98 @@ options {
             return null;
 		}
 	}
+	
+	public static VarData FindVar(string name)
+	{
+		Block par = curBlock;
+		while (!par.varTable.ContainsKey(name))
+		{
+			par = par.Parent;
+			if (par == null)
+			{
+				break;
+			}
+		}                                
+		if (par == null)
+		{
+			Error($"Unknown var {name}!!!");
+		}
+		return par.varTable[name];
+	} 
+	
+	public class Cycles: OperationClass
+    {
+        //public List<OperationClass> callList = new ArrayList<OperationClass>();
+        public Block cycleBlock = new Block();
+		public ExprClass refExpr1;
+		
+	}
+    
+	public class While:Cycles
+	{
+		public override dynamic Eval()
+        {
+        	curBlock = cycleBlock;
+        	Debug("---Entering whilecycle");
+        	int i = 0;
+        	while(refExpr1.Eval())
+			{
+				Debug($"-=-While loop {i++}");
+				cycleBlock.Eval();
+            }
+            Debug("---Exiting whilecycle");
+            curBlock = curBlock.Parent;
+    		return null;
+        }
+    }
+    
+    public class Do_while:Cycles
+    {
+		public override dynamic Eval()
+        {
+			do
+			{
+				cycleBlock.Eval();
+			}
+			while(refExpr1.Eval());
+			return null;
+		}
+	}
+    
+    public class For:Cycles
+    {
+		ExprClass refExpr2;
+    	ExprClass refExpr3;
+    	
+        public override dynamic Eval()
+        {
+			refExpr2.Eval();
+            while(refExpr1.Eval())
+            {
+            	cycleBlock.Eval();
+				refExpr3.Eval(); 
+            }
+    		return null;
+        }
+    }    
+    
+    public class Condition:Cycles 
+    {
+    	public Block elseIfBlock = new Block();
+    	//public List<OperationClass> callListElse = new ArrayList<OperationClass>();
+        public override dynamic Eval()
+        {
+        	if(refExpr1.Eval())
+            {
+            	cycleBlock.Eval();
+            }
+            else
+            {
+				elseIfBlock.Eval();
+            }
+    		return null;
+        }
+   	}
 }
 
 program : function* main function* {
@@ -905,7 +992,7 @@ code : (operation[curBlock.createOperationClass()])*;
 main_code : (operation[curBlock.createOperationClass()])*;
 
 operation[OperationClass oper] : call[curBlock.ToExpr()] | custom_call[curBlock.ToExpr()] | declare[curBlock.ToExpr()] | ariphExprEx[curBlock.ToExpr()] | boolExprEx[curBlock.ToExpr()]
-			| myif|myif_short|mywhile|mydo_while|myfor;
+			| myif[new Condition()]|myif_short[new Condition()]|mywhile[curBlock.ToExpr()]|mydo_while[new Do_while()]|myfor[new For()];
 
 method_return[OperationClass oper] returns [string type, dynamic value]: RETURN_KEYWORD val_or_id[curBlock.ToExpr()] {
 	Debug($"val_or_id3 is {$val_or_id.text}");
@@ -1101,6 +1188,67 @@ val_or_id[ExprClass oper] returns [string type, dynamic value]:
 				$type = "bool";
 			};
 
+//cyclemetka
+myif[Condition condition]: IF LPAREN boolExprEx[null]{condition.refExpr1=$boolExprEx.res;} RPAREN 
+     OBRACE 
+     {
+     	
+     	//curBlock = 
+     }
+    (operation[curBlock.createOperationClass()])* 
+    CBRACE
+     ELSE 
+      OBRACE  
+    (operation[curBlock.createOperationClass()])*
+    CBRACE
+    {
+        // добавление в общую таблицу вызовов?
+     }
+   ;
+myif_short[Condition condition]: IF LPAREN boolExprEx[null]{condition.refExpr1=$boolExprEx.res;}  RPAREN 
+    OBRACE
+    (operation[curBlock.createOperationClass()])* 
+    CBRACE
+    {
+        // добавление в общую таблицу вызовов?
+     }
+   ;
+mywhile[ExprClass oper]: WHILE LPAREN boolExprEx[$oper]{} RPAREN 
+     OBRACE 
+     {
+     	While whiler = new While()
+     	{
+     		refExpr1=$boolExprEx.res
+     	};
+     	curBlock.operations.Add(whiler);
+     	whiler.cycleBlock.Parent = curBlock;
+     	curBlock = whiler.cycleBlock;
+     }
+     (operation[curBlock.createOperationClass()])*
+     CBRACE 
+     {
+        // добавление в общую таблицу вызовов?
+      }
+       ;
+mydo_while[Do_while obj]: DO 
+          OBRACE
+            (operation[curBlock.createOperationClass()])* 
+          CBRACE
+          WHILE LPAREN boolExprEx[null] RPAREN 
+          {
+            // добавление в общую таблицу вызовов?      
+           }
+          ;
+myfor[For obj]:  FOR LPAREN ariphExprEx[null]
+                 SEMICOLON boolExprEx[null] 
+                 SEMICOLON ariphExprEx[null] RPAREN
+        OBRACE
+        (operation[curBlock.createOperationClass()])*
+        CBRACE
+        { 
+            // добавление в общую таблицу вызовов?
+         }
+     ;
 
 //Code related to variables
 ariphOperand[ExprClass oper]:
@@ -1393,36 +1541,7 @@ trig2[ExprClass oper]:
 		
 
 //code related to cycles
-myif: IF LPAREN boolExprEx[null] RPAREN // вместо INT  нужен BOOL
-     OBRACE 
-    (operation[null])+
-    CBRACE
-     ELSE 
-      OBRACE  
-    (operation[null])+
-    CBRACE
-   ;
-myif_short: IF LPAREN boolExprEx[null]  RPAREN // вместо INT  нужен BOOL
-    OBRACE
-    (operation[null])+
-    CBRACE
-   ;
-mywhile: WHILE LPAREN boolExprEx[null] RPAREN // вместо INT  нужен BOOL
-     OBRACE
-     (operation[null])+
-     CBRACE 
-       ;
-mydo_while: DO 
-          OBRACE
-            (operation[null])+
-          CBRACE
-          WHILE LPAREN boolExprEx[null] RPAREN // вместо INT  нужен BOOL
-          ;
-myfor:  FOR LPAREN ~SEMICOLON+ SEMICOLON boolExprEx[null] SEMICOLON ~SEMICOLON+ RPAREN // ~SEMICOLON+ заменяется на INT BOOL оператор
-        OBRACE
-        (operation[null])+
-        CBRACE
-     ;
+
 
 
 //Lexer rules
