@@ -743,7 +743,7 @@ options {
     {
         //public List<OperationClass> callList = new ArrayList<OperationClass>();
         public Block cycleBlock = new Block();
-		public ExprClass refExpr1;
+		public ExprClass cond;
 		
 	}
     
@@ -754,7 +754,7 @@ options {
         	curBlock = cycleBlock;
         	Debug("---Entering whilecycle");
         	int i = 0;
-        	while(refExpr1.Eval())
+        	while(cond.Eval())
 			{
 				Debug($"-=-While loop {i++}");
 				cycleBlock.Eval();
@@ -773,7 +773,7 @@ options {
 			{
 				cycleBlock.Eval();
 			}
-			while(refExpr1.Eval());
+			while(cond.Eval());
 			return null;
 		}
 	}
@@ -786,7 +786,7 @@ options {
         public override dynamic Eval()
         {
 			refExpr2.Eval();
-            while(refExpr1.Eval())
+            while(cond.Eval())
             {
             	cycleBlock.Eval();
 				refExpr3.Eval(); 
@@ -801,7 +801,7 @@ options {
     	//public List<OperationClass> callListElse = new ArrayList<OperationClass>();
         public override dynamic Eval()
         {
-        	if(refExpr1.Eval())
+        	if(cond.Eval())
             {
             	cycleBlock.Eval();
             }
@@ -992,7 +992,7 @@ code : (operation[curBlock.createOperationClass()])*;
 main_code : (operation[curBlock.createOperationClass()])*;
 
 operation[OperationClass oper] : call[curBlock.ToExpr()] | custom_call[curBlock.ToExpr()] | declare[curBlock.ToExpr()] | ariphExprEx[curBlock.ToExpr()] | boolExprEx[curBlock.ToExpr()]
-			| myif[new Condition()]|myif_short[new Condition()]|mywhile[curBlock.ToExpr()]|mydo_while[new Do_while()]|myfor[new For()];
+			| myif[new Condition()]|myif_short[new Condition()]|mywhile[curBlock.ToExpr()]|mydo_while[curBlock.ToExpr()]|myfor[new For()];
 
 method_return[OperationClass oper] returns [string type, dynamic value]: RETURN_KEYWORD val_or_id[curBlock.ToExpr()] {
 	Debug($"val_or_id3 is {$val_or_id.text}");
@@ -1185,7 +1185,7 @@ val_or_id[ExprClass oper] returns [string type, dynamic value]:
 			};
 
 //cyclemetka
-myif[Condition condition]: IF LPAREN boolExprEx[null]{condition.refExpr1=$boolExprEx.res;} RPAREN 
+myif[Condition condition]: IF LPAREN boolExprEx[null]{condition.cond=$boolExprEx.res;} RPAREN 
      OBRACE 
      {
      	
@@ -1201,7 +1201,7 @@ myif[Condition condition]: IF LPAREN boolExprEx[null]{condition.refExpr1=$boolEx
         // добавление в общую таблицу вызовов?
      }
    ;
-myif_short[Condition condition]: IF LPAREN boolExprEx[null]{condition.refExpr1=$boolExprEx.res;}  RPAREN 
+myif_short[Condition condition]: IF LPAREN boolExprEx[null]{condition.cond=$boolExprEx.res;}  RPAREN 
     OBRACE
     (operation[curBlock.createOperationClass()])* 
     CBRACE
@@ -1209,12 +1209,12 @@ myif_short[Condition condition]: IF LPAREN boolExprEx[null]{condition.refExpr1=$
         // добавление в общую таблицу вызовов?
      }
    ;
-mywhile[ExprClass oper]: WHILE LPAREN boolExprEx[$oper]{} RPAREN 
+mywhile[ExprClass oper]: WHILE LPAREN boolExprEx[$oper] RPAREN 
      OBRACE 
      {
      	While whiler = new While()
      	{
-     		refExpr1=$boolExprEx.res
+     		cond=$boolExprEx.res
      	};
      	curBlock.operations.Add(whiler);
      	whiler.cycleBlock.Parent = curBlock;
@@ -1226,13 +1226,20 @@ mywhile[ExprClass oper]: WHILE LPAREN boolExprEx[$oper]{} RPAREN
         curBlock = curBlock.Parent;
       }
        ;
-mydo_while[Do_while obj]: DO 
-          OBRACE
+mydo_while[ExprClass oper]: DO 
+          OBRACE 
+          {
+          		Do_while doer = new Do_while();
+               	curBlock.operations.Add(doer);
+               	doer.cycleBlock.Parent = curBlock;
+               	curBlock = doer.cycleBlock;
+          }
             (operation[curBlock.createOperationClass()])* 
           CBRACE
-          WHILE LPAREN boolExprEx[null] RPAREN 
+          WHILE LPAREN boolExprEx[$oper] RPAREN 
           {
-            // добавление в общую таблицу вызовов?      
+            	doer.cond=$boolExprEx.res;
+            	curBlock = curBlock.Parent;
            }
           ;
 myfor[For obj]:  FOR LPAREN ariphExprEx[null]
