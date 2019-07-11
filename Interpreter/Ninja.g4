@@ -102,6 +102,17 @@ options {
         Console.WriteLine(message);
         Console.ForegroundColor = curr;
     }
+    
+    public static bool CheckType(Type t, VarType vt)
+    {
+    	if(t.ToString().ToLower().Contains("bool") && vt.ToString().ToLower().Contains("bool"))
+    		return true;
+    	if(t.ToString().ToLower().Contains("int") && vt.ToString().ToLower().Contains("int"))
+            return true;
+        if(t.ToString().ToLower().Contains("double") && vt.ToString().ToLower().Contains("double"))
+            return true;
+        return false;        	
+    }
 	
 	public static bool CheckParams(NinjaParser.CallData call, NinjaParser.MethodData method)
     {
@@ -114,11 +125,12 @@ options {
     
     	for (int i = 0; i < call.paramList.Count; i++)
     	{
-    				
-    		if (call.paramList[i].type == method.paramList[i].type)
+    		var r = call.paramList[i].value.Eval();		
+    		//if (call.paramList[i].type == method.paramList[i].type)
+    		if (CheckType(r.GetType(), method.paramList[i].type))
     		{
-    			method.paramList[i].value = call.paramList[i].value;
-    			method.varTable[method.paramList[i].name].value = call.paramList[i].value;
+    			method.paramList[i].value = r;
+    			method.varTable[method.paramList[i].name].value = r;
     			Console.WriteLine($"Param \"{method.paramList[i].name}\" of type {method.paramList[i].type} with val {call.paramList[i].value}");
     		}
     		else
@@ -592,12 +604,12 @@ program : function* main function* {
                 			sm.Eval();
                 		}
                 	}*/
-
+				metTable["main"].Eval();
 };
 
 main : main_signature OBRACE main_code CBRACE
 {
-	metTable["main"].Eval();
+	
 };
 
 main_signature : FUN_KEYWORD VOID MAIN LPAREN RPAREN {
@@ -755,10 +767,10 @@ call[OperationClass oper] : parameterized_call {
 		value = _localctx._parameterized_call.ariphExprEx().GetText()
 	};
 	
-	if($parameterized_call.res.isEvaluated)
-		d.value = $parameterized_call.res.value;
-	else	
-		d.value = $parameterized_call.res.Eval();
+	//if($parameterized_call.res.isEvaluated)
+	//	d.value = $parameterized_call.res.value;
+	//else	
+		d.value = $parameterized_call.res;
     d.paramType = ParamType.Pass;				
     data.paramList.Add(d);
 	
@@ -819,7 +831,9 @@ custom_call[OperationClass oper] returns [string funName]: ID LPAREN call_params
         	//	break;
         						
         	default:
-        		throw new NotImplementedException();
+        		Error($"Unknown type {par.type}");
+        		//throw new NotImplementedException();
+        		break;
         }
         d.value = par.value;
 		data.paramList.Add(d);    			
@@ -838,24 +852,27 @@ val_or_id[OperationClass oper] returns [string type, dynamic value]:
 			ariphExprEx[curBlock.ToExpr()]
 			{
 				
-				if($ariphExprEx.res.isEvaluated)
-                		$value = $ariphExprEx.res.value;
-                	else	
-                		$value = $ariphExprEx.res.Eval();
-				Debug($"param value is {$value}");
+				//if($ariphExprEx.res.isEvaluated)
+                //		$value = $ariphExprEx.res.value;
+                //	else	
+                		$value = $ariphExprEx.res;
+				
 				if ($value.GetType() == typeof(int)) //ariphExprEx.value.GetType() == typeof(int)")
 					$type = "int";
-				else
+				else if ($value.GetType() == typeof(double))
 					$type = "double";
+				else if ($value.GetType() == typeof(bool))
+                    $type = "bool";
+                Debug($"param value1 is {$value} of type {$type}");    
 			}
 		  | boolExprEx[curBlock.ToExpr()]
 			{
 				//Debug($"val_or_id is {$boolExprEx.text}");
-				if($boolExprEx.res.isEvaluated)
-                     $value = $boolExprEx.res.value;
-                else	
-                      $value = $boolExprEx.res.Eval();
-                Debug($"param value is {$value}");
+				//if($boolExprEx.res.isEvaluated)
+                 //    $value = $boolExprEx.res.value;
+                //else	
+                      $value = $boolExprEx.res;
+                Debug($"param value2 is {$value}");
 				$type = "bool";
 			};
 

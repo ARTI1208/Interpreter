@@ -86,6 +86,10 @@ namespace Interpreter
 
 				var pastwk = new ParseTreeWalker();
 				pastwk.Walk(new NinjaAdvancedListener(), tree);
+				int t = 6;
+
+				t = 5;
+				Console.WriteLine(t.GetType());
 			}
 			catch (StackOverflowException e)
 			{

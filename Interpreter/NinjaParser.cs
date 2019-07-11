@@ -205,6 +205,17 @@ public partial class NinjaParser : Parser {
 	        Console.WriteLine(message);
 	        Console.ForegroundColor = curr;
 	    }
+	    
+	    public static bool CheckType(Type t, VarType vt)
+	    {
+	    	if(t.ToString().ToLower().Contains("bool") && vt.ToString().ToLower().Contains("bool"))
+	    		return true;
+	    	if(t.ToString().ToLower().Contains("int") && vt.ToString().ToLower().Contains("int"))
+	            return true;
+	        if(t.ToString().ToLower().Contains("double") && vt.ToString().ToLower().Contains("double"))
+	            return true;
+	        return false;        	
+	    }
 		
 		public static bool CheckParams(NinjaParser.CallData call, NinjaParser.MethodData method)
 	    {
@@ -217,11 +228,12 @@ public partial class NinjaParser : Parser {
 	    
 	    	for (int i = 0; i < call.paramList.Count; i++)
 	    	{
-	    				
-	    		if (call.paramList[i].type == method.paramList[i].type)
+	    		var r = call.paramList[i].value.Eval();		
+	    		//if (call.paramList[i].type == method.paramList[i].type)
+	    		if (CheckType(r.GetType(), method.paramList[i].type))
 	    		{
-	    			method.paramList[i].value = call.paramList[i].value;
-	    			method.varTable[method.paramList[i].name].value = call.paramList[i].value;
+	    			method.paramList[i].value = r;
+	    			method.varTable[method.paramList[i].name].value = r;
 	    			Console.WriteLine($"Param \"{method.paramList[i].name}\" of type {method.paramList[i].type} with val {call.paramList[i].value}");
 	    		}
 	    		else
@@ -765,7 +777,7 @@ public partial class NinjaParser : Parser {
 			                			sm.Eval();
 			                		}
 			                	}*/
-
+							metTable["main"].Eval();
 
 			}
 		}
@@ -816,7 +828,7 @@ public partial class NinjaParser : Parser {
 			State = 109; main_code();
 			State = 110; Match(CBRACE);
 
-				metTable["main"].Eval();
+				
 
 			}
 		}
@@ -1810,10 +1822,10 @@ public partial class NinjaParser : Parser {
 						value = _localctx._parameterized_call.ariphExprEx().GetText()
 					};
 					
-					if(_localctx._parameterized_call.res.isEvaluated)
-						d.value = _localctx._parameterized_call.res.value;
-					else	
-						d.value = _localctx._parameterized_call.res.Eval();
+					//if(_localctx._parameterized_call.res.isEvaluated)
+					//	d.value = _localctx._parameterized_call.res.value;
+					//else	
+						d.value = _localctx._parameterized_call.res;
 				    d.paramType = ParamType.Pass;				
 				    data.paramList.Add(d);
 					
@@ -2027,7 +2039,9 @@ public partial class NinjaParser : Parser {
 			        	//	break;
 			        						
 			        	default:
-			        		throw new NotImplementedException();
+			        		Error($"Unknown type {par.type}");
+			        		//throw new NotImplementedException();
+			        		break;
 			        }
 			        d.value = par.value;
 					data.paramList.Add(d);    			
@@ -2171,15 +2185,18 @@ public partial class NinjaParser : Parser {
 				State = 235; _localctx._ariphExprEx = ariphExprEx(curBlock.ToExpr());
 
 								
-								if(_localctx._ariphExprEx.res.isEvaluated)
-				                		_localctx.value =  _localctx._ariphExprEx.res.value;
-				                	else	
-				                		_localctx.value =  _localctx._ariphExprEx.res.Eval();
-								Debug($"param value is {_localctx.value}");
+								//if(_localctx._ariphExprEx.res.isEvaluated)
+				                //		_localctx.value =  _localctx._ariphExprEx.res.value;
+				                //	else	
+				                		_localctx.value =  _localctx._ariphExprEx.res;
+								
 								if (_localctx.value.GetType() == typeof(int)) //ariphExprEx.value.GetType() == typeof(int)")
 									_localctx.type =  "int";
-								else
+								else if (_localctx.value.GetType() == typeof(double))
 									_localctx.type =  "double";
+								else if (_localctx.value.GetType() == typeof(bool))
+				                    _localctx.type =  "bool";
+				                Debug($"param value1 is {_localctx.value} of type {_localctx.type}");    
 							
 				}
 				break;
@@ -2189,11 +2206,11 @@ public partial class NinjaParser : Parser {
 				State = 238; _localctx._boolExprEx = boolExprEx(curBlock.ToExpr());
 
 								//Debug($"val_or_id is {(_localctx._boolExprEx!=null?TokenStream.GetText(_localctx._boolExprEx.Start,_localctx._boolExprEx.Stop):null)}");
-								if(_localctx._boolExprEx.res.isEvaluated)
-				                     _localctx.value =  _localctx._boolExprEx.res.value;
-				                else	
-				                      _localctx.value =  _localctx._boolExprEx.res.Eval();
-				                Debug($"param value is {_localctx.value}");
+								//if(_localctx._boolExprEx.res.isEvaluated)
+				                 //    _localctx.value =  _localctx._boolExprEx.res.value;
+				                //else	
+				                      _localctx.value =  _localctx._boolExprEx.res;
+				                Debug($"param value2 is {_localctx.value}");
 								_localctx.type =  "bool";
 							
 				}

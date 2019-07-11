@@ -4,10 +4,11 @@ fun bool ret(int ch)
 	return false
 }
 
-fun void boo(bool is)
+fun void boo(bool is, int ru)
 {
 	bool isb = true
 	bool isc = is || false
+	int y = ru * 3 - 1 
 }
 
 fun void foo(int a)
@@ -21,6 +22,6 @@ fun void main()
 	int f = 1
 	foo(f + 3)
 	bool k = true
-	k = ret(3)
-	boo(true)
+	ret(f + 1)
+	boo(false, f)
 }
