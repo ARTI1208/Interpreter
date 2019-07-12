@@ -47,8 +47,26 @@ options {
     {
         public string name;
         public VarType type;
-        public dynamic value;
         
+        
+        public dynamic value
+        {
+        	get 
+        	{
+        		if (isAssigned)
+        			return rval;
+        		throw new Exception($"Cannot get value, Variable \"{name}\" is not initialized!");	
+        	}
+        	
+        	set
+        	{
+        		isAssigned = true;
+        		rval = value;
+        	}
+        }
+        
+        private dynamic rval;
+        public bool isAssigned {get; private set;}
     }
 
     public class MethodData : Block
@@ -76,7 +94,10 @@ options {
             Debug($"---Vars of block met {name} ----");	
             foreach (var elem in varTable)
             {
-                Console.WriteLine("\t" + elem.Key + " is " + elem.Value.type + " with value " + elem.Value.value);
+            	if (elem.Value.isAssigned)
+                	Console.WriteLine("\t" + elem.Key + " is " + elem.Value.type + " with value " + elem.Value.value);
+                else
+                	Console.WriteLine("\t" + elem.Key + " is " + elem.Value.type + ", value not assigned");
             }
             Debug($"---End Vars of block met {name} ----");
             Debug($"===Exiting fun {name}");	
@@ -130,10 +151,9 @@ options {
 	
 	public bool CheckParams(NinjaParser.CallData call, NinjaParser.MethodData method)
     {
-    	Console.WriteLine($"Checking params of {call.name}");
     	if (call.paramList.Count != method.paramList.Count)
     	{
-    		Console.WriteLine($"Expected params {method.paramList.Count}, found {call.paramList.Count}");
+    		Error($"Expected params {method.paramList.Count}, found {call.paramList.Count}");
     		return false;
     	}
     
@@ -146,7 +166,7 @@ options {
     				r = FindVar(varId).value;
     			else
     			{
-    				Console.WriteLine($"Type mismatch ({i+1}/{call.paramList.Count}): expected {method.paramList[i].type}, found {r.GetType()} with value {call.paramList[call.paramList.Count - i - 1].value}");
+    				Error($"Type mismatch ({i+1}/{call.paramList.Count}): expected {method.paramList[i].type}, found {r.GetType()} with value {call.paramList[call.paramList.Count - i - 1].value}");
                     return false;
     			}
     				
@@ -164,11 +184,10 @@ options {
                	}
                 	                
     			method.varTable[method.paramList[i].name].value = r;
-    			Console.WriteLine($"Param \"{method.paramList[i].name}\" of type {method.paramList[i].type} with val {call.paramList[i].value}");
     		}
     		else
     		{
-    			Console.WriteLine($"Type mismatch ({i+1}/{call.paramList.Count}): expected {method.paramList[i].type}, found {r.GetType()} with value {call.paramList[call.paramList.Count - i - 1].value}");
+    			Error($"Type mismatch ({i+1}/{call.paramList.Count}): expected {method.paramList[i].type}, found {r.GetType()} with value {call.paramList[call.paramList.Count - i - 1].value}");
     			return false;
     		}
     	}
@@ -259,20 +278,23 @@ options {
 		{
 			if (callType == NinjaParser.CallType.Custom)
 			{
+				Console.WriteLine("CUUUUSsssstom");
+				
 				if (parser.metTable.ContainsKey(name) && parser.CheckParams(this, parser.metTable[name]))
-				{
-					
-					parser.metTable[name].Eval();
-					var ret = parser.metTable[name].returnValue.Eval();
-					
-					
-                    	if (!CheckType(ret.GetType(), parser.metTable[name].returnType)){
-                    		throw new Exception($"Actual return is {ret.GetType()}, expected declared return type {parser.metTable[name].returnType}");
-                    	}
-					
-					parser.curBlock = parent;
-					return ret;
-					
+				{		
+					Console.WriteLine($"Calling custom method {name} with params {ParamListToString(paramList)}");
+                    						parser.metTable[name].Eval();
+                    						if (parser.metTable[name].returnType != ReturnType.Void)
+                    						{
+                    							var ret = parser.metTable[name].returnValue.Eval();
+                    							if (!CheckType(ret.GetType(), parser.metTable[name].returnType)){
+                    								throw new Exception($"Actual return is {ret.GetType()}, expected declared return type {parser.metTable[name].returnType}");
+                    							}
+                    							parser.curBlock = parent;
+                    							return ret;	
+                    						}
+                    						parser.curBlock = parent;
+                    						return null;
 				}
 			}
 			else
@@ -370,37 +392,11 @@ options {
 		
 		public dynamic Calc()
 		{
-					Debug($"Calculatinf {type}, {value}");
             				if (type == ObjType.Number)
             					return value;
             				if (type == ObjType.Var)
             				{
-            					Block par = parser.curBlock;
-								while (!par.varTable.ContainsKey(value))
-								{
-									par = par.Parent;
-									if (par == null)
-									{
-										break;
-									}
-								}
-                                
-								if (par == null)
-								{
-									Console.WriteLine($"Unknown var {value}!!!");
-									Debug($"nkeys {parser.curBlock.varTable.Keys.Count}");
-									foreach (var key in parser.curBlock.varTable.Keys)
-									{
-										Debug($"nkey {key}");
-									}
-									
-									foreach (var key in parser.curBlock.Parent.varTable.Keys)
-                                    									{
-                                    										Debug($"nkey2 {key}");
-                                    									}
-								}
-								Debug(value + par.varTable[value].value);
-            					return par.varTable[value].value;
+            					return parser.FindVar(value).value;
             				}
             
             				Error("\"" + value + "\" is an operation");
@@ -467,7 +463,6 @@ options {
 			{
 				s += v.value;
 			}
-			Debug($"Evaluating {s}");
 			List<ExprStackObject> stack = new List<ExprStackObject>();
 			foreach (var elem in exprStack)
 			{
@@ -475,7 +470,6 @@ options {
 					stack.Add(elem);
 				else if (elem.type == ObjType.Function)
 				{
-					Debug($"evals {elem.value.name}");
 					ArrayList<ParamData> pars = elem.value.paramList;
 					for (int i = 0; i < pars.Count; ++i)
 					{
@@ -682,15 +676,12 @@ options {
                     								dynamic rightval = rightVal;
                     								string su = (string) left.value;
                     								VarData data = parser.FindVar(su);
-                    								Debug("ishere?");
-                    								if (data.value.GetType() == rightval.GetType())
+                    								if (CheckType(rightval.GetType(), data.type))
                     									data.value = rightval;
                     								else if (data.type == VarType.Double)
                     									data.value = (double)rightval;
                     								else
-                    									Error("Can't convert \"" + rightval + "\" to " + data.type);
-                    								Debug("oshere?");
-                    								Debug($"var \"{left.value}\" of type {parser.FindVar(left.value).type} = {data.value}");	
+                    									Error("Can't convert \"" + rightval + "\" to " + data.type);	
                     								stack.Add(new ExprStackObject(data.value, parser));
                     							}
                     							catch (KeyNotFoundException e)
@@ -861,18 +852,22 @@ options {
 			if (stack.Count > 0)
             {
             	var res = stack[0];
-            	res.Calc();
+            	try
+                	                {
+                		                res.Calc();
+                	                }
+                	                catch (Exception e)
+                	                {
+                		                return null;
+                	                }
             	if (res.value is string ss && parser.FindVar(ss) != null)
 				{
-            		Debug($"Result is {parser.FindVar(ss).value}");
             		value = parser.FindVar(ss).value;
             		return parser.FindVar(ss).value;
             	}
-            	Debug($"Result is {res.value}");
             	value = res.value;
             	return res.value;	
             }
-            Error("Nothing in stack left");
             return null;
 		}
 	}
@@ -890,7 +885,7 @@ options {
 		}                                
 		if (par == null)
 		{
-			Error($"Unknown var {name}!!!");
+			Error($"Variable {name} doesn\'t exist in current context!");
 		}
 		return par?.varTable[name];
 	} 
@@ -953,12 +948,11 @@ options {
     	
         public override dynamic Eval()
         {
-			Debug($"forfirst is {first.Eval()}");
-			Debug($"forcond is {cond.Eval()}");
+        	first.Eval();
             while(cond.Eval())
             {
             	cycleBlock.Eval();
-				Debug($"forlast is {last.Eval()}"); 
+            	last.Eval(); 
             }
     		return null;
         }
@@ -1181,7 +1175,6 @@ operation[OperationClass oper] : call[curBlock.ToExpr()] | custom_call[curBlock.
 			| myif[curBlock.ToExpr()]|myif_short[curBlock.ToExpr()]|mywhile[curBlock.ToExpr()]|mydo_while[curBlock.ToExpr()]|myfor[curBlock.ToExpr()];
 
 method_return[OperationClass oper] returns [string type, dynamic value]: RETURN_KEYWORD val_or_id[curBlock.ToExpr()] {
-	Debug($"val_or_id3 is {$val_or_id.text}");
 	$type = $val_or_id.type;
 	$value = $val_or_id.value;
 };
@@ -1196,17 +1189,17 @@ var_signature[string funName]: meaningfulType ID
 					{
 						case "int":
 							newVar.type = VarType.Int;
-							newVar.value = 0;
+							
 							break;
 							
 						case "double":
 							newVar.type = VarType.Double;
-							newVar.value = 0.0;
+							
 							break;
 							
 						case "bool":
 							newVar.type = VarType.Bool;
-							newVar.value = false;
+							
 							break;
 					}
 					ParamData pData = new ParamData();
@@ -1261,15 +1254,12 @@ call[ExprClass oper] returns [CallData callData] : parameterized_call[$oper] {
             	//	break;
             						
             	default:
-            		Error($"Unknown type {par.type}");
+            		//Error($"Unknown type {par.type}");
             		//throw new NotImplementedException();
             		break;
             }
             d.value = par.value;
-            //Debug($"{d.value} of {d.value.GetType()}");
-    		data.paramList.Insert(0, d);    
-    		Debug($"Adding param, type {d.value.GetType()}");			
-    		//data.paramList.Add(d);    			
+    		data.paramList.Insert(0, d);		
     	}
 		$callData = data;
 
@@ -1309,6 +1299,8 @@ custom_call[ExprClass oper] returns [string funName, CallData callData]: ID LPAR
         parent = curBlock,
 		parser = this
 	};
+	
+	Debug($"foun cccall {callName}");
 
 	foreach (var par in _localctx.call_params().val_or_id())
 	{
@@ -1330,22 +1322,20 @@ custom_call[ExprClass oper] returns [string funName, CallData callData]: ID LPAR
         	//	break;
         						
         	default:
-        		Error($"Unknown type {par.type}");
+        		//Error($"Unknown type {par.type}");
         		//throw new NotImplementedException();
         		break;
         }
         d.value = par.value;
-        //Debug($"{d.value} of {d.value.GetType()}");
-		data.paramList.Insert(0, d);    
-		Debug($"Adding param, type {d.value.GetType()}");			
-		//data.paramList.Add(d);    			
+		data.paramList.Insert(0, d);    			
 	}
 	
 	string methodName = currentMet;
+    curBlock.operations.Add(data);
 	$callData = data;
 };
 
-call_params[ExprClass oper] : (val_or_id[$oper] {Debug($"val_or_id1 is {$val_or_id.text}");} (COMMA val_or_id[$oper] {Debug($"val_or_id2 is {$val_or_id.text}");})*)?;
+call_params[ExprClass oper] : (val_or_id[$oper] (COMMA val_or_id[$oper])*)?;
 
 val_or_id[ExprClass oper] returns [string type, dynamic value]: 
 			ariphExprEx[$oper]
@@ -1364,12 +1354,10 @@ val_or_id[ExprClass oper] returns [string type, dynamic value]:
                     $type = "bool";
                 else if ($value.GetType() == typeof(ExprClass))
                 	$type = $value.GetType().ToString();
-                Debug($"param value1 is {$value} of type {$type}");    
 			}
 		  | boolExprEx[$oper]
 			{
 				$value = $boolExprEx.res;
-                Debug($"param value2 is {$value}");
 				$type = "bool";
 			};
 
@@ -1480,7 +1468,6 @@ myfor[ExprClass oper]: {
                              last = $l.res,
 							 parser = this
                         };
-                        Debug($"cond is {$boolExprEx.text}");
                        	curBlock.operations.Add(forer);
                        	forer.cycleBlock.Parent = curBlock;
                        	curBlock = forer.cycleBlock;
@@ -1519,7 +1506,6 @@ ariphOperand[ExprClass oper]:
 						value = $custom_call.callData,
 						parser = this
 					});
-					Debug("rrigthCall");
              	}
              | call[$oper]
              	{
@@ -1529,11 +1515,10 @@ ariphOperand[ExprClass oper]:
              			value = $call.callData,
 						parser = this
              		});
-             		Debug("parrrigthCall");
                 }	
              | ariphID[$oper]
                {
-                   Console.WriteLine($"founy idd {$ariphID.text} val undefined");
+
                }
 			 | trig[$oper] | trig2[$oper]
 			 | incdec=(INC|DEC) ariphID[$oper]
@@ -1557,9 +1542,7 @@ ariphOperand[ExprClass oper]:
              | LPAREN ariphExprEx[$oper] RPAREN;
 ariphTerm[ExprClass oper]:
             ariphOperand[$oper]
-            {
-                Debug("\t terarpy1 operand\"" + $ariphOperand.text + "\"");
-            }
+            
            (muldiv=(MUL|DIV) ariphOperand[$oper])*
             {
 				if ($muldiv.text != null)
@@ -1570,13 +1553,12 @@ ariphTerm[ExprClass oper]:
 						value = $muldiv.text,
 						parser = this
 					 });
-					Debug("\t terarpy2 operand\"" + $ariphOperand.text + "\"");
 				}
             };
 ariphExpr[ExprClass oper]:
             ariphTerm[$oper]
             {
-                Debug("\t rarpy1 term\"" + $ariphTerm.text + "\"");
+                
             }
 			(addsub=(ADD|SUB) ariphTerm[$oper])*
             {
@@ -1588,13 +1570,12 @@ ariphExpr[ExprClass oper]:
 						value = $addsub.text,
 						parser = this
 					 });
-					 Debug("\t rarpy2 term\"" + $ariphTerm.text + "\"");
+					 
 				}
             };
 ariphExprEx[ExprClass oper] returns [ExprClass res]:
             ariphExpr[$oper]
             {
-                Debug("\t arpy1 expr\"" + $ariphExpr.text + "\"");
                 $res = $oper;
             }
           | ariphID[$oper] assigns=(ASSIGN|ADDASSIGN|SUBASSIGN|MULASSIGN|DIVASSIGN) ariphExprEx[$oper]
@@ -1606,13 +1587,11 @@ ariphExprEx[ExprClass oper] returns [ExprClass res]:
 						parser = this
 					 });
 				$res = $oper;
-				Debug("\t arpy2 expr\"" + $text + "\"");
             };
 
 boolOperand[ExprClass oper]:
               BOOL
               {
-				  Debug("Const " + $BOOL.text);
                   $oper.Push(new ExprStackObject(bool.Parse($BOOL.text), this));
               }
             | custom_call[$oper]
@@ -1623,11 +1602,9 @@ boolOperand[ExprClass oper]:
              						value = $custom_call.callData,
 									parser = this
              					});
-             					Debug("rrigthCall2");
                           	} 
             | ariphID[$oper]
 			  {
-				Debug("Var " + $ariphID.text);
 			  }
             | ariphExprEx[$oper] comp=(LESS|GREATER|EQUAL|NOTEQUAL|LESSEQUAL|GREQUAL) ariphExprEx[$oper]
               {
@@ -1640,7 +1617,6 @@ boolOperand[ExprClass oper]:
 			  }
 			| NOT boolOperand[$oper]
 			{
-				Debug("\tNOT " + $boolOperand.text);
 				$oper.Push(new ExprStackObject()
 				{
 					type = ObjType.Operation,
@@ -1648,20 +1624,11 @@ boolOperand[ExprClass oper]:
 						parser = this
 				});
 			}
-            /*| boolExprEx[$oper] EQUAL boolExprEx[$oper]
-              {
-                  
-              }
-            | boolExprEx[$oper] NOTEQUAL boolExprEx[$oper]
-              {
-                  
-              }*/
             | LPAREN boolExprEx[$oper] RPAREN;
 boolExpr[ExprClass oper]:
            boolOperand[$oper]
          | left=boolOperand[$oper] andor=(AND|OR) right=boolExpr[$oper]
            {
-				Debug("\t" + $left.text + " AND/OR " + $right.text);
 				$oper.Push(new ExprStackObject()
 				{
 					type = ObjType.Operation,
@@ -1676,7 +1643,6 @@ boolExprEx[ExprClass oper] returns [ExprClass res]:
 		   }
          | left=ariphID[$oper] ASSIGN right=boolExprEx[$oper]
            {
-				Debug("\t" + $left.text + " ASSIGN " + $right.text);
 				$oper.Push(new ExprStackObject()
 				{
 					type = ObjType.Operation,
@@ -1691,17 +1657,15 @@ declare[ExprClass oper] returns [ExprClass res]: INTKEY ariphID[$oper]
           {
            VarData newVar = new VarData
            {
-                type = VarType.Int,
-                value = 0
+           		name = $ariphID.text,
+                type = VarType.Int
            };
            curBlock.varTable.Add($ariphID.text, newVar);
-           Debug("Create var " + $ariphID.text);
           }
           (ASSIGN ariphExprEx[$oper])?
           {
            if ($ariphExprEx.text != null)
            {
-				Debug("\tAssigning it value of " + $ariphExprEx.text);
 				$oper.Push(new ExprStackObject()
 					 {
 						type = ObjType.Operation,
@@ -1715,18 +1679,16 @@ declare[ExprClass oper] returns [ExprClass res]: INTKEY ariphID[$oper]
         | DOUBLEKEY ariphID[$oper]
           {
            VarData newVar = new VarData
-           {
-                type = VarType.Double,
-                value = 0.0
+           {	
+           		name = $ariphID.text,
+                type = VarType.Double
            };
            curBlock.varTable.Add($ariphID.text, newVar);
-           Debug("Create var " + $ariphID.text);
           }
           (ASSIGN ariphExprEx[$oper])?
           {
            if ($ariphExprEx.text != null)
            {
-                Debug("\tAssigning it value of " + $ariphExprEx.text);
                 $oper.Push(new ExprStackObject()
 					 {
 						type = ObjType.Operation,
@@ -1740,17 +1702,15 @@ declare[ExprClass oper] returns [ExprClass res]: INTKEY ariphID[$oper]
           {
            VarData newVar = new VarData
            {
-                type = VarType.Bool,
-                value = false
+           		name = $ariphID.text,
+                type = VarType.Bool
            };
            curBlock.varTable.Add($ariphID.text, newVar);
-           Debug("Create var " + $ariphID.text);
           }
           (ASSIGN boolExprEx[$oper])?
           {
            if ($boolExprEx.text != null)
            {
-                Debug("\tAssigning3 it value of " + $boolExprEx.text);
                 $oper.Push(new ExprStackObject()
 				{
 					type = ObjType.Operation,
@@ -1769,16 +1729,6 @@ ariphID[ExprClass oper] : ID
 						value = $ID.text,
 						parser = this
 					 });
-			Debug($"arrriph id {$ID.text}");
-			
-			//$oper.Push(new ExprStackObject()
-            //					 {
-            //						type = ObjType.Var,
-            //						value = $ID.text,
-			//			parser = this
-            //					 });
-            //			Debug($"boooooool id {$ID.text}");
-			
 		};
 
 //trigonometry

@@ -1,7 +1,15 @@
+fun double getVal(){
+	//int y = 5
+	double ti = 5.7
+	hit()
+	return ti
+}
+
 fun void main()
 {
+	int ttt
+	ttt = 2
 	int t = 0
-	
 	int u = 0
 	do
 	{
@@ -27,8 +35,10 @@ fun void main()
     
     	move(-13)
     }
-    for (int i = -1; i < 3; i++)
+    int i = -1
+    for (i = -7; i < 3; i++)
     {
     	move(i)
     }
+    double uru = getVal()
 }
