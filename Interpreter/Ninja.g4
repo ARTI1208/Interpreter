@@ -70,7 +70,7 @@ options {
     }
 
     public class MethodData : Block
-    {public string name;
+    {
 		public bool isMeaningful;
         public ReturnType returnType = ReturnType.Void;
         public ArrayList<NinjaParser.ParamData> paramList = new ArrayList<NinjaParser.ParamData>();
@@ -226,6 +226,9 @@ options {
 	
 	public class Block
 	{
+	
+		public string name;
+	
 		public NinjaParser parser;
 		
 		public Block(NinjaParser parser)
@@ -278,7 +281,6 @@ options {
 		{
 			if (callType == NinjaParser.CallType.Custom)
 			{
-				Console.WriteLine("CUUUUSsssstom");
 				
 				if (parser.metTable.ContainsKey(name) && parser.CheckParams(this, parser.metTable[name]))
 				{		
@@ -337,7 +339,17 @@ options {
 		}
 	}
 	
-	public Block curBlock;
+	private Block rBlock;
+	
+	public Block curBlock
+	{
+		get{
+			return rBlock;
+		}
+		set{
+			rBlock = value;
+		}
+	}
 	
 	public class OperationClass
 	{
@@ -352,6 +364,11 @@ options {
 		{
 			
 		}
+		
+		public OperationClass(NinjaParser p)
+        			{
+        				parser = p;
+        			}
 		
 		public virtual dynamic Eval()
 		{
@@ -466,6 +483,7 @@ options {
 			{
 				s += v.value;
 			}
+			//Console.WriteLine($"evaluating {s} from block {parser.curBlock.name}");
 			List<ExprStackObject> stack = new List<ExprStackObject>();
 			foreach (var elem in exprStack)
 			{
@@ -493,7 +511,7 @@ options {
 							result = elem.value;
 						else if (elem.value.GetType() == typeof(bool))
 							result = elem.value;
-						else
+						else 
 							result = elem.value.Eval();
 					}
 					stack.Add(new ExprStackObject(result, parser));
@@ -933,9 +951,11 @@ options {
         {
 			do
 			{
+				parser.curBlock = cycleBlock;
 				cycleBlock.Eval();
 			}
 			while(cond.Eval());
+			parser.curBlock = parser.curBlock.Parent;
 			return null;
 		}
 		
@@ -949,19 +969,29 @@ options {
 		public ExprClass first;
     	public ExprClass last;
     	
+    	public Block oneTimeBlock;
+    	
         public override dynamic Eval()
         {
+        	parser.curBlock = oneTimeBlock;
         	first.Eval();
+        	int t = 0;
+        	parser.curBlock = cycleBlock;
             while(cond.Eval())
             {
+            	Debug($"==For iter {t++}");
             	cycleBlock.Eval();
             	last.Eval(); 
             }
+            parser.curBlock = oneTimeBlock.Parent;
     		return null;
         }
         
         public For(NinjaParser parser) : base(parser)
         	        {
+        	        	oneTimeBlock = new Block(parser);
+        	        	oneTimeBlock.name = "otbl";
+        	        	cycleBlock.name = "cbl";
         	        }
     }    
     
@@ -978,12 +1008,15 @@ options {
         {
         	if(cond.Eval())
             {
+            	parser.curBlock = cycleBlock;
             	cycleBlock.Eval();
             }
             else
             {
+            	parser.curBlock = elseIfBlock;
 				elseIfBlock.Eval();
             }
+            parser.curBlock = parser.curBlock.Parent;
     		return null;
         }
    	}
@@ -1305,8 +1338,6 @@ custom_call[ExprClass oper] returns [string funName, CallData callData]: ID LPAR
 	
 	if (metTable.ContainsKey(callName))
 		data.returnType = metTable[callName].returnType;
-	
-	Debug($"foun cccall {callName}");
 
 	foreach (var par in _localctx.call_params().val_or_id())
 	{
@@ -1449,11 +1480,20 @@ mydo_while[ExprClass oper]: DO
           ;
 myfor[ExprClass oper]: {
 
-	ExprClass fExpr = curBlock.ToExpr();
-	ExprClass cExpr = curBlock.ToExpr();
-	ExprClass lExpr = curBlock.ToExpr();
 	
-}  FOR LPAREN (declare[fExpr]
+}  FOR LPAREN {
+
+		For forer = new For(this);
+		forer.parser = this;
+		
+		forer.oneTimeBlock.Parent = curBlock;
+		forer.cycleBlock.Parent = forer.oneTimeBlock;
+            	curBlock = forer.oneTimeBlock;
+		
+		curBlock.createOperationClass();
+		ExprClass fExpr = curBlock.ToExpr();    	
+						
+} (declare[fExpr]
 {
 	fExpr = $declare.res;
 }
@@ -1463,25 +1503,39 @@ myfor[ExprClass oper]: {
 {
 	fExpr = $ariphExprEx.res;
 })
-                 SEMICOLON boolExprEx[cExpr] 
-                 SEMICOLON l=ariphExprEx[lExpr] RPAREN
+
+
+
+
+                 SEMICOLON
+                  
+                  {
+                  		
+                      	ExprClass cExpr = new ExprClass(new OperationClass(this));
+                      	cExpr.parser = this;
+                  
+                  }
+                  
+                  boolExprEx[cExpr] 
+                 SEMICOLON {
+                 
+					ExprClass lExpr = new ExprClass(new OperationClass(this));
+                 lExpr.parser = this;
+                 }l=ariphExprEx[lExpr] RPAREN
         OBRACE
         {
-        				For forer = new For(this)
-        				{
-                             cond = $boolExprEx.res,
-                             first = fExpr,
-                             last = $l.res,
-							 parser = this
-                        };
-                       	curBlock.operations.Add(forer);
-                       	forer.cycleBlock.Parent = curBlock;
-                       	curBlock = forer.cycleBlock;
+                                      forer.cond = $boolExprEx.res;
+                                      forer.first = fExpr;
+                                      forer.last = $l.res;
+         				curBlock = forer.cycleBlock;			 
+        				
+                       	
         }
         (operation[curBlock.createOperationClass()])*
         CBRACE
         { 
-        	curBlock = curBlock.Parent;    
+        	curBlock = curBlock.Parent.Parent;
+        	curBlock.operations.Add(forer);    
         }
      ;
 
@@ -1538,6 +1592,7 @@ ariphOperand[ExprClass oper]:
 			   }
 			 | ariphID[$oper] incdec=(INC|DEC)
 			   {
+			   
 					$oper.Push(new ExprStackObject()
 					{
 						type = ObjType.Operation,

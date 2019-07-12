@@ -1,44 +1,13 @@
-fun double getVal(){
-	//int y = 5
-	double ti = 5.7
-	hit()
-	return 6.3
-}
+fun void main() 
+{ 
+int k = 7
 
-fun void main()
-{
-	int ttt
-	ttt = 2
-	int t = 0
-	int u = 0
-	do
-	{
-		t = 0
-		while (t < 2)
-        {
-			shoot()
-			t++	        	
-        }
-		hit()
-		u = u + 1
-	} while (u < 7)
-	if (false)
-	{
-		move(7)
-	}
-	else
-    {
-    	if(7 > 5)
-    	{
-    		move(7 + 5)
-    	}
-    
-    	move(-13)
-    }
-    int i = -1
-    for (i = -7; i < 3; i++)
-    {
-    	move(i)
-    }
-    getVal()
+ int i = 9
+
+for(i = i + 4;i<17;i++) 
+{ 
+	move(i) 
+} 
+
+
 }
