@@ -268,7 +268,7 @@ options {
 			
 		public CallType callType;
 		
-		public ReturnType returnType;
+		public ReturnType returnType = ReturnType.Void;
 		
 		public Block parent;
 			
@@ -284,15 +284,18 @@ options {
 				{		
 					Console.WriteLine($"Calling custom method {name} with params {ParamListToString(paramList)}");
                     						parser.metTable[name].Eval();
-                    						if (parser.metTable[name].returnType != ReturnType.Void)
+                    						if (returnType != ReturnType.Void && parser.metTable[name].returnType != ReturnType.Void)
                     						{
                     							var ret = parser.metTable[name].returnValue.Eval();
                     							if (!CheckType(ret.GetType(), parser.metTable[name].returnType)){
                     								throw new Exception($"Actual return is {ret.GetType()}, expected declared return type {parser.metTable[name].returnType}");
                     							}
                     							parser.curBlock = parent;
+                    							Debug($"===fun {name} returned {ret}");
                     							return ret;	
                     						}
+                    						if (returnType != parser.metTable[name].returnType)
+                    							Error("Method declaration and call have different return types");
                     						parser.curBlock = parent;
                     						return null;
 				}
@@ -1299,6 +1302,9 @@ custom_call[ExprClass oper] returns [string funName, CallData callData]: ID LPAR
         parent = curBlock,
 		parser = this
 	};
+	
+	if (metTable.ContainsKey(callName))
+		data.returnType = metTable[callName].returnType;
 	
 	Debug($"foun cccall {callName}");
 

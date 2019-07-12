@@ -2,7 +2,7 @@ fun double getVal(){
 	//int y = 5
 	double ti = 5.7
 	hit()
-	return ti
+	return 6.3
 }
 
 fun void main()
@@ -40,5 +40,5 @@ fun void main()
     {
     	move(i)
     }
-    double uru = getVal()
+    getVal()
 }
