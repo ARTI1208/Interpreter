@@ -68,6 +68,8 @@ namespace Interpreter
 				};
 				proc.Start();
 				proc.WaitForExit();
+
+
 				
 				
 				var input = File.ReadAllText("..\\..\\nnj.npr");

@@ -165,6 +165,10 @@ public partial class NinjaParser : Parser {
 	        
 			public dynamic returnValue;
 			
+			public MethodData(NinjaParser parser) : base(parser)
+	        	        {
+	        	        }
+			
 			public override void Eval()
 	        {
 	        	parser.curBlock = this;
@@ -311,6 +315,11 @@ public partial class NinjaParser : Parser {
 		{
 			public NinjaParser parser;
 			
+			public Block(NinjaParser parser)
+			{
+				this.parser = parser;
+			}
+			
 			public List<OperationClass> operations = new List<OperationClass>();
 			public Dictionary<string, VarData> varTable = new Dictionary<string, VarData>();
 			
@@ -409,7 +418,7 @@ public partial class NinjaParser : Parser {
 			}
 		}
 		
-		public Block curBlock = new Block();
+		public Block curBlock;
 		
 		public class OperationClass
 		{
@@ -773,14 +782,6 @@ public partial class NinjaParser : Parser {
 	                    							left = Pop(stack);
 	                    							try
 	                    							{
-	                    								foreach(var key in parser.curBlock.varTable.Keys)
-	                    								{
-	                    									Debug($"|||{key}||| with type {parser.curBlock.varTable[key].value.GetType()}");
-	                    									if (key == "op")
-	                    									{
-	                    										Debug(parser.curBlock.varTable["op"].value + "nono");
-	                    									}
-	                    								}
 	                    								rightVal = right.Calc();
 	                    								if (!isCompatible(left, rightVal, true))
 	                    									Error("Can't assign " + rightVal + " to " + left.value);
@@ -799,17 +800,7 @@ public partial class NinjaParser : Parser {
 	                    								stack.Add(new ExprStackObject(data.value, parser));
 	                    							}
 	                    							catch (KeyNotFoundException e)
-	                    							{
-	                    								Debug("what exist");
-	                    								foreach(var key in parser.curBlock.varTable.Keys)
-	                    								{
-	                    									Debug($"|||{key}||| with type {parser.curBlock.varTable[key].value.GetType()}");
-	                    									if (key == "op")
-	                    									{
-	                    										Debug(parser.curBlock.varTable["op"].value + "ioio");
-	                    									}
-	                    								}
-	                                                								
+	                    							{					
 	                    								Error("Variable " + left.value + " does not exist in current context1\n" + e.StackTrace);
 	                    							}
 	                    							break;
@@ -1012,10 +1003,14 @@ public partial class NinjaParser : Parser {
 		
 		public class Cycles: OperationClass
 	    {
-	        //public List<OperationClass> callList = new ArrayList<OperationClass>();
-	        public Block cycleBlock = new Block();
+	        public Block cycleBlock;
+	        
+	        	        public Cycles(NinjaParser parser)
+	        	        {
+	        		        cycleBlock = new Block(parser);
+	        	        }
+	        	        
 			public ExprClass cond;
-			
 		}
 	    
 		public class While:Cycles
@@ -1034,6 +1029,10 @@ public partial class NinjaParser : Parser {
 	            parser.curBlock = parser.curBlock.Parent;
 	    		return null;
 	        }
+	        
+	        public While(NinjaParser parser) : base(parser)
+	        			{
+	        			}
 	    }
 	    
 	    public class Do_while:Cycles
@@ -1047,6 +1046,10 @@ public partial class NinjaParser : Parser {
 				while(cond.Eval());
 				return null;
 			}
+			
+			public Do_while(NinjaParser parser) : base(parser)
+	        			{
+	        			}
 		}
 	    
 	    public class For:Cycles
@@ -1065,12 +1068,21 @@ public partial class NinjaParser : Parser {
 	            }
 	    		return null;
 	        }
+	        
+	        public For(NinjaParser parser) : base(parser)
+	        	        {
+	        	        }
 	    }    
 	    
 	    public class Condition:Cycles 
 	    {
-	    	public Block elseIfBlock = new Block();
-	    	//public List<OperationClass> callListElse = new ArrayList<OperationClass>();
+	    	public Block elseIfBlock;
+	        
+	        	        public Condition(NinjaParser parser) : base(parser)
+	        	        {
+	        		        elseIfBlock = new Block(parser);
+	        	        }
+	        	        
 	        public override dynamic Eval()
 	        {
 	        	if(cond.Eval())
@@ -1167,12 +1179,12 @@ public partial class NinjaParser : Parser {
 			                			sm.Eval();
 			                		}
 			                	}*/
-			                MethodData getSelfId = new MethodData(){
+			                MethodData getSelfId = new MethodData(this){
 			                	name = "getSelfId",
 			                    returnType = ReturnType.Int,
 								parser = this
 			                };	
-			                MethodData getHealth = new MethodData(){
+			                MethodData getHealth = new MethodData(this){
 			                    name = "getHealth",
 			                    returnType = ReturnType.Int,
 								parser = this
@@ -1182,7 +1194,7 @@ public partial class NinjaParser : Parser {
 							ghp.paramType = ParamType.Receive;
 							ghp.type = VarType.Int;
 							getHealth.paramList.Add(ghp);
-			                MethodData getPositionX = new MethodData(){
+			                MethodData getPositionX = new MethodData(this){
 								name = "getPositionX",
 								returnType = ReturnType.Double,
 								parser = this
@@ -1192,7 +1204,7 @@ public partial class NinjaParser : Parser {
 			                gpxp.paramType = ParamType.Receive;
 			                gpxp.type = VarType.Int;
 			               	getPositionX.paramList.Add(gpxp);
-			                MethodData getPositionY = new MethodData(){
+			                MethodData getPositionY = new MethodData(this){
 			                    name = "getPositionY",
 								returnType = ReturnType.Double,
 								parser = this
@@ -1202,7 +1214,7 @@ public partial class NinjaParser : Parser {
 							gpyp.paramType = ParamType.Receive;
 							gpyp.type = VarType.Int;
 			                getPositionY.paramList.Add(gpyp);
-							MethodData getDirection = new MethodData(){
+							MethodData getDirection = new MethodData(this){
 								name = "getDirection",
 								returnType = ReturnType.Double,
 								parser = this
@@ -1326,7 +1338,7 @@ public partial class NinjaParser : Parser {
 			State = 104; Match(LPAREN);
 			State = 105; Match(RPAREN);
 
-				MethodData newMet = new MethodData
+				MethodData newMet = new MethodData(this)
 				{
 					name = "main",
 					returnType = ReturnType.Void,
@@ -1494,7 +1506,7 @@ public partial class NinjaParser : Parser {
 				if (methodName == "main" || metTable.ContainsKey(methodName))
 					throw new NotImplementedException("!!!Method overloading is not supported yet!!!");
 
-				MethodData newMet = new MethodData
+				MethodData newMet = new MethodData(this)
 				{
 					name = methodName,
 					returnType = ReturnType.Void,
@@ -1656,7 +1668,7 @@ public partial class NinjaParser : Parser {
 				if (methodName == "main" || metTable.ContainsKey(methodName))
 					throw new NotImplementedException("!!!Method overloading is not supported yet!!!");
 
-				MethodData newMet = new MethodData
+				MethodData newMet = new MethodData(this)
 				{
 					name = methodName,
 					isMeaningful = true,
@@ -2880,7 +2892,7 @@ public partial class NinjaParser : Parser {
 			State = 254; Match(RPAREN);
 			State = 255; Match(OBRACE);
 
-			     	Condition ifer = new Condition()
+			     	Condition ifer = new Condition(this)
 					{
 						cond=_localctx._boolExprEx.res,
 						parser = this
@@ -2987,7 +2999,7 @@ public partial class NinjaParser : Parser {
 			State = 279; Match(RPAREN);
 			State = 280; Match(OBRACE);
 
-			    		Condition ifer = new Condition()
+			    		Condition ifer = new Condition(this)
 			         	{
 			         		cond=_localctx._boolExprEx.res,
 							parser = this
@@ -3074,7 +3086,7 @@ public partial class NinjaParser : Parser {
 			State = 294; Match(RPAREN);
 			State = 295; Match(OBRACE);
 
-			     	While whiler = new While()
+			     	While whiler = new While(this)
 			     	{
 			     		cond=_localctx._boolExprEx.res,
 						parser = this
@@ -3159,7 +3171,7 @@ public partial class NinjaParser : Parser {
 			State = 306; Match(DO);
 			State = 307; Match(OBRACE);
 
-			          		Do_while doer = new Do_while();
+			          		Do_while doer = new Do_while(this);
 							doer.parser = this;
 			               	curBlock.operations.Add(doer);
 			               	doer.cycleBlock.Parent = curBlock;
@@ -3319,7 +3331,7 @@ public partial class NinjaParser : Parser {
 			State = 337; Match(RPAREN);
 			State = 338; Match(OBRACE);
 
-			        				For forer = new For()
+			        				For forer = new For(this)
 			        				{
 			                             cond = _localctx._boolExprEx.res,
 			                             first = fExpr,

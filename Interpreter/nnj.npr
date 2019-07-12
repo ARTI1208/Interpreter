@@ -1,7 +1,8 @@
 fun void main()
 {
-	int t	
+	int t = 0
 	
+	int u = 0
 	do
 	{
 		t = 0

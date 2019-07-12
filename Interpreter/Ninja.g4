@@ -59,6 +59,10 @@ options {
         
 		public dynamic returnValue;
 		
+		public MethodData(NinjaParser parser) : base(parser)
+        	        {
+        	        }
+		
 		public override void Eval()
         {
         	parser.curBlock = this;
@@ -205,6 +209,11 @@ options {
 	{
 		public NinjaParser parser;
 		
+		public Block(NinjaParser parser)
+		{
+			this.parser = parser;
+		}
+		
 		public List<OperationClass> operations = new List<OperationClass>();
 		public Dictionary<string, VarData> varTable = new Dictionary<string, VarData>();
 		
@@ -303,7 +312,7 @@ options {
 		}
 	}
 	
-	public Block curBlock = new Block();
+	public Block curBlock;
 	
 	public class OperationClass
 	{
@@ -667,14 +676,6 @@ options {
                     							left = Pop(stack);
                     							try
                     							{
-                    								foreach(var key in parser.curBlock.varTable.Keys)
-                    								{
-                    									Debug($"|||{key}||| with type {parser.curBlock.varTable[key].value.GetType()}");
-                    									if (key == "op")
-                    									{
-                    										Debug(parser.curBlock.varTable["op"].value + "nono");
-                    									}
-                    								}
                     								rightVal = right.Calc();
                     								if (!isCompatible(left, rightVal, true))
                     									Error("Can't assign " + rightVal + " to " + left.value);
@@ -693,17 +694,7 @@ options {
                     								stack.Add(new ExprStackObject(data.value, parser));
                     							}
                     							catch (KeyNotFoundException e)
-                    							{
-                    								Debug("what exist");
-                    								foreach(var key in parser.curBlock.varTable.Keys)
-                    								{
-                    									Debug($"|||{key}||| with type {parser.curBlock.varTable[key].value.GetType()}");
-                    									if (key == "op")
-                    									{
-                    										Debug(parser.curBlock.varTable["op"].value + "ioio");
-                    									}
-                    								}
-                                                								
+                    							{					
                     								Error("Variable " + left.value + " does not exist in current context1\n" + e.StackTrace);
                     							}
                     							break;
@@ -906,10 +897,14 @@ options {
 	
 	public class Cycles: OperationClass
     {
-        //public List<OperationClass> callList = new ArrayList<OperationClass>();
-        public Block cycleBlock = new Block();
+        public Block cycleBlock;
+        
+        	        public Cycles(NinjaParser parser)
+        	        {
+        		        cycleBlock = new Block(parser);
+        	        }
+        	        
 		public ExprClass cond;
-		
 	}
     
 	public class While:Cycles
@@ -928,6 +923,10 @@ options {
             parser.curBlock = parser.curBlock.Parent;
     		return null;
         }
+        
+        public While(NinjaParser parser) : base(parser)
+        			{
+        			}
     }
     
     public class Do_while:Cycles
@@ -941,6 +940,10 @@ options {
 			while(cond.Eval());
 			return null;
 		}
+		
+		public Do_while(NinjaParser parser) : base(parser)
+        			{
+        			}
 	}
     
     public class For:Cycles
@@ -959,12 +962,21 @@ options {
             }
     		return null;
         }
+        
+        public For(NinjaParser parser) : base(parser)
+        	        {
+        	        }
     }    
     
     public class Condition:Cycles 
     {
-    	public Block elseIfBlock = new Block();
-    	//public List<OperationClass> callListElse = new ArrayList<OperationClass>();
+    	public Block elseIfBlock;
+        
+        	        public Condition(NinjaParser parser) : base(parser)
+        	        {
+        		        elseIfBlock = new Block(parser);
+        	        }
+        	        
         public override dynamic Eval()
         {
         	if(cond.Eval())
@@ -991,12 +1003,12 @@ program : function* main function* {
                 			sm.Eval();
                 		}
                 	}*/
-                MethodData getSelfId = new MethodData(){
+                MethodData getSelfId = new MethodData(this){
                 	name = "getSelfId",
                     returnType = ReturnType.Int,
 					parser = this
                 };	
-                MethodData getHealth = new MethodData(){
+                MethodData getHealth = new MethodData(this){
                     name = "getHealth",
                     returnType = ReturnType.Int,
 					parser = this
@@ -1006,7 +1018,7 @@ program : function* main function* {
 				ghp.paramType = ParamType.Receive;
 				ghp.type = VarType.Int;
 				getHealth.paramList.Add(ghp);
-                MethodData getPositionX = new MethodData(){
+                MethodData getPositionX = new MethodData(this){
 					name = "getPositionX",
 					returnType = ReturnType.Double,
 					parser = this
@@ -1016,7 +1028,7 @@ program : function* main function* {
                 gpxp.paramType = ParamType.Receive;
                 gpxp.type = VarType.Int;
                	getPositionX.paramList.Add(gpxp);
-                MethodData getPositionY = new MethodData(){
+                MethodData getPositionY = new MethodData(this){
                     name = "getPositionY",
 					returnType = ReturnType.Double,
 					parser = this
@@ -1026,7 +1038,7 @@ program : function* main function* {
 				gpyp.paramType = ParamType.Receive;
 				gpyp.type = VarType.Int;
                 getPositionY.paramList.Add(gpyp);
-				MethodData getDirection = new MethodData(){
+				MethodData getDirection = new MethodData(this){
 					name = "getDirection",
 					returnType = ReturnType.Double,
 					parser = this
@@ -1059,7 +1071,7 @@ main : main_signature OBRACE main_code CBRACE
 };
 
 main_signature : FUN_KEYWORD VOID MAIN LPAREN RPAREN {
-	MethodData newMet = new MethodData
+	MethodData newMet = new MethodData(this)
 	{
 		name = "main",
 		returnType = ReturnType.Void,
@@ -1081,7 +1093,7 @@ v_fun_signature returns [string funName]: FUN_KEYWORD VOID ID
 	if (methodName == "main" || metTable.ContainsKey(methodName))
 		throw new NotImplementedException("!!!Method overloading is not supported yet!!!");
 
-	MethodData newMet = new MethodData
+	MethodData newMet = new MethodData(this)
 	{
 		name = methodName,
 		returnType = ReturnType.Void,
@@ -1136,7 +1148,7 @@ m_fun_signature returns [string funName]: FUN_KEYWORD meaningfulType ID {
 	if (methodName == "main" || metTable.ContainsKey(methodName))
 		throw new NotImplementedException("!!!Method overloading is not supported yet!!!");
 
-	MethodData newMet = new MethodData
+	MethodData newMet = new MethodData(this)
 	{
 		name = methodName,
 		isMeaningful = true,
@@ -1365,7 +1377,7 @@ val_or_id[ExprClass oper] returns [string type, dynamic value]:
 myif[ExprClass oper]: IF LPAREN boolExprEx[$oper] RPAREN 
      OBRACE 
      {
-     	Condition ifer = new Condition()
+     	Condition ifer = new Condition(this)
 		{
 			cond=$boolExprEx.res,
 			parser = this
@@ -1391,7 +1403,7 @@ myif[ExprClass oper]: IF LPAREN boolExprEx[$oper] RPAREN
 myif_short[ExprClass oper]: IF LPAREN boolExprEx[$oper] RPAREN 
     OBRACE 
     {
-    		Condition ifer = new Condition()
+    		Condition ifer = new Condition(this)
          	{
          		cond=$boolExprEx.res,
 				parser = this
@@ -1409,7 +1421,7 @@ myif_short[ExprClass oper]: IF LPAREN boolExprEx[$oper] RPAREN
 mywhile[ExprClass oper]: WHILE LPAREN boolExprEx[$oper] RPAREN 
      OBRACE 
      {
-     	While whiler = new While()
+     	While whiler = new While(this)
      	{
      		cond=$boolExprEx.res,
 			parser = this
@@ -1427,7 +1439,7 @@ mywhile[ExprClass oper]: WHILE LPAREN boolExprEx[$oper] RPAREN
 mydo_while[ExprClass oper]: DO 
           OBRACE 
           {
-          		Do_while doer = new Do_while();
+          		Do_while doer = new Do_while(this);
 				doer.parser = this;
                	curBlock.operations.Add(doer);
                	doer.cycleBlock.Parent = curBlock;
@@ -1461,7 +1473,7 @@ myfor[ExprClass oper]: {
                  SEMICOLON l=ariphExprEx[lExpr] RPAREN
         OBRACE
         {
-        				For forer = new For()
+        				For forer = new For(this)
         				{
                              cond = $boolExprEx.res,
                              first = fExpr,
