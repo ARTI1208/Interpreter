@@ -4,8 +4,33 @@ options {
 	language=CSharp ;
 }
 
+@parser::header
+{
+	#if NOGUI
+    	using Interpreter;
+    #endif
+}
+
 @parser::members 
 {
+
+	public RealInterpreter owner;
+    public int id;
+    public int[] health = new int[4];
+    public double[] xPos = new double[4];
+    public double[] yPos = new double[4];
+    public double[] dirs = new double[4];
+
+    public void Sleep()
+    {
+        int tmp = 0;
+        Main.Log("#" + id + " entered pause");
+        Main.mre[id].Reset();
+        Main.mre[id].WaitOne();
+        Main.Log("#" + id + " left pause");
+    }
+
+
 	public enum ParamType
 	{
 		Receive, Pass
@@ -85,6 +110,12 @@ options {
         {
         	parser.curBlock = this;
         	Debug($"===Entering fun {name} with params {ParamListToString(paramList)}");
+			Debug($"Method {name} contains:");
+            foreach (var sm in operations)
+            {
+                Debug(sm.ToString());
+            }
+            Debug($"End of method {name} block");
             foreach(var sm in operations)
             {
             	if(sm.GetType().IsSubclassOf(typeof(OperationClass)))
@@ -95,9 +126,9 @@ options {
             foreach (var elem in varTable)
             {
             	if (elem.Value.isAssigned)
-                	Console.WriteLine("\t" + elem.Key + " is " + elem.Value.type + " with value " + elem.Value.value);
+                	Debug("\t" + elem.Key + " is " + elem.Value.type + " with value " + elem.Value.value);
                 else
-                	Console.WriteLine("\t" + elem.Key + " is " + elem.Value.type + ", value not assigned");
+                	Debug("\t" + elem.Key + " is " + elem.Value.type + ", value not assigned");
             }
             Debug($"---End Vars of block met {name} ----");
             Debug($"===Exiting fun {name}");	
@@ -114,18 +145,24 @@ options {
     int depth = 0;
     string currentMet = "?";
     
-    public static void Debug(string line)
-    {
-        Console.WriteLine(line);
-    }
-    
-    public static void Error(string message)
-    {
-        ConsoleColor curr = Console.ForegroundColor;
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine(message);
-        Console.ForegroundColor = curr;
-    }
+    static StreamWriter fstream = new StreamWriter("execlog.log");
+   	    
+   	public static void Debug(string line)
+   	{
+   		Console.WriteLine(line);
+   		fstream.WriteLine(line);
+   	    fstream.Flush();
+   	}
+   	    
+   	public static void Error(string message)
+   	{
+   	    ConsoleColor curr = Console.ForegroundColor;
+   	    Console.ForegroundColor = ConsoleColor.Red;
+   	    Console.WriteLine(message);
+   	    fstream.WriteLine("ERROR: " + message);
+   	    fstream.Flush();
+   	    Console.ForegroundColor = curr;
+   	}
     
     public static bool CheckType(Type t, VarType vt)
     {
@@ -162,7 +199,7 @@ options {
     		var r = call.paramList[call.paramList.Count - i - 1].value;//.Eval();		
     		//if (call.paramList[i].type == method.paramList[i].type)
     		if (r is string varId)
-    			if(curBlock.varTable.ContainsKey(varId))
+    			if (FindVar(varId) != null)
     				r = FindVar(varId).value;
     			else
     			{
@@ -173,7 +210,7 @@ options {
     		if (CheckType(r.GetType(), method.paramList[i].type))
     		{
     			method.paramList[i].value = r;
-				if (!method.varTable.ContainsKey(method.paramList[i].name))
+				if (FindVar(method.paramList[i].name) == null)
                	{
                 	VarData varData = new VarData()
                 	{
@@ -284,7 +321,7 @@ options {
 				
 				if (parser.metTable.ContainsKey(name) && parser.CheckParams(this, parser.metTable[name]))
 				{		
-					Console.WriteLine($"Calling custom method {name} with params {ParamListToString(paramList)}");
+					Debug($"Calling custom method {name} with params {ParamListToString(paramList)}");
                     						parser.metTable[name].Eval();
                     						if (returnType != ReturnType.Void && parser.metTable[name].returnType != ReturnType.Void)
                     						{
@@ -305,35 +342,80 @@ options {
 			else
 			{
 				if (parser.metTable.ContainsKey(name))
-				{
-					if(parser.CheckParams(this, parser.metTable[name]))
-					{
-						Console.WriteLine($"Calling builtin method {name} with params {ParamListToString(paramList)}, ret {parser.metTable[name].returnValue}");
-						return parser.metTable[name].returnValue;
-					}	
-				} 
-				else
-				{			
-					Console.WriteLine($"Calling builtin method {name} with params {ParamListToString(paramList)}");
-					switch (name)
-					{
-						case "move":
-							parser._bytes.Add(1);
-							break;
-						case "turn":
-							parser._bytes.Add(2);
-							break;
-						case "hit":
-							parser._bytes.Add(3);
-							break;
-						case "shoot":
-							parser._bytes.Add(4);
-							break;
-						default:
-							Error($"Unknown builtin method {name}");
-							break;
-					}
-				}
+                					{
+                						if (parser.CheckParams(this, parser.metTable[name]))
+                						{
+#if !NOGUI
+	                						parser.Sleep();
+#endif
+                							dynamic ret = 0;
+											Debug($"BUiltin func {name}, param ");
+	                                        int reqid = -1;
+	                                        if (name != "getSelfId")
+	                                        {
+		                                    	dynamic param = paramList[0].value;
+		                                        if (param.GetType() == typeof(string))
+		                                        {
+			                                    	reqid = parser.FindVar(param).value;
+		                                        }
+		                                        else
+		                                        {
+			                                        reqid = param;
+		                                        }
+	                                        }
+                							switch (name)
+                							{
+                								case "getSelfId":
+                									ret = parser.id;
+                									break;
+                
+                								case "getHealth":
+                									ret = parser.health[reqid];
+                									break;
+                
+                								case "getPositionX":
+                									ret = parser.xPos[reqid];
+                									break;
+                
+                								case "getPositionY":
+                									ret = parser.yPos[reqid];
+                									break;
+                
+                								case "getDirection":
+                									ret = parser.dirs[reqid];
+                									break;
+                							}
+                							Debug($"Calling builtin method {name} with params {ParamListToString(paramList)}, ret {ret} + of type " + ret.GetType());
+                							Main.Log("Func " + name + " for player #" + reqid + " returning " + ret);
+                							return parser.metTable[name].returnValue = ret;
+                						}
+                					}
+                					else
+                					{
+                						Debug($"Calling builtin method {name} with params {ParamListToString(paramList)}");
+                						Command nw;
+                						switch (name)
+                						{
+                							case "move":
+                								nw = new Command(1, paramList[0].value.Eval());
+                								break;
+                							case "turn":
+                								nw = new Command(2, paramList[0].value.Eval());
+                								break;
+                							case "hit":
+                								nw = new Command(3);
+                								break;
+                							case "shoot":
+                								nw = new Command(4);
+                								break;
+                							default:
+                								Error($"Unknown builtin method {name}");
+                								return null;
+                						}
+                						#if !NOGUI
+										parser.owner.commands.Enqueue(nw);
+                                        #endif
+                					}
 			}
 			return null;
 		}
@@ -481,9 +563,9 @@ options {
 			string s = "";
 			foreach(var v in exprStack)
 			{
-				s += v.value;
+				s += v.value + " ";
 			}
-			//Console.WriteLine($"evaluating {s} from block {parser.curBlock.name}");
+			Debug($"Evaluating {s} from block {parser.curBlock.name}");
 			List<ExprStackObject> stack = new List<ExprStackObject>();
 			foreach (var elem in exprStack)
 			{
@@ -650,6 +732,26 @@ options {
                     							stack.Add(new ExprStackObject(leftVal / rightVal, parser));
                     							break;
                     						
+											case "%":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							leftVal = left.Calc();
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(leftVal, rightVal))
+                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
+                    							stack.Add(new ExprStackObject(leftVal % rightVal, parser));
+                    							break;
+                    							
+											case "**":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							leftVal = left.Calc();
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(leftVal, rightVal))
+                    								Error("Incompatible types of values " + leftVal + " and " + rightVal);
+                    							stack.Add(new ExprStackObject(Math.Pow(leftVal, rightVal), parser));
+                    							break;	
+                    						
                     						case "++pre":
                     							right = Pop(stack);
                     							rightVal = right.Calc();
@@ -703,6 +805,7 @@ options {
                     									data.value = (double)rightval;
                     								else
                     									Error("Can't convert \"" + rightval + "\" to " + data.type);	
+													Debug("Assigned " + rightVal + " of type " + rightVal.GetType() + " to " + left.value + " of type " + data.type);
                     								stack.Add(new ExprStackObject(data.value, parser));
                     							}
                     							catch (KeyNotFoundException e)
@@ -806,6 +909,55 @@ options {
                     								Error("Variable " + left.value + " does not exist in current context5");
                     							}
                     							break;
+                    						
+											case "%=":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							try
+                    							{
+                    								rightVal = right.Calc();
+                    								if (!isCompatible(left, rightVal, true))
+                    									Error("Can't assign " + rightVal + " to " + left.value);
+                    								dynamic rightval = rightVal;
+                    								VarData data = parser.FindVar(left.value);
+                    								if (data.value.GetType() == rightval.GetType())
+                    									data.value %= rightval;
+                    								else if (data.type == VarType.Double)
+                    									data.value %= (double)rightval;
+                    								else
+                    									Error("Can't convert \"" + rightval + "\" to " + data.type);
+                    								stack.Add(new ExprStackObject(data.value, parser));
+                    							}
+                    							catch (KeyNotFoundException)
+                    							{
+                    								Error("Variable " + left.value + " does not exist in current context5");
+                    							}
+                    							break;
+
+											case "**=":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							try
+                    							{
+                    								rightVal = right.Calc();
+                    								if (!isCompatible(left, rightVal, true))
+                    									Error("Can't assign " + rightVal + " to " + left.value);
+                    								dynamic rightval = rightVal;
+                    								VarData data = parser.FindVar(left.value);
+                    								if (data.value.GetType() == rightval.GetType())
+                    									data.value = Math.Pow(data.value, rightval);
+                    								else if (data.type == VarType.Double)
+                    									data.value = Math.Pow(data.value, rightval);
+                    								else
+                    									Error("Can't convert \"" + rightval + "\" to " + data.type);
+                    								stack.Add(new ExprStackObject(data.value, parser));
+                    							}
+                    							catch (KeyNotFoundException)
+                    							{
+                    								Error("Variable " + left.value + " does not exist in current context5");
+                    							}
+                    							break;
+
                     							
                     						case "sin":
                     							right = Pop(stack);
@@ -866,6 +1018,7 @@ options {
                     								Error("Can't convert " + leftVal + " to double");
                     							stack.Add(new ExprStackObject(Math.Atan2(leftVal, rightVal), parser));
                     							break;
+                    							
                     					}
 					
 				}
@@ -898,6 +1051,7 @@ options {
 		Block par = curBlock;
 		while (!par.varTable.ContainsKey(name))
 		{
+			
 			par = par.Parent;
 			if (par == null)
 			{
@@ -936,7 +1090,7 @@ options {
 				cycleBlock.Eval();
             }
             Debug("---Exiting whilecycle");
-            parser.curBlock = parser.curBlock.Parent;
+            parser.curBlock = cycleBlock.Parent;
     		return null;
         }
         
@@ -998,10 +1152,12 @@ options {
     public class Condition:Cycles 
     {
     	public Block elseIfBlock;
+    	private bool full;
         
-        	        public Condition(NinjaParser parser) : base(parser)
+        	        public Condition(NinjaParser parser, bool f) : base(parser)
         	        {
         		        elseIfBlock = new Block(parser);
+        		        full = f;
         	        }
         	        
         public override dynamic Eval()
@@ -1011,12 +1167,12 @@ options {
             	parser.curBlock = cycleBlock;
             	cycleBlock.Eval();
             }
-            else
+            else if (full)
             {
             	parser.curBlock = elseIfBlock;
 				elseIfBlock.Eval();
             }
-            parser.curBlock = parser.curBlock.Parent;
+            parser.curBlock = cycleBlock.Parent;
     		return null;
         }
    	}
@@ -1092,7 +1248,9 @@ program : function* main function* {
                 metTable.Add("getPositionX", getPositionX);
                 metTable.Add("getPositionY", getPositionY);
                 metTable.Add("getDirection", getDirection);
-				metTable["main"].Eval();
+                #if NOGUI
+					metTable["main"].Eval();
+				#endif
 };
 
 main : main_signature OBRACE main_code CBRACE
@@ -1207,7 +1365,7 @@ code : (operation[curBlock.createOperationClass()])*;
 
 main_code : (operation[curBlock.createOperationClass()])*;
 
-operation[OperationClass oper] : call[curBlock.ToExpr()] | custom_call[curBlock.ToExpr()] | declare[curBlock.ToExpr()] | ariphExprEx[curBlock.ToExpr()] | boolExprEx[curBlock.ToExpr()]
+operation[OperationClass oper] : call[curBlock.ToExpr(), true] | custom_call[curBlock.ToExpr(), true] | declare[curBlock.ToExpr()] | ariphExprEx[curBlock.ToExpr()] | boolExprEx[curBlock.ToExpr()]
 			| myif[curBlock.ToExpr()]|myif_short[curBlock.ToExpr()]|mywhile[curBlock.ToExpr()]|mydo_while[curBlock.ToExpr()]|myfor[curBlock.ToExpr()];
 
 method_return[OperationClass oper] returns [string type, dynamic value]: RETURN_KEYWORD val_or_id[curBlock.ToExpr()] {
@@ -1255,7 +1413,7 @@ builtin_func_p : 'move'|'turn' ;
 
 builtin_func_e : 'hit'|'shoot' ;  
 
-call[ExprClass oper] returns [CallData callData] : parameterized_call[$oper] {
+call[ExprClass oper, bool independent] returns [CallData callData] : parameterized_call[$oper] {
 
 	CallData data = new CallData(){
 		callType = CallType.BuiltIn, 
@@ -1266,7 +1424,7 @@ call[ExprClass oper] returns [CallData callData] : parameterized_call[$oper] {
 	};
 	
 	string methodName = currentMet;
-	if(methodName != "?"){
+	if(methodName != "?" && independent){
 		curBlock.operations.Add(data);
 	}
 	
@@ -1310,7 +1468,7 @@ call[ExprClass oper] returns [CallData callData] : parameterized_call[$oper] {
 	};
 	$callData = data;
 	string methodName = currentMet;
-	if(methodName != "?"){
+	if(methodName != "?" && independent){
 		curBlock.operations.Add(data);
 	}
 };
@@ -1325,7 +1483,7 @@ parameterized_call[ExprClass oper] returns [ExprClass res, ReturnType type]: bui
 
 simple_call : builtin_func_e LPAREN RPAREN;
 
-custom_call[ExprClass oper] returns [string funName, CallData callData]: ID LPAREN call_params[$oper] RPAREN {
+custom_call[ExprClass oper, bool independent] returns [string funName, CallData callData]: ID LPAREN call_params[$oper] RPAREN {
 
 	string callName = $ID.text;
 	$funName = callName;
@@ -1368,7 +1526,8 @@ custom_call[ExprClass oper] returns [string funName, CallData callData]: ID LPAR
 	}
 	
 	string methodName = currentMet;
-    curBlock.operations.Add(data);
+	if (independent)
+    	curBlock.operations.Add(data);
 	$callData = data;
 };
 
@@ -1402,7 +1561,7 @@ val_or_id[ExprClass oper] returns [string type, dynamic value]:
 myif[ExprClass oper]: IF LPAREN boolExprEx[$oper] RPAREN 
      OBRACE 
      {
-     	Condition ifer = new Condition(this)
+     	Condition ifer = new Condition(this, true)
 		{
 			cond=$boolExprEx.res,
 			parser = this
@@ -1428,7 +1587,7 @@ myif[ExprClass oper]: IF LPAREN boolExprEx[$oper] RPAREN
 myif_short[ExprClass oper]: IF LPAREN boolExprEx[$oper] RPAREN 
     OBRACE 
     {
-    		Condition ifer = new Condition(this)
+    		Condition ifer = new Condition(this, false)
          	{
          		cond=$boolExprEx.res,
 				parser = this
@@ -1558,7 +1717,7 @@ ariphOperand[ExprClass oper]:
                    	}
 					$oper.Push(new ExprStackObject(value, this));
                }
-             | custom_call[$oper]
+             | custom_call[$oper, false]
              	{
              		$oper.Push(new ExprStackObject()
 					{
@@ -1567,7 +1726,7 @@ ariphOperand[ExprClass oper]:
 						parser = this
 					});
              	}
-             | call[$oper]
+             | call[$oper, false]
              	{
                     $oper.Push(new ExprStackObject()
              		{
@@ -1604,7 +1763,7 @@ ariphOperand[ExprClass oper]:
 ariphTerm[ExprClass oper]:
             ariphOperand[$oper]
             
-           (muldiv=(MUL|DIV) ariphOperand[$oper])*
+           (muldiv=(POW|MUL|DIV|MOD) ariphOperand[$oper])*
             {
 				if ($muldiv.text != null)
 				{
@@ -1639,7 +1798,7 @@ ariphExprEx[ExprClass oper] returns [ExprClass res]:
             {
                 $res = $oper;
             }
-          | ariphID[$oper] assigns=(ASSIGN|ADDASSIGN|SUBASSIGN|MULASSIGN|DIVASSIGN) ariphExprEx[$oper]
+          | ariphID[$oper] assigns=(ASSIGN|ADDASSIGN|SUBASSIGN|POWASSIGN|MULASSIGN|DIVASSIGN|MODASSIGN) ariphExprEx[$oper]
             {
                 $oper.Push(new ExprStackObject()
 					 {
@@ -1655,7 +1814,7 @@ boolOperand[ExprClass oper]:
               {
                   $oper.Push(new ExprStackObject(bool.Parse($BOOL.text), this));
               }
-            | custom_call[$oper]
+            | custom_call[$oper, false]
                           	{
                           		$oper.Push(new ExprStackObject()
              					{
@@ -1793,16 +1952,17 @@ ariphID[ExprClass oper] : ID
 		};
 
 //trigonometry
+
 trig[ExprClass oper]:
 		trfun=(SIN|COS|TAN|ASIN|ACOS|ATAN) LPAREN ariphExprEx[$oper] RPAREN
-		{
-			$oper.Push(new ExprStackObject()
-					 {
-						type = ObjType.Operation,
-						value = $trfun.text,
-						parser = this
-					 });
-		};
+              		{
+              			$oper.Push(new ExprStackObject()
+              					 {
+              						type = ObjType.Operation,
+              						value = $trfun.text,
+              						parser = this
+              					 });
+              		};
 trig2[ExprClass oper]:
 		ATAN2 LPAREN ariphExprEx[$oper] COMMA ariphExprEx[$oper] RPAREN
 		{
@@ -1845,6 +2005,8 @@ ADD     : '+' ;
 SUB     : '-' ;
 MUL     : '*' ;
 DIV     : '/' ;
+MOD     : '%' ;
+POW     : '**' ;
 INC		: '++' ;
 DEC		: '--' ;
 ASSIGN		: '=' ;
@@ -1852,6 +2014,8 @@ ADDASSIGN   : '+=' ;
 SUBASSIGN   : '-=' ;
 MULASSIGN   : '*=' ;
 DIVASSIGN   : '/=' ;
+MODASSIGN   : '%=' ;
+POWASSIGN   : '**=' ;
 AND       : '&&' ;
 OR        : '||' ;
 NOT		  : '!' ;

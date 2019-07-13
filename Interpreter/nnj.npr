@@ -1,13 +1,7 @@
-fun void main() 
-{ 
-int k = 7
 
- int i = 9
-
-for(i = i + 4;i<17;i++) 
-{ 
-	move(i) 
-} 
-
-
+fun void main()
+{
+	shoot()
+		
+	
 }
