@@ -255,22 +255,18 @@ public partial class NinjaParser : Parser {
 	   	public static void Debug(string line)
 	   	{
 	   		Console.WriteLine(line);
-	        using (fstream)
-	        {
-		        fstream.WriteLine(line);    
-	        }
-	    }
+	   		fstream.WriteLine(line);
+	   	    fstream.Flush();
+	   	}
 	   	    
 	   	public static void Error(string message)
 	   	{
 	   	    ConsoleColor curr = Console.ForegroundColor;
 	   	    Console.ForegroundColor = ConsoleColor.Red;
 	   	    Console.WriteLine(message);
-	        using (fstream)
-	        {
-		        fstream.WriteLine("ERROR: " + message);    
-	        }
-	        Console.ForegroundColor = curr;
+	   	    fstream.WriteLine("ERROR: " + message);
+	   	    fstream.Flush();
+	   	    Console.ForegroundColor = curr;
 	   	}
 	    
 	    public static bool CheckType(Type t, VarType vt)
@@ -307,7 +303,7 @@ public partial class NinjaParser : Parser {
 	    	{
 	    		var r = call.paramList[call.paramList.Count - i - 1].value;//.Eval();		
 	    		//if (call.paramList[i].type == method.paramList[i].type)
-	    		if (r is string varId)
+	    		if (r is string varId){
 	    			if (FindVar(varId) != null)
 	    				r = FindVar(varId).value;
 	    			else
@@ -315,23 +311,37 @@ public partial class NinjaParser : Parser {
 	    				Error($"Type mismatch ({i+1}/{call.paramList.Count}): expected {method.paramList[i].type}, found {r.GetType()} with value {call.paramList[call.paramList.Count - i - 1].value}");
 	                    return false;
 	    			}
+	    		}
+	    		if (r is ExprClass)
+				{
+					if (r.value != null)
+					{
+						r = r.value;
+						call.paramList[call.paramList.Count - i - 1].value = r;
+	                }
+	                else
+					{
+						//second call
+						Error("Evaluating param (fuck, second evaluation)");
+						call.paramList[call.paramList.Count - i - 1].value = r.Eval();
+						r = call.paramList[call.paramList.Count - i - 1].value;	
+					}
+	            }
 	    				
 	    		if (CheckType(r.GetType(), method.paramList[i].type))
 	    		{
 	    			method.paramList[i].value = r;
-	                Debug($"callll {call.name}, type = {call.callType}");
-	                if (FindVar(method.paramList[i].name, method) == null)
-	               	{
-	                	VarData varData = new VarData()
-	                	{
-	                		name = method.paramList[i].name,
+					if (FindVar(method.paramList[i].name, method) == null)
+		            {
+		                VarData varData = new VarData()
+		                {
+		                	name = method.paramList[i].name,
 							type = method.paramList[i].type
-	               		};
-	                    Debug($"Addung to {method.name}");
-	               		method.varTable.Add(varData.name, varData);
-	               	}
-	                	                
-	    			FindVar(method.paramList[i].name, method).value = r;
+		               	};
+		                Debug($"Addung to {method.name}");
+		           		method.varTable.Add(varData.name, varData);
+		           	}
+		    		FindVar(method.paramList[i].name, method).value = r;
 	    		}
 	    		else
 	    		{
@@ -427,10 +437,9 @@ public partial class NinjaParser : Parser {
 			
 			public override dynamic Eval()
 			{
-//				parser.curBlock = parent;
-				Debug($"call {name} eval");
 				if (callType == NinjaParser.CallType.Custom)
 				{
+					
 					if (parser.metTable.ContainsKey(name) && parser.CheckParams(this, parser.metTable[name]))
 					{		
 						Debug($"Calling custom method {name} with params {ParamListToString(paramList)}");
@@ -441,7 +450,7 @@ public partial class NinjaParser : Parser {
 	                    							if (!CheckType(ret.GetType(), parser.metTable[name].returnType)){
 	                    								throw new Exception($"Actual return is {ret.GetType()}, expected declared return type {parser.metTable[name].returnType}");
 	                    							}
-	                                                parser.curBlock = parent;        							
+	                    							parser.curBlock = parent;
 	                    							Debug($"===fun {name} returned {ret}");
 	                    							return ret;	
 	                    						}
@@ -541,7 +550,6 @@ public partial class NinjaParser : Parser {
 				return rBlock;
 			}
 			set{
-				Debug($"Context associated with block {value.name}");
 				rBlock = value;
 			}
 		}
@@ -1186,7 +1194,6 @@ public partial class NinjaParser : Parser {
 				{
 					if (paramData.name == name)
 					{
-
 						if (!method.varTable.ContainsKey(name))
 						{
 							VarData varData = new VarData()
@@ -1197,7 +1204,6 @@ public partial class NinjaParser : Parser {
 							};
 							method.varTable.Add(name, varData);
 						}
-						
 						return true;
 					}
 				}	
@@ -1222,7 +1228,7 @@ public partial class NinjaParser : Parser {
 				Error($"Variable {name} doesn\'t exist in block {block.name} context!");
 			}
 			return par?.varTable[name];
-		}
+		} 
 		
 		public class Cycles: OperationClass
 	    {

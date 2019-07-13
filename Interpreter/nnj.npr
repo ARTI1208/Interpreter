@@ -1,7 +1,59 @@
+fun double abs(double val)
+{
+	double res = val
+	if (res < 0)
+	{
+		res = 0 - res
+	}
+	return res
+}
+
+fun void testMain()
+{
+	int id = getSelfId()
+	double myx = getPositionX(id)
+	double myy = getPositionY(id)
+	double EPS = 0.000001
+	for (int j = 0; j < 4; ++j)
+	{
+		if (j != id)
+		{
+			double x = getPositionX(j)
+			double y = getPositionY(j)
+			double myAng = getDirection(id)
+			double reqAng = atan2(y - myy, x - myx)
+			while (abs(myAng - reqAng) > EPS)
+			{
+				turn(reqAng - myAng)
+				myAng = getDirection(id)
+			}
+			for (int i = 0; i < 10; ++i)
+			{
+				shoot()
+			}
+		}
+	
+	}
+}
+
+fun void testVoid(int d)
+{
+	move(d)
+}
+
+
+fun int testInt()
+{
+	shoot()
+	return 5
+}
+
+fun void testInpDouble(double f)
+{
+	double y = f
+}
 
 fun void main()
 {
-	shoot()
-		
-	
+	testInpDouble(testInt())
 }

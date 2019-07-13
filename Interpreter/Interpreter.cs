@@ -138,8 +138,8 @@ namespace Interpreter
 						WindowStyle = ProcessWindowStyle.Hidden
 					}
 				};
-//				proc.Start();
-//				proc.WaitForExit();
+				proc.Start();
+				proc.WaitForExit();
 
 
 				
