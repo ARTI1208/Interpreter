@@ -141,10 +141,14 @@ namespace Interpreter
 				proc.Start();
 				proc.WaitForExit();
 
+				bool b = false;
 
+				b |= true;
+				b |= true;
+
+				Console.WriteLine(b);
 				
-				
-				var input = File.ReadAllText("..\\..\\nnj.npr");
+				var input = File.ReadAllText("..\\..\\..\\ProgramExamples\\nnj.npr");
 				var ms = new MemoryStream(Encoding.UTF8.GetBytes(input));
 				var lexer = new NinjaLexer(new AntlrInputStream(ms));
 				var tokens = new CommonTokenStream(lexer);

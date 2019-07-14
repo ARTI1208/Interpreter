@@ -110,12 +110,6 @@ options {
         {
         	parser.curBlock = this;
         	Debug($"===Entering fun {name} with params {ParamListToString(paramList)}");
-			Debug($"Method {name} contains:");
-            foreach (var sm in operations)
-            {
-                Debug(sm.ToString());
-            }
-            Debug($"End of method {name} block");
             foreach(var sm in operations)
             {
             	if(sm.GetType().IsSubclassOf(typeof(OperationClass)))
@@ -166,22 +160,28 @@ options {
     
     public static bool CheckType(Type t, VarType vt)
     {
-    	if(t.ToString().ToLower().Contains("bool") && vt.ToString().ToLower().Contains("bool"))
-    		return true;
-    	if(t.ToString().ToLower().Contains("int") && vt.ToString().ToLower().Contains("int"))
+    	string actualTypeName = t.ToString().ToLower();
+        string expectedTypeName = vt.ToString().ToLower();
+        
+    	if(actualTypeName.Contains("bool") && expectedTypeName.Contains("bool"))
+        	return true;
+        if(actualTypeName.Contains("int") && (expectedTypeName.Contains("int") || expectedTypeName.Contains("double")))
             return true;
-        if(t.ToString().ToLower().Contains("double") && vt.ToString().ToLower().Contains("double"))
+        if(actualTypeName.Contains("double") && expectedTypeName.Contains("double"))
             return true;
         return false;        	
     }
     
     public static bool CheckType(Type t, ReturnType vt)
         {
-        	if(t.ToString().ToLower().Contains("bool") && vt.ToString().ToLower().Contains("bool"))
+        	string actualTypeName = t.ToString().ToLower();
+        	string expectedTypeName = vt.ToString().ToLower();
+        
+        	if(actualTypeName.Contains("bool") && expectedTypeName.Contains("bool"))
         		return true;
-        	if(t.ToString().ToLower().Contains("int") && vt.ToString().ToLower().Contains("int"))
+        	if(actualTypeName.Contains("int") && (expectedTypeName.Contains("int") || expectedTypeName.Contains("double")))
                 return true;
-            if(t.ToString().ToLower().Contains("double") && vt.ToString().ToLower().Contains("double"))
+            if(actualTypeName.Contains("double") && expectedTypeName.Contains("double"))
                 return true;
             return false;        	
         }
@@ -203,7 +203,7 @@ options {
     				r = FindVar(varId).value;
     			else
     			{
-    				Error($"Type mismatch ({i+1}/{call.paramList.Count}): expected {method.paramList[i].type}, found {r.GetType()} with value {call.paramList[call.paramList.Count - i - 1].value}");
+    				Error($"Type mismatch ({i+1}/{call.paramList.Count}) in {call.name}: expected {method.paramList[i].type}, found {r.GetType()} with value {call.paramList[call.paramList.Count - i - 1].value}");
                     return false;
     			}
     		}
@@ -233,14 +233,13 @@ options {
 	                	name = method.paramList[i].name,
 						type = method.paramList[i].type
 	               	};
-	                Debug($"Addung to {method.name}");
 	           		method.varTable.Add(varData.name, varData);
 	           	}
 	    		FindVar(method.paramList[i].name, method).value = r;
     		}
     		else
     		{
-    			Error($"Type mismatch ({i+1}/{call.paramList.Count}): expected {method.paramList[i].type}, found {r.GetType()} with value {call.paramList[call.paramList.Count - i - 1].value}");
+    			Error($"Type mismatch ({i+1}/{call.paramList.Count}) in {call.name}: expected {method.paramList[i].type}, found {r.GetType()} with value {call.paramList[call.paramList.Count - i - 1].value}");
     			return false;
     		}
     	}
@@ -314,6 +313,15 @@ options {
 			operations[lastInd] = res;
 			return res;
 		}
+		
+		public ExprClass createExpressionClass(){
+			operations.Add(new OperationClass());
+			int lastInd = operations.Count - 1;
+        	var res = new ExprClass(operations[lastInd]);
+			res.parser = parser;
+			operations[lastInd] = res;
+			return res;
+		}
 	}
 	
 	public class CallData : OperationClass
@@ -338,100 +346,101 @@ options {
 				if (parser.metTable.ContainsKey(name) && parser.CheckParams(this, parser.metTable[name]))
 				{		
 					Debug($"Calling custom method {name} with params {ParamListToString(paramList)}");
-                    						parser.metTable[name].Eval();
-                    						if (returnType != ReturnType.Void && parser.metTable[name].returnType != ReturnType.Void)
-                    						{
-                    							var ret = parser.metTable[name].returnValue.Eval();
-                    							if (!CheckType(ret.GetType(), parser.metTable[name].returnType)){
-                    								throw new Exception($"Actual return is {ret.GetType()}, expected declared return type {parser.metTable[name].returnType}");
-                    							}
-                    							parser.curBlock = parent;
-                    							Debug($"===fun {name} returned {ret}");
-                    							return ret;	
-                    						}
-                    						if (returnType != parser.metTable[name].returnType)
-                    							Error("Method declaration and call have different return types");
-                    						parser.curBlock = parent;
-                    						return null;
+					parser.metTable[name].Eval();
+					if (returnType != ReturnType.Void && parser.metTable[name].returnType != ReturnType.Void)
+					{
+						var ret = parser.metTable[name].returnValue.Eval();
+						if (!CheckType(ret.GetType(), parser.metTable[name].returnType)){
+							throw new Exception($"Actual return is {ret.GetType()}, expected declared return type {parser.metTable[name].returnType}");
+						}
+						parser.curBlock = parent;
+						Debug($"===fun {name} returned {ret}");
+						return ret;	
+					}
+					if (returnType != parser.metTable[name].returnType)
+						Error("Method declaration and call have different return types");
+					parser.curBlock = parent;
+					return null;
 				}
 			}
 			else
 			{
 				if (parser.metTable.ContainsKey(name))
-                					{
-                						if (parser.CheckParams(this, parser.metTable[name]))
-                						{
+				{
+					if (parser.CheckParams(this, parser.metTable[name]))
+					{
 #if !NOGUI
-	                						parser.Sleep();
+						parser.Sleep();
 #endif
-                							dynamic ret = 0;
-											Debug($"BUiltin func {name}, param ");
-	                                        int reqid = -1;
-	                                        if (name != "getSelfId")
-	                                        {
-		                                    	dynamic param = paramList[0].value;
-		                                        if (param.GetType() == typeof(string))
-		                                        {
-			                                    	reqid = parser.FindVar(param).value;
-		                                        }
-		                                        else
-		                                        {
-			                                        reqid = param;
-		                                        }
-	                                        }
-                							switch (name)
-                							{
-                								case "getSelfId":
-                									ret = parser.id;
-                									break;
-                
-                								case "getHealth":
-                									ret = parser.health[reqid];
-                									break;
-                
-                								case "getPositionX":
-                									ret = parser.xPos[reqid];
-                									break;
-                
-                								case "getPositionY":
-                									ret = parser.yPos[reqid];
-                									break;
-                
-                								case "getDirection":
-                									ret = parser.dirs[reqid];
-                									break;
-                							}
-                							Debug($"Calling builtin method {name} with params {ParamListToString(paramList)}, ret {ret} + of type " + ret.GetType());
-                							Main.Log("Func " + name + " for player #" + reqid + " returning " + ret);
-                							return parser.metTable[name].returnValue = ret;
-                						}
-                					}
-                					else
-                					{
-                						Debug($"Calling builtin method {name} with params {ParamListToString(paramList)}");
-                						Command nw;
-                						switch (name)
-                						{
-                							case "move":
-                								nw = new Command(1, paramList[0].value.Eval());
-                								break;
-                							case "turn":
-                								nw = new Command(2, paramList[0].value.Eval());
-                								break;
-                							case "hit":
-                								nw = new Command(3);
-                								break;
-                							case "shoot":
-                								nw = new Command(4);
-                								break;
-                							default:
-                								Error($"Unknown builtin method {name}");
-                								return null;
-                						}
-                						#if !NOGUI
-										parser.owner.commands.Enqueue(nw);
-                                        #endif
-                					}
+						dynamic ret = 0;
+						int reqid = -1;
+						if (name != "getSelfId")
+						{
+							dynamic param = paramList[0].value;
+							if (param.GetType() == typeof(string))
+							{
+								reqid = parser.FindVar(param).value;
+							}
+							else
+							{
+								reqid = param;
+							}
+						}
+						switch (name)
+						{
+							case "getSelfId":
+								ret = parser.id;
+								break;
+
+							case "getHealth":
+								ret = parser.health[reqid];
+								break;
+
+							case "getPositionX":
+								ret = parser.xPos[reqid];
+								break;
+
+							case "getPositionY":
+								ret = parser.yPos[reqid];
+								break;
+
+							case "getDirection":
+								ret = parser.dirs[reqid];
+								break;
+						}
+						Debug($"Calling builtin method {name} with params {ParamListToString(paramList)}, ret {ret} + of type " + ret.GetType());
+						Main.Log("Func " + name + " for player #" + reqid + " returning " + ret);
+						return parser.metTable[name].returnValue = ret;
+					}
+				}
+				else
+				{
+					Debug($"Calling builtin method {name} with params {ParamListToString(paramList)}");
+					Command nw;
+					switch (name)
+					{
+						case "move":
+							nw = new Command(1, paramList[0].value.Eval());
+							break;
+						case "turn":
+							nw = new Command(2, paramList[0].value.Eval());
+							break;
+						case "hit":
+							nw = new Command(3);
+							break;
+						case "shoot":
+							nw = new Command(4);
+							break;
+						default:
+							Error($"Unknown builtin method {name}");
+							return null;
+					}
+					#if !NOGUI
+					parser.owner.commands.Enqueue(nw);
+					if (parser.owner.commands.Count > 100)
+						parser.Sleep();
+					#endif
+				}
 			}
 			return null;
 		}
@@ -470,7 +479,8 @@ options {
 		
 		public virtual dynamic Eval()
 		{
-			throw new NotImplementedException("OperationClass class is abstract");
+			Error("OperationClass class is abstract");
+			return null;
 		}
 	}
     
@@ -510,15 +520,15 @@ options {
 		
 		public dynamic Calc()
 		{
-            				if (type == ObjType.Number)
-            					return value;
-            				if (type == ObjType.Var)
-            				{
-            					return parser.FindVar(value).value;
-            				}
-            
-            				Error("\"" + value + "\" is an operation");
-            				return null;
+			if (type == ObjType.Number)
+				return value;
+			if (type == ObjType.Var)
+			{
+				return parser.FindVar(value).value;
+			}
+
+			Error("\"" + value + "\" is an operation");
+			return null;
 		}
 		
 		public new Type GetType()
@@ -581,7 +591,7 @@ options {
 			{
 				s += v.value + " ";
 			}
-			Debug($"Evaluating {s} from block {parser.curBlock.name}");
+			//Debug($"Evaluating {s} from block {parser.curBlock.name}");
 			List<ExprStackObject> stack = new List<ExprStackObject>();
 			foreach (var elem in exprStack)
 			{
@@ -773,7 +783,7 @@ options {
                     							rightVal = right.Calc();
                     							if (!isCompatible(0, rightVal))
                     								Error(rightVal + " can't be incremented");
-                    							++parser.FindVar(right.value).value;
+                    							rightVal = ++parser.FindVar(right.value).value;
                     							stack.Add(new ExprStackObject(rightVal, parser));
                     							break;
                     							
@@ -791,7 +801,7 @@ options {
                     							rightVal = right.Calc();
                     							if (!isCompatible(0, rightVal))
                     								Error(rightVal + " can't be decremented");
-                    							--parser.FindVar(right.value).value;
+                    							rightVal = --parser.FindVar(right.value).value;
                     							stack.Add(new ExprStackObject(rightVal, parser));
                     							break;
                     							
@@ -802,6 +812,14 @@ options {
                     								Error(rightVal + " can't be decremented");
                     							stack.Add(new ExprStackObject(rightVal, parser));
                     							--parser.FindVar(right.value).value;
+                    							break;
+												
+											case "-un":
+                    							right = Pop(stack);
+                    							rightVal = right.Calc();
+                    							if (!isCompatible(0.0, rightVal))
+                    								Error(rightVal + " is not a number");
+                    							stack.Add(new ExprStackObject(-rightVal, parser));
                     							break;
                     							
                     						case "=":
@@ -821,7 +839,7 @@ options {
                     									data.value = (double)rightval;
                     								else
                     									Error("Can't convert \"" + rightval + "\" to " + data.type);	
-													Debug("Assigned " + rightVal + " of type " + rightVal.GetType() + " to " + left.value + " of type " + data.type);
+													//Debug("Assigned " + rightVal + " of type " + rightVal.GetType() + " to " + left.value + " of type " + data.type);
                     								stack.Add(new ExprStackObject(data.value, parser));
                     							}
                     							catch (KeyNotFoundException e)
@@ -973,7 +991,50 @@ options {
                     								Error("Variable " + left.value + " does not exist in current context5");
                     							}
                     							break;
-
+											
+											case "&&=":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							try
+                    							{
+                    								rightVal = right.Calc();
+                    								if (!isCompatible(left, rightVal, true))
+                    									Error("Can't assign " + rightVal + " to " + left.value);
+                    								dynamic rightval = rightVal;
+                    								VarData data = parser.FindVar(left.value);
+                    								if (data.value.GetType() == rightval.GetType())
+                    									data.value = data.value && rightval;
+                    								else
+                    									Error("Can't convert \"" + rightval + "\" to " + data.type);
+                    								stack.Add(new ExprStackObject(data.value, parser));
+                    							}
+                    							catch (KeyNotFoundException)
+                    							{
+                    								Error("Variable " + left.value + " does not exist in current context5");
+                    							}
+                    							break;
+											
+											case "||=":
+                    							right = Pop(stack);
+                    							left = Pop(stack);
+                    							try
+                    							{
+                    								rightVal = right.Calc();
+                    								if (!isCompatible(left, rightVal, true))
+                    									Error("Can't assign " + rightVal + " to " + left.value);
+                    								dynamic rightval = rightVal;
+                    								VarData data = parser.FindVar(left.value);
+                    								if (data.value.GetType() == rightval.GetType())
+                    									data.value = data.value || rightval;
+                    								else
+                    									Error("Can't convert \"" + rightval + "\" to " + data.type);
+                    								stack.Add(new ExprStackObject(data.value, parser));
+                    							}
+                    							catch (KeyNotFoundException)
+                    							{
+                    								Error("Variable " + left.value + " does not exist in current context5");
+                    							}
+                    							break;
                     							
                     						case "sin":
                     							right = Pop(stack);
@@ -1043,20 +1104,20 @@ options {
             {
             	var res = stack[0];
             	try
-                	                {
-                		                res.Calc();
-                	                }
-                	                catch (Exception e)
-                	                {
-                		                return null;
-                	                }
+				{
+					res.Calc();
+				}
+				catch (Exception e)
+				{
+					return null;
+				}
             	if (res.value is string ss && parser.FindVar(ss) != null)
 				{
             		value = parser.FindVar(ss).value;
-            		return parser.FindVar(ss).value;
+            		return value;
             	}
             	value = res.value;
-            	return res.value;	
+            	return value;	
             }
             return null;
 		}
@@ -1067,7 +1128,7 @@ options {
 		Block par = curBlock;
 		while (!par.varTable.ContainsKey(name) && !isParam(par, name))
 		{
-			Debug($"sSearching {name} in {par.name}");
+			//Debug($"sSearching {name} in {par.name}");
 			par = par.Parent;
 			if (par == null)
 			{
@@ -1146,7 +1207,6 @@ options {
         	int i = 0;
         	while(cond.Eval())
 			{
-				Debug($"-=-While loop {i++}");
 				cycleBlock.Eval();
             }
             Debug("---Exiting whilecycle");
@@ -1155,27 +1215,29 @@ options {
         }
         
         public While(NinjaParser parser) : base(parser)
-        			{
-        			}
+		{
+		}
     }
     
     public class Do_while:Cycles
     {
 		public override dynamic Eval()
         {
+        	Debug("===Entering do_while");
 			do
 			{
 				parser.curBlock = cycleBlock;
 				cycleBlock.Eval();
 			}
 			while(cond.Eval());
+			Debug("===Exiting do_while");
 			parser.curBlock = parser.curBlock.Parent;
 			return null;
 		}
 		
 		public Do_while(NinjaParser parser) : base(parser)
-        			{
-        			}
+		{
+		}
 	}
     
     public class For:Cycles
@@ -1188,25 +1250,29 @@ options {
         public override dynamic Eval()
         {
         	parser.curBlock = oneTimeBlock;
-        	first.Eval();
+        	Debug("===Entering for");
+        	first?.Eval();
         	int t = 0;
         	parser.curBlock = cycleBlock;
             while(cond.Eval())
             {
-            	Debug($"==For iter {t++}");
+            	parser.curBlock = cycleBlock;
             	cycleBlock.Eval();
-            	last.Eval(); 
+            	parser.curBlock = cycleBlock;
+            	last?.Eval();
+            	parser.curBlock = cycleBlock; 
             }
+            Debug("===Exiting for");
             parser.curBlock = oneTimeBlock.Parent;
     		return null;
         }
         
         public For(NinjaParser parser) : base(parser)
-        	        {
-        	        	oneTimeBlock = new Block(parser);
-        	        	oneTimeBlock.name = "otbl";
-        	        	cycleBlock.name = "cbl";
-        	        }
+		{
+			oneTimeBlock = new Block(parser);
+			oneTimeBlock.name = "otbl";
+			cycleBlock.name = "cbl";
+		}
     }    
     
     public class Condition:Cycles 
@@ -1421,12 +1487,12 @@ m_fun_signature returns [string funName]: FUN_KEYWORD meaningfulType ID {
 	curBlock = newMet;
 } LPAREN params[$ID.text] RPAREN;
 
-code : (operation[curBlock.createOperationClass()])*;
+code : (operation)*;
 
-main_code : (operation[curBlock.createOperationClass()])*;
+main_code : (operation)*;
 
-operation[OperationClass oper] : call[curBlock.ToExpr(), true] | custom_call[curBlock.ToExpr(), true] | declare[curBlock.ToExpr()] | ariphExprEx[curBlock.ToExpr()] | boolExprEx[curBlock.ToExpr()]
-			| myif[curBlock.ToExpr()]|myif_short[curBlock.ToExpr()]|mywhile[curBlock.ToExpr()]|mydo_while[curBlock.ToExpr()]|myfor[curBlock.ToExpr()];
+operation : call[curBlock.createExpressionClass(), true] | custom_call[curBlock.createExpressionClass(), true] | declare[curBlock.createExpressionClass()] | ariphExprEx[curBlock.createExpressionClass()] | boolExprEx[curBlock.createExpressionClass()]
+			| myif[null]|myif_short[null]|mywhile[null]|mydo_while[null]|myfor[null];
 
 method_return[OperationClass oper] returns [string type, dynamic value]: RETURN_KEYWORD val_or_id[curBlock.ToExpr()] {
 	$type = $val_or_id.type;
@@ -1618,19 +1684,26 @@ val_or_id[ExprClass oper] returns [string type, dynamic value]:
 			};
 
 //cyclemetka
-myif[ExprClass oper]: IF LPAREN boolExprEx[$oper] RPAREN 
+myif[ExprClass oper]:
+{
+	ExprClass bExpr = new ExprClass(new OperationClass(this));
+	bExpr.parser = this;
+	
+	Condition ifer = new Condition(this, false)
+	{
+		
+		parser = this
+	};
+	curBlock.operations.Add(ifer);
+	ifer.cycleBlock.Parent = curBlock;
+	curBlock = ifer.cycleBlock;
+
+} IF LPAREN boolExprEx[bExpr] RPAREN 
      OBRACE 
      {
-     	Condition ifer = new Condition(this, true)
-		{
-			cond=$boolExprEx.res,
-			parser = this
-		};
-		curBlock.operations.Add(ifer);
-		ifer.cycleBlock.Parent = curBlock;
-		curBlock = ifer.cycleBlock;
+     	ifer.cond=$boolExprEx.res;
      }
-    (operation[curBlock.createOperationClass()])* 
+    (operation)* 
     CBRACE
      ELSE 
       OBRACE
@@ -1638,43 +1711,58 @@ myif[ExprClass oper]: IF LPAREN boolExprEx[$oper] RPAREN
       	ifer.elseIfBlock.Parent = curBlock.Parent;
       	curBlock = ifer.elseIfBlock;
       } 
-    (operation[curBlock.createOperationClass()])*
+    (operation)*
     CBRACE
     {
         curBlock = curBlock.Parent;
      }
    ;
-myif_short[ExprClass oper]: IF LPAREN boolExprEx[$oper] RPAREN 
+myif_short[ExprClass oper]: {
+
+	ExprClass bExpr = new ExprClass(new OperationClass(this));
+	bExpr.parser = this;
+	
+	Condition ifer = new Condition(this, false)
+	{
+		
+		parser = this
+	};
+	curBlock.operations.Add(ifer);
+	ifer.cycleBlock.Parent = curBlock;
+	curBlock = ifer.cycleBlock;
+
+} IF LPAREN boolExprEx[bExpr] RPAREN 
     OBRACE 
     {
-    		Condition ifer = new Condition(this, false)
-         	{
-         		cond=$boolExprEx.res,
-				parser = this
-         	};
-         	curBlock.operations.Add(ifer);
-         	ifer.cycleBlock.Parent = curBlock;
-         	curBlock = ifer.cycleBlock;
+    		ifer.cond=$boolExprEx.res;
+         	
+         	
     }
-    (operation[curBlock.createOperationClass()])* 
+    (operation)* 
     CBRACE
     {
         curBlock = curBlock.Parent;
     }
    ;
-mywhile[ExprClass oper]: WHILE LPAREN boolExprEx[$oper] RPAREN 
-     OBRACE 
-     {
-     	While whiler = new While(this)
+mywhile[ExprClass oper]: {
+ExprClass bExpr = new ExprClass(new OperationClass(this));
+bExpr.parser = this;
+
+While whiler = new While(this)
      	{
-     		cond=$boolExprEx.res,
+     		
 			parser = this
      	};
      	curBlock.operations.Add(whiler);
      	whiler.cycleBlock.Parent = curBlock;
      	curBlock = whiler.cycleBlock;
+
+} WHILE LPAREN boolExprEx[bExpr] RPAREN 
+     OBRACE 
+     {
+     	whiler.cond=$boolExprEx.res;
      }
-     (operation[curBlock.createOperationClass()])*
+     (operation)*
      CBRACE 
      {
         curBlock = curBlock.Parent;
@@ -1683,15 +1771,17 @@ mywhile[ExprClass oper]: WHILE LPAREN boolExprEx[$oper] RPAREN
 mydo_while[ExprClass oper]: DO 
           OBRACE 
           {
+          		ExprClass bExpr = new ExprClass(new OperationClass(this));
+                bExpr.parser = this;
           		Do_while doer = new Do_while(this);
 				doer.parser = this;
                	curBlock.operations.Add(doer);
                	doer.cycleBlock.Parent = curBlock;
                	curBlock = doer.cycleBlock;
           }
-            (operation[curBlock.createOperationClass()])* 
+            (operation)* 
           CBRACE
-          WHILE LPAREN boolExprEx[$oper] RPAREN 
+          WHILE LPAREN boolExprEx[bExpr] RPAREN 
           {
             	doer.cond=$boolExprEx.res;
             	curBlock = curBlock.Parent;
@@ -1709,8 +1799,8 @@ myfor[ExprClass oper]: {
 		forer.cycleBlock.Parent = forer.oneTimeBlock;
             	curBlock = forer.oneTimeBlock;
 		
-		curBlock.createOperationClass();
-		ExprClass fExpr = curBlock.ToExpr();    	
+		ExprClass fExpr = new ExprClass(new OperationClass(this));
+        fExpr.parser = this;    	
 						
 } (declare[fExpr]
 {
@@ -1721,7 +1811,7 @@ myfor[ExprClass oper]: {
 |ariphExprEx[fExpr]
 {
 	fExpr = $ariphExprEx.res;
-})
+})?
 
 
 
@@ -1735,25 +1825,29 @@ myfor[ExprClass oper]: {
                   
                   }
                   
-                  boolExprEx[cExpr] 
+                  boolExprEx[cExpr]?
                  SEMICOLON {
                  
 					ExprClass lExpr = new ExprClass(new OperationClass(this));
                  lExpr.parser = this;
-                 }l=ariphExprEx[lExpr] RPAREN
+                 }l=ariphExprEx[lExpr]? RPAREN
         OBRACE
         {
-                                      forer.cond = $boolExprEx.res;
-                                      forer.first = fExpr;
-                                      forer.last = $l.res;
-         				curBlock = forer.cycleBlock;			 
-        				
-                       	
+
+				try {
+					forer.cond = $boolExprEx.res;
+				} catch {
+					 cExpr.Push(new ExprStackObject(true, this));
+					 forer.cond = cExpr;
+				}
+			  	forer.first = fExpr;
+			  	forer.last = (_localctx.l == null) ? null : $l.res;
+				curBlock = forer.cycleBlock;       	
         }
-        (operation[curBlock.createOperationClass()])*
+        (operation)*
         CBRACE
         { 
-        	curBlock = curBlock.Parent.Parent;
+        	curBlock = forer.oneTimeBlock.Parent;
         	curBlock.operations.Add(forer);    
         }
      ;
@@ -1794,7 +1888,16 @@ ariphOperand[ExprClass oper]:
              			value = $call.callData,
 						parser = this
              		});
-                }	
+                }
+			 | SUB ariphOperand[$oper]
+				{
+					$oper.Push(new ExprStackObject()
+             		{
+             			type = ObjType.Operation,
+             			value = "-un",
+						parser = this
+             		});
+				}
              | ariphID[$oper]
                {
 
@@ -1823,7 +1926,7 @@ ariphOperand[ExprClass oper]:
 ariphTerm[ExprClass oper]:
             ariphOperand[$oper]
             
-           (muldiv=(POW|MUL|DIV|MOD) ariphOperand[$oper])*
+           (muldiv=(POW|MUL|DIV|MOD) ariphOperand[$oper]
             {
 				if ($muldiv.text != null)
 				{
@@ -1834,13 +1937,13 @@ ariphTerm[ExprClass oper]:
 						parser = this
 					 });
 				}
-            };
+            })*;
 ariphExpr[ExprClass oper]:
             ariphTerm[$oper]
             {
                 
             }
-			(addsub=(ADD|SUB) ariphTerm[$oper])*
+			(addsub=(ADD|SUB) ariphTerm[$oper]
             {
 				if ($addsub.text != null)
 				{
@@ -1852,7 +1955,7 @@ ariphExpr[ExprClass oper]:
 					 });
 					 
 				}
-            };
+            })*;
 ariphExprEx[ExprClass oper] returns [ExprClass res]:
             ariphExpr[$oper]
             {
@@ -1906,7 +2009,15 @@ boolOperand[ExprClass oper]:
 			}
             | LPAREN boolExprEx[$oper] RPAREN;
 boolExpr[ExprClass oper]:
-           boolOperand[$oper]
+           boolOperand[$oper] (comp=(EQUAL|NOTEQUAL) boolExpr[$oper]
+			{
+				$oper.Push(new ExprStackObject()
+				{
+					type = ObjType.Operation,
+					value = $comp.text,
+					parser = this
+				}); 
+		  })*
          | left=boolOperand[$oper] andor=(AND|OR) right=boolExpr[$oper]
            {
 				$oper.Push(new ExprStackObject()
@@ -1921,12 +2032,12 @@ boolExprEx[ExprClass oper] returns [ExprClass res]:
 		   {
 				$res = $oper;
 		   }
-         | left=ariphID[$oper] ASSIGN right=boolExprEx[$oper]
+         | left=ariphID[$oper] assigns=(ASSIGN|ORASSIGN|ANDASSIGN) right=boolExprEx[$oper]
            {
 				$oper.Push(new ExprStackObject()
 				{
 					type = ObjType.Operation,
-					value = "=",
+					value = $assigns.text,
 						parser = this
 				});
 				$res = $oper;
@@ -2078,6 +2189,8 @@ MODASSIGN   : '%=' ;
 POWASSIGN   : '**=' ;
 AND       : '&&' ;
 OR        : '||' ;
+ANDASSIGN : '&&=' ;
+ORASSIGN  : '||=' ;
 NOT		  : '!' ;
 LESS      : '<' ;
 GREATER   : '>' ;
